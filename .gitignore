@@ -1,0 +1,32 @@
+# vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+netrwhist
+*~
+tags
+[._]*.un~
+
+# Logs
+logs
+*.log
+
+# Dependency directory
+node_modules
+
+# Debug log from npm
+npm-debug.log
+
+# local env variables
+.env
+
+# truffle build directory
+build/
+
+# macOS
+.DS_Store
+
+# truffle
+.node-xmlhttprequest-*
