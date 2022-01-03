@@ -9,10 +9,20 @@ import "./IRockNFT.sol";
 import "./IProtocolParameters.sol";
 import "./IPebble.sol";
 
+/*
+ * TODO:
+ * [x] Minting
+ * [x] Buy ticket
+ * [x] Split payment
+ * [ ] Rock tax
+ *
+ */
+
 contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         struct Experience {
                 address host;
+                DAO creators;
                 string name;
                 uint256 price;
                 uint256 watchLaterPrice;
@@ -20,7 +30,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 uint256 revenue;
         }
 
-        // Every experience is a "mini" DAO. 
+        // Every experience is a "mini" DAO of creators. 
         struct DAO {
                 uint256 totalShares;
                 mapping(address => uint256) shares;
@@ -36,7 +46,6 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         Counters.Counter private _counter;
 
         mapping(uint256 => Experience) private _experiences;
-        mapping(uint256 => DAO) private _daos;
 
         ITicketNFT private _ticketNFT;
         IRockNFT private _rockNFT;
@@ -49,7 +58,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         }
 
         modifier onlyCreator(uint256 experienceId) {
-                require(_daos[experienceId].shares[msg.sender] > 0, "ExperienceNFT: not a creator");
+                require(_experiences[experienceId].creators.shares[msg.sender] > 0, "ExperienceNFT: not a creator");
                 _;
         }
 
@@ -85,12 +94,18 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
                 // pay hosting fees
                 uint256 hostingFee = _protocol.getHostingFee(experienceType);
-                _pebble.transferFrom(host, address(this), hostingFee);
+                if (hostingFee > 0) 
+                        _pebble.transferFrom(host, address(this), hostingFee);
 
                 // mint the experience
                 _counter.increment();
                 uint256 i = _counter.current();
-                _experiences[i] = Experience(host, name, price, watchLaterPrice, State.MINTED, 0);
+                Experience storage e = _experiences[i]; 
+                e.host = host;
+                e.name = name;
+                e.price = price;
+                e.watchLaterPrice = watchLaterPrice;
+                e.state = State.MINTED;
                 _mint(host, i);
                 _setTokenURI(i, tokenURI);
 
@@ -108,9 +123,8 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(creators.length == shares.length, "ExperienceNFT: creators & shares length mismatch");
                 require(creators.length > 0, "ExperienceNFT: no creators");
 
-                for (uint256 i = 0; i < creators.length; i++) {
+                for (uint256 i = 0; i < creators.length; i++) 
                         updateCreator(experienceId, creators[i], shares[i]);
-                }
         }
 
         function updateCreator(
@@ -124,11 +138,11 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(creator != address(0), "ExperienceNFT: creator address is 0");
                 require(shares > 0, "ExperienceNFT: shares are 0");
 
-                DAO storage dao = _daos[experienceId];
+                DAO storage creators = _experiences[experienceId].creators;
 
                 // update new shares for the creator
-                dao.totalShares = dao.totalShares - dao.shares[creator] + shares;
-                dao.shares[creator] = shares;
+                creators.totalShares = creators.totalShares - creators.shares[creator] + shares;
+                creators.shares[creator] = shares;
         }
 
         /*
@@ -142,10 +156,11 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         {
                 require(_experiences[experienceId].state == State.ENDED);
 
-                DAO storage dao = _daos[experienceId];
+                DAO storage creators = _experiences[experienceId].creators;
                 address creator = msg.sender;
 
-                uint256 amount = _experiences[experienceId].revenue * (dao.shares[creator] / dao.totalShares);
+                uint256 percentage = creators.shares[creator] / creators.totalShares;
+                uint256 amount = _experiences[experienceId].revenue * percentage;
                 
                 require(amount > 0, "ExperienceNFT: no payment due to creator");
 

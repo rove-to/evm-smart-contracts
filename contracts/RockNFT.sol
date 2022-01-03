@@ -3,6 +3,16 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./IProtocolParameters.sol";
+
+/*
+ * TODO:
+ * [x] Minting
+ * [ ] Rock attributes
+ * [ ] Lease
+ * [ ] Rock tax
+ *
+ */
 
 contract RockNFT is AccessControl, ERC721URIStorage {
 
@@ -26,8 +36,15 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         Counters.Counter private _counter;
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
+        IProtocolParameters _protocol;
 
-        constructor() ERC721("Rock", "R") {}
+        constructor(
+                IProtocolParameters protocol
+        ) 
+                ERC721("Rock", "R") 
+        {
+                _protocol = protocol;
+        }
 
         function mintRock(address rover, string memory tokenURI)
                 public

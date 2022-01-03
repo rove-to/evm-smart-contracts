@@ -18,6 +18,10 @@
   },
   "homepage": "https://github.com/rove-to/evm-smart-contracts#readme",
   "devDependencies": {
+    "@openzeppelin/contracts": "^4.4.1",
     "truffle": "^5.4.26"
+  },
+  "directories": {
+    "test": "test"
   }
 }
