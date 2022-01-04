@@ -77,6 +77,9 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                external 
                returns (uint256) 
         {
+                require(ownerOf(dadId) == msg.sender);
+                require(ownerOf(momId) == msg.sender);
+
                 _pebble.transferFrom(msg.sender, address(this), _globalParameters.get("RockMintingFee")); 
 
                 _counter.increment();
@@ -100,6 +103,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         // @dev a child is an offspring of mom and dad
         // TODO: move these parameters to Global Parameter contract so they can be adjusted via DAO
+        // TODO: should we add a (+) operator here so Rover can combine 2 rocks to make a bigger one?
         function _breed(uint256 dad, uint256 mom, string memory attribute) internal view returns (uint256) {
 
                 uint256 offspring = _random(100, attribute, dad + mom);
