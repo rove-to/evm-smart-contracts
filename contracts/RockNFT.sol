@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
+import "./IPebble.sol";
 
 /*
  * TODO:
@@ -39,17 +40,20 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
 
-        IParameterControl _parameterControl;
+        IParameterControl _globalParameters;
+        IPebble _pebble;
 
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
 
         constructor(
-                IParameterControl parameterControl
+                IPebble pebble,
+                IParameterControl globalParameters
         ) 
                 ERC721("Rock", "R") 
         {
-                _parameterControl = parameterControl;
+                _pebble = pebble;
+                _globalParameters = globalParameters;
         }
 
         function mintRock(address rover, uint256 metaverseId, string memory tokenURI)
@@ -73,6 +77,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                external 
                returns (uint256) 
         {
+                _pebble.transferFrom(msg.sender, address(this), _globalParameters.get("RockMintingFee")); 
+
                 _counter.increment();
                 uint256 i = _counter.current();
 
