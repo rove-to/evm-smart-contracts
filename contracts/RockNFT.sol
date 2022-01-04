@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -8,6 +9,7 @@ import "./IProtocolParameters.sol";
 /*
  * TODO:
  * [x] Minting
+ * [ ] Mint in batch?
  * [ ] Rock attributes
  * [ ] Lease
  * [ ] Rock tax
@@ -17,6 +19,7 @@ import "./IProtocolParameters.sol";
 contract RockNFT is AccessControl, ERC721URIStorage {
 
         struct Rock {
+                uint256 world;
                 uint256 size;
                 uint256 x;
                 uint256 y;
@@ -34,9 +37,11 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
+
+        IProtocolParameters _protocol;
+
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
-        IProtocolParameters _protocol;
 
         constructor(
                 IProtocolParameters protocol
@@ -46,7 +51,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _protocol = protocol;
         }
 
-        function mintRock(address rover, string memory tokenURI)
+        function mintRock(address rover, uint256 world, string memory tokenURI)
                 public
                 onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256)
@@ -54,7 +59,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _counter.increment();
 
                 uint256 i = _counter.current();
-                _rocks[i] = Rock(0, 0, 0, 0, 0);
+                _rocks[i] = Rock(world, 0, 0, 0, 0, 0);
                 _mint(rover, i);
                 _setTokenURI(i, tokenURI);
 
