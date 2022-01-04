@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./ITicketNFT.sol";
 import "./IRockNFT.sol";
-import "./IProtocolParameters.sol";
+import "./IParameterControl.sol";
 import "./IPebble.sol";
 
 /*
@@ -50,7 +50,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         ITicketNFT private _ticketNFT;
         IRockNFT private _rockNFT;
-        IProtocolParameters private _protocol;
+        IParameterControl private _parameterControl;
         IPebble _pebble;
 
         modifier onlyHost(uint256 experienceId) {
@@ -66,14 +66,14 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         constructor(
                 ITicketNFT ticketNFT, 
                 IRockNFT rockNFT, 
-                IProtocolParameters protocol,
+                IParameterControl parameterControl,
                 IPebble pebble
         ) 
                 ERC721("Experience", "E") 
         {
                 _ticketNFT = ticketNFT;
                 _rockNFT = rockNFT;
-                _protocol = protocol;
+                _parameterControl = parameterControl;
                 _pebble = pebble;
         }
 
@@ -94,7 +94,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(_rockNFT.hasAccess(host, rockId));
 
                 // pay hosting fees
-                uint256 hostingFee = _protocol.getHostingFee(experienceType);
+                uint256 hostingFee = _parameterControl.get(experienceType);
                 if (hostingFee > 0) 
                         _pebble.transferFrom(host, address(this), hostingFee);
 

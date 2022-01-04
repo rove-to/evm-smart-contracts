@@ -4,21 +4,23 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./IProtocolParameters.sol";
+import "./IParameterControl.sol";
 import "./IPebble.sol";
 import "./IRockNFT.sol";
 
-/*
+/**
+ * @dev Implementation of the Metaverse element in Rove
+ *
  * TODO:
- * [x] Minting world
+ * [x] Minting metaverse
  * [ ] Minting rocks
- * [ ] World DAO
+ * [ ] Metaverse DAO
  *
  */
 
-contract WorldNFT is AccessControl, ERC721URIStorage {
+contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
-        struct World {
+        struct Metaverse {
                 string name;
                 address owner;
                 uint256[] rocks;
@@ -29,37 +31,37 @@ contract WorldNFT is AccessControl, ERC721URIStorage {
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
 
-        IProtocolParameters _protocol;
+        IParameterControl _parameterControl;
         IPebble _pebble;
         IRockNFT _rockNFT;
 
-        mapping(uint256 => World) private _worlds;
+        mapping(uint256 => Metaverse) private _metaverses;
 
-        modifier onlyOwner(uint256 worldId) {
-                require(_worlds[worldId].owner == msg.sender, "WorldNFT: not the owner");
+        modifier onlyOwner(uint256 metaverseId) {
+                require(_metaverses[metaverseId].owner == msg.sender, "MetaverseNFT: not the owner");
                 _;
         }
 
         constructor(
-                IProtocolParameters protocol,
+                IParameterControl parameterControl,
                 IPebble pebble
         ) 
-                ERC721("World", "W") 
+                ERC721("Metaverse", "W") 
         {
-                _protocol = protocol;
+                _parameterControl = parameterControl;
                 _pebble = pebble;
         }
 
-        function mintWorld(string memory name, string memory tokenURI)
+        function mintMetaverse(string memory name, string memory tokenURI)
                 external
                 returns (uint256)
         {
-                _pebble.transferFrom(msg.sender, address(this), _protocol.getWorldMintingFee()); 
+                _pebble.transferFrom(msg.sender, address(this), _parameterControl.get("metaverseMintingFee")); 
 
                 _counter.increment();
                 uint256 i = _counter.current();
 
-                World storage w = _worlds[i];
+                Metaverse storage w = _metaverses[i];
                 w.name = name;
                 w.owner = msg.sender;
 
@@ -69,13 +71,13 @@ contract WorldNFT is AccessControl, ERC721URIStorage {
                 return i;
         }
 
-        function mintRock(address rover, uint256 worldId, string memory tokenURI) 
+        function mintRock(address rover, uint256 metaverseId, string memory tokenURI) 
                 external
-                onlyOwner(worldId)
+                onlyOwner(metaverseId)
                 returns (uint256)
         {
-                uint256 rockId = _rockNFT.mintRock(rover, worldId, tokenURI);
-                _worlds[worldId].rocks.push(rockId);
+                uint256 rockId = _rockNFT.mintRock(rover, metaverseId, tokenURI);
+                _metaverses[metaverseId].rocks.push(rockId);
                 return rockId;
         }
 

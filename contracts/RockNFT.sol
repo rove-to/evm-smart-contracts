@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./IProtocolParameters.sol";
+import "./IParameterControl.sol";
 
 /*
  * TODO:
@@ -19,7 +19,7 @@ import "./IProtocolParameters.sol";
 contract RockNFT is AccessControl, ERC721URIStorage {
 
         struct Rock {
-                uint256 world;
+                uint256 metaverseId;
                 uint256 size;
                 uint256 x;
                 uint256 y;
@@ -38,20 +38,20 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
 
-        IProtocolParameters _protocol;
+        IParameterControl _parameterControl;
 
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
 
         constructor(
-                IProtocolParameters protocol
+                IParameterControl parameterControl
         ) 
                 ERC721("Rock", "R") 
         {
-                _protocol = protocol;
+                _parameterControl = parameterControl;
         }
 
-        function mintRock(address rover, uint256 world, string memory tokenURI)
+        function mintRock(address rover, uint256 metaverseId, string memory tokenURI)
                 public
                 onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256)
@@ -59,7 +59,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _counter.increment();
 
                 uint256 i = _counter.current();
-                _rocks[i] = Rock(world, 0, 0, 0, 0, 0);
+                _rocks[i] = Rock(metaverseId, 0, 0, 0, 0, 0);
                 _mint(rover, i);
                 _setTokenURI(i, tokenURI);
 
