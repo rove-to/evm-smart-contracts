@@ -11,9 +11,13 @@ import "./IRockNFT.sol";
 /**
  * @dev Implementation of the Metaverse element in Rove
  *
+ * Each metaverse comes with the first 100 rocks.
+ *
  * TODO:
  * [x] Minting metaverse
- * [ ] Minting rocks
+ * [x] Minting gensis rocks
+ * [x] Taxes
+ * [x] Expenditure
  * [ ] Metaverse DAO
  *
  */
@@ -22,33 +26,45 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
         struct Metaverse {
                 string name;
-                address owner;
+                address founder;
                 uint256[] rocks;
+                uint256 treasury;
+                Taxes taxes;
+                Expenditure expenditure;
+        }
+
+        struct Taxes {
                 uint256 salesTax;
-                uint256 treasuryBalance;
+                uint256 propertyTax;
+        }
+
+        struct Expenditure {
+                uint256 kickstartReward;
+                uint256 creatorReward;
+                uint256 audienceReward;
         }
 
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
 
-        IParameterControl _parameterControl;
+        IParameterControl _globalParameters;
         IPebble _pebble;
         IRockNFT _rockNFT;
 
         mapping(uint256 => Metaverse) private _metaverses;
 
-        modifier onlyOwner(uint256 metaverseId) {
-                require(_metaverses[metaverseId].owner == msg.sender, "MetaverseNFT: not the owner");
+        modifier onlyFounder(uint256 metaverseId) {
+                require(_metaverses[metaverseId].founder == msg.sender, "MetaverseNFT: not the founder");
                 _;
         }
 
         constructor(
-                IParameterControl parameterControl,
+                IParameterControl globalParameters,
                 IPebble pebble
         ) 
-                ERC721("Metaverse", "W") 
+                ERC721("Metaverse", "M") 
         {
-                _parameterControl = parameterControl;
+                _globalParameters = globalParameters;
                 _pebble = pebble;
         }
 
@@ -56,24 +72,36 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 external
                 returns (uint256)
         {
-                _pebble.transferFrom(msg.sender, address(this), _parameterControl.get("metaverseMintingFee")); 
-
+                _pebble.transferFrom(msg.sender, address(this), _globalParameters.get("metaverseMintingFee")); 
                 _counter.increment();
                 uint256 i = _counter.current();
 
                 Metaverse storage w = _metaverses[i];
                 w.name = name;
-                w.owner = msg.sender;
+                w.founder = msg.sender;
 
                 _mint(msg.sender, i);
+                _mintGenesisRocks(i, tokenURI);
                 _setTokenURI(i, tokenURI);
 
                 return i;
         }
 
+        // TODO: watch out for gas fee.  is minting 100 rocks ok?
+        function _mintGenesisRocks(uint256 metaverseId, string memory tokenURI) internal {
+
+                uint256 numberOfGenesisRocks = _globalParameters.get("numberOfGenesisRocks");
+
+                for (uint256 i = 0; i < numberOfGenesisRocks; i++) {
+                        mintRock(msg.sender, metaverseId, tokenURI);
+                }
+
+        }
+
+        // TODO: what is the tokenURI here?
         function mintRock(address rover, uint256 metaverseId, string memory tokenURI) 
-                external
-                onlyOwner(metaverseId)
+                public
+                onlyFounder(metaverseId)
                 returns (uint256)
         {
                 uint256 rockId = _rockNFT.mintRock(rover, metaverseId, tokenURI);
@@ -81,6 +109,45 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 return rockId;
         }
 
+        function setSalesTax(uint256 metaversId, uint256 salesTax) external {
+                _metaverses[metaversId].taxes.salesTax = salesTax;
+        }
+
+        function setPropertyTax(uint256 metaversId, uint256 propertyTax) external {
+                _metaverses[metaversId].taxes.propertyTax = propertyTax;
+        }
+
+        function setKickstartReward(uint256 metaversId, uint256 kickstartReward) external {
+                _metaverses[metaversId].expenditure.kickstartReward = kickstartReward;
+        }
+        
+        function setCreatorReward(uint256 metaversId, uint256 creatorReward) external {
+                _metaverses[metaversId].expenditure.creatorReward = creatorReward;
+        }
+
+        function setAudienceReward(uint256 metaversId, uint256 audienceReward) external {
+                _metaverses[metaversId].expenditure.audienceReward = audienceReward;
+        }
+
+        function getSalesTax(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].taxes.salesTax;
+        }
+
+        function getPropertyTax(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].taxes.propertyTax;
+        }
+
+        function getKickstartReward(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].expenditure.kickstartReward;
+        }
+
+        function getCreatorReward(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].expenditure.creatorReward;
+        }
+
+        function getAudienceReward(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].expenditure.audienceReward;
+        }
 
         function supportsInterface(bytes4 interfaceId) 
                 public 
@@ -94,5 +161,4 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                         interfaceId == type(IERC721Metadata).interfaceId || 
                         super.supportsInterface(interfaceId);
         }
-
 }

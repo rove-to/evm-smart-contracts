@@ -15,7 +15,7 @@ import "./IPebble.sol";
  * [x] Minting
  * [x] Buy ticket
  * [x] Split payment
- * [ ] Rock tax
+ * [ ] 
  *
  */
 

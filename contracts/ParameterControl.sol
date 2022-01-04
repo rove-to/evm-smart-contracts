@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 
 /*
- * [ ] 
- * [ ] 
- * [ ] 
+ * @dev Implementation of a programmable parameter control.
+ *
+ * [x] Add (key, value)
+ * [ ] Add access control 
+ * [ ] Use string instead of uint256. Add a string to uint parser.
  *
  */
 
