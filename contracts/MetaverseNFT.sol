@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
-import "./IPebble.sol";
+import "./IRove.sol";
 import "./IRockNFT.sol";
 
 /**
@@ -14,7 +14,7 @@ import "./IRockNFT.sol";
  * Each metaverse comes with the first 100 rocks.
  *
  * TODO:
- * [x] Minting metaverse
+ * [x] Mint a metaverse
  * [x] Minting gensis rocks
  * [x] Taxes
  * [x] Expenditure
@@ -48,7 +48,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         Counters.Counter private _counter;
 
         IParameterControl _globalParameters;
-        IPebble _pebble;
+        IRove _rove;
         IRockNFT _rockNFT;
 
         mapping(uint256 => Metaverse) private _metaverses;
@@ -60,19 +60,19 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
         constructor(
                 IParameterControl globalParameters,
-                IPebble pebble
+                IRove rove
         ) 
                 ERC721("Metaverse", "M") 
         {
                 _globalParameters = globalParameters;
-                _pebble = pebble;
+                _rove = rove;
         }
 
         function mintMetaverse(string memory name, string memory tokenURI)
                 external
                 returns (uint256)
         {
-                _pebble.transferFrom(msg.sender, address(this), _globalParameters.get("metaverseMintingFee")); 
+                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("metaverseMintingFee")); 
                 _counter.increment();
                 uint256 i = _counter.current();
 

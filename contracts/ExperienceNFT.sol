@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./ITicketNFT.sol";
 import "./IRockNFT.sol";
 import "./IParameterControl.sol";
-import "./IPebble.sol";
+import "./IRove.sol";
 
 /*
  * TODO:
@@ -50,8 +50,8 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         ITicketNFT private _ticketNFT;
         IRockNFT private _rockNFT;
-        IParameterControl private _parameterControl;
-        IPebble _pebble;
+        IParameterControl private _globalParameters;
+        IRove _pebble;
 
         modifier onlyHost(uint256 experienceId) {
                 require(_experiences[experienceId].host == msg.sender, "ExperienceNFT: not the host");
@@ -66,14 +66,14 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         constructor(
                 ITicketNFT ticketNFT, 
                 IRockNFT rockNFT, 
-                IParameterControl parameterControl,
-                IPebble pebble
+                IParameterControl globalParameters,
+                IRove pebble
         ) 
                 ERC721("Experience", "E") 
         {
                 _ticketNFT = ticketNFT;
                 _rockNFT = rockNFT;
-                _parameterControl = parameterControl;
+                _globalParameters = globalParameters;
                 _pebble = pebble;
         }
 
@@ -94,19 +94,21 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(_rockNFT.hasAccess(host, rockId));
 
                 // pay hosting fees
-                uint256 hostingFee = _parameterControl.get(experienceType);
+                uint256 hostingFee = _globalParameters.get(experienceType);
                 if (hostingFee > 0) 
                         _pebble.transferFrom(host, address(this), hostingFee);
 
                 // mint the experience
                 _counter.increment();
                 uint256 i = _counter.current();
+
                 Experience storage e = _experiences[i]; 
                 e.host = host;
                 e.name = name;
                 e.price = price;
                 e.watchLaterPrice = watchLaterPrice;
                 e.state = State.MINTED;
+
                 _mint(host, i);
                 _setTokenURI(i, tokenURI);
 
