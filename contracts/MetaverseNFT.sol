@@ -76,9 +76,9 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 _counter.increment();
                 uint256 i = _counter.current();
 
-                Metaverse storage w = _metaverses[i];
-                w.name = name;
-                w.founder = msg.sender;
+                Metaverse storage m = _metaverses[i];
+                m.name = name;
+                m.founder = msg.sender;
 
                 _mint(msg.sender, i);
                 _mintGenesisRocks(i, tokenURI);
@@ -98,7 +98,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
         }
 
-        // TODO: what is the tokenURI here?
+        // TODO: what exactly is the tokenURI here?
         function mintRock(address rover, uint256 metaverseId, string memory tokenURI) 
                 public
                 onlyFounder(metaverseId)

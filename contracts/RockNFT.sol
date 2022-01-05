@@ -27,6 +27,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 uint256 y;
                 uint256 gravity;
                 uint256 color;
+                uint256 birthday; // or birth block?
+                uint256 generation; // min(dad, mom) + 1
         }
 
         struct Lease {
