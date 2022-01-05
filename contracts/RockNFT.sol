@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
-import "./IPebble.sol";
+import "./IRove.sol";
 
 /*
  * TODO:
  * [x] Minting
  * [x] Mint rock from 2 rocks? Aka. Breed a new rock.
  * [ ] Mint in batch?
- * [ ] Rock attributes
+ * [x] Rock attributes
  * [ ] Lease
  * [ ] Rock tax
  *
@@ -20,13 +20,48 @@ import "./IPebble.sol";
 
 contract RockNFT is AccessControl, ERC721URIStorage {
 
+        // TODO: do we save gas cost if we use uint8?
         struct Rock {
+
                 uint256 metaverseId;
-                uint256 size;
-                uint256 x;
-                uint256 y;
-                uint256 gravity;
-                uint256 color;
+
+                uint256 capacity; // the maximum number of Rovers the rock can host
+
+                // visual attributes
+                uint256 color; 
+                uint256 texture; 
+
+                // coordinate
+                uint256 x; 
+                uint256 y; 
+
+                // historical attributes
+                uint256 birthdate; // or birth block?
+                uint256 generation; // max(mom, dad) + 1
+
+                // special-effect attributes
+                uint256 gravity; // for VR experience, give Rovers the flying superpower 
+
+                // the complexity of the rock. different complexity unlocks different experience types 
+                // on the rock. if the i-th bit is on, that experience type is enabled on the rock.
+                //
+                // bit 0: audio
+                // bit 1: video
+                // bit 2: stream
+                // bit 3: spatial
+                // bit 4: vr
+                // bit 5 and beyond: reserved for new experience types
+                // 
+                // for example:
+                //
+                // 1: 00000001 audio
+                // 2: 00000010 video
+                // 3: 00000011 audio + video
+                // 4: 00000100 stream
+                // 5: 00000101 stream + audio
+                // 6: 00000110 stream + video
+                // etc
+                uint256 complexity;
         }
 
         struct Lease {
@@ -41,18 +76,18 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         Counters.Counter private _counter;
 
         IParameterControl _globalParameters;
-        IPebble _pebble;
+        IRove _rove;
 
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
 
         constructor(
-                IPebble pebble,
+                IRove rove,
                 IParameterControl globalParameters
         ) 
                 ERC721("Rock", "R") 
         {
-                _pebble = pebble;
+                _rove = rove;
                 _globalParameters = globalParameters;
         }
 
@@ -64,7 +99,13 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _counter.increment();
 
                 uint256 i = _counter.current();
-                _rocks[i] = Rock(metaverseId, 0, 0, 0, 0, 0);
+                Rock storage r = _rocks[i];
+                r.metaverseId = metaverseId;
+
+                // TODO: populate random attributes
+                // 
+                //
+
                 _mint(rover, i);
                 _setTokenURI(i, tokenURI);
 
@@ -73,14 +114,14 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         // @dev given 2 rock parents, breed a new child rock
         // TODO: should we let N rock parents where N > 2?
-        function breedRock(uint256 dadId, uint256 momId, string memory tokenURI)
-               external 
-               returns (uint256) 
+        function breedRock(uint256 dadId, uint256 momId, string memory tokenURI) 
+                external 
+                returns (uint256) 
         {
                 require(ownerOf(dadId) == msg.sender);
                 require(ownerOf(momId) == msg.sender);
 
-                _pebble.transferFrom(msg.sender, address(this), _globalParameters.get("RockMintingFee")); 
+                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("rockMintingFee")); 
 
                 _counter.increment();
                 uint256 i = _counter.current();
@@ -89,11 +130,15 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 Rock memory dad = _rocks[dadId];
                 Rock memory mom = _rocks[momId];
 
-                child.size = _breed(dad.size, mom.size, "size");
+                child.capacity = _breed(dad.capacity, mom.capacity, "capacity");
                 child.x = _breed(dad.x, mom.x, "x");
                 child.y = _breed(dad.y, mom.y, "y");
                 child.gravity = _breed(dad.gravity, mom.gravity, "gravity");
                 child.color = _breed(dad.color, mom.color, "color");
+
+                // TODO: breed and populate other attributes
+                //
+                //
 
                 _mint(msg.sender, i);
                 _setTokenURI(i, tokenURI);
@@ -134,7 +179,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 return child;
         }
 
-        // @dev generate a random number between 0 and [range]
+        // @dev generate a random number between 0 and range
         function _random(
                 uint256 range, 
                 string memory attribute, 
