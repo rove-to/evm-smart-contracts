@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IExperienceNFT {
 
-        // Mints a new experience. The host must pay a hosting fee to rock owner. 
+        // Mints a new experience. The host must pay a rental fee to rock owner. 
         // Caller: Platform 
         function mintExperience(
                 uint256 rockId,
@@ -14,10 +14,11 @@ interface IExperienceNFT {
                 uint256 watchLaterPrice,
                 string memory tokenURI
                 // TODO: start_time & end_time? 
+                // TODO: scheduling, avoid conflict - onchain or offchain?
         ) external returns (uint256 experienceId);
 
         // Updates the ownership of multiple creators
-        // Caller: Host
+        // Caller: Host, Platform
         function updateCreators(
                 uint256 experienceId, 
                 address[] memory creators, 
@@ -25,7 +26,7 @@ interface IExperienceNFT {
         ) external;
 
         // Updates the ownership of one creator
-        // Caller: Host
+        // Caller: Host, Platform
         function updateCreator(
                 uint256 experienceId, 
                 address creator, 
@@ -33,15 +34,15 @@ interface IExperienceNFT {
         ) external;
 
         // Gets ticket
-        // Caller: Audience
+        // Caller: Audience, Plaform
         function getTicket(uint256 experienceId) external;
 
         // Ends an experience
-        // Caller: Host
+        // Caller: Host, Platform
         function endExperience(uint256 experienceId) external;
 
         // Collects payment
-        // Caller: Creator
+        // Caller: Creator, Platform
         function collectPayment(uint256 experienceId) external;
 
         // Events
