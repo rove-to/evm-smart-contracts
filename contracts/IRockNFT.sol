@@ -8,12 +8,14 @@ interface IRockNFT {
         function getCoordinateX(uint256 rockId) external view returns (uint256);
         function getCoordinateY(uint256 rockId) external view returns (uint256);
         function getComplexity(uint256 rockId) external view returns (uint256);
+        function getRentalFee(uint256 experienceType) external view returns (uint256);
 
         // Setters
         function setCapacity(uint256 rockId, uint256 capacity) external;
         function setCoordinateX(uint256 rockId, uint256 x) external;
         function setCoordinateY(uint256 rockId, uint256 y) external;
         function setComplexity(uint256 rockId, uint256 complexity) external;
+        function setRentalFee(uint256 experienceType, uint256 feee) external;
         
         // Checks if a rover owns a rock or is renting a rock
         // Caller: Experience contract

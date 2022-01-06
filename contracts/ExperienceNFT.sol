@@ -9,6 +9,7 @@ import "./ITicketNFT.sol";
 import "./IRockNFT.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
+import "./IMetaverseNFT.sol";
 
 /*
  * TODO:
@@ -50,6 +51,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         ITicketNFT private _ticketNFT;
         IRockNFT private _rockNFT;
+        IMetaverseNFT _metaverseNFT;
         IParameterControl private _globalParameters;
         IRove _pebble;
 
@@ -66,6 +68,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         constructor(
                 ITicketNFT ticketNFT, 
                 IRockNFT rockNFT, 
+                IMetaverseNFT metaverseNFT,
                 IParameterControl globalParameters,
                 IRove pebble
         ) 
@@ -73,6 +76,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         {
                 _ticketNFT = ticketNFT;
                 _rockNFT = rockNFT;
+                _metaverseNFT = metaverseNFT;
                 _globalParameters = globalParameters;
                 _pebble = pebble;
         }
@@ -81,7 +85,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 uint256 rockId,
                 address host,
                 string memory name,
-                string memory experienceType,
+                uint256 experienceType,
                 uint256 price,
                 uint256 watchLaterPrice,
                 string memory tokenURI
@@ -89,13 +93,18 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 external
                 returns (uint256)
         {
+                // the rock must not owe any property tax
+                require(!_metaverseNFT.owePropertyTax(rockId));
+
                 // the host must either own or rent the rock
                 require(_rockNFT.hasAccess(host, rockId));
 
-                // pay hosting fees
-                uint256 hostingFee = _globalParameters.get(experienceType);
-                if (hostingFee > 0) 
-                        _pebble.transferFrom(host, address(this), hostingFee);
+                // pay rental fees
+                if (ownerOf(rockId) != host) {
+                        uint256 rentalFee = _rockNFT.getRentalFee(experienceType);
+                        if (rentalFee > 0) 
+                                _pebble.transferFrom(host, ownerOf(rockId), rentalFee);
+                }
 
                 // mint the experience
                 _counter.increment();

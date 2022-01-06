@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
+import "./IMetaverseNFT.sol";
 
 /*
  * TODO:
@@ -62,6 +63,10 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 // 6: 00000110 stream + video
                 // etc
                 uint256 complexity;
+
+                // rental fees by experience type
+                // (experienceType, hosting fee)
+                mapping(uint256 => uint256) rentalFees;
         }
 
         struct Lease {
@@ -77,18 +82,21 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         IParameterControl _globalParameters;
         IRove _rove;
+        IMetaverseNFT _metaverseNFT;
 
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
 
         constructor(
                 IRove rove,
-                IParameterControl globalParameters
+                IParameterControl globalParameters,
+                IMetaverseNFT metaverseNFT
         ) 
                 ERC721("Rock", "R") 
         {
                 _rove = rove;
                 _globalParameters = globalParameters;
+                _metaverseNFT = metaverseNFT;
         }
 
         function mintRock(uint256 metaverseId, address owner, string memory tokenURI)
@@ -126,8 +134,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 uint256 i = _counter.current();
 
                 Rock storage child = _rocks[i];
-                Rock memory dad = _rocks[dadId];
-                Rock memory mom = _rocks[momId];
+                Rock storage dad = _rocks[dadId];
+                Rock storage mom = _rocks[momId];
 
                 child.capacity = _breed(dad.capacity, mom.capacity, "capacity");
                 child.x = _breed(dad.x, mom.x, "x");

@@ -3,16 +3,17 @@ pragma solidity ^0.8.0;
 
 interface IExperienceNFT {
 
-        // Mints a new experience. The host must pay an experience hosting fee. 
+        // Mints a new experience. The host must pay a hosting fee to rock owner. 
         // Caller: Platform 
         function mintExperience(
                 uint256 rockId,
                 address host,
                 string memory name,
-                string memory experienceType,
+                uint256 experienceType,
                 uint256 price,
                 uint256 watchLaterPrice,
                 string memory tokenURI
+                // TODO: start_time & end_time? 
         ) external returns (uint256 experienceId);
 
         // Updates the ownership of multiple creators

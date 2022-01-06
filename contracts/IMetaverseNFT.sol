@@ -22,18 +22,24 @@ interface IMetaverseNFT {
                 string memory tokenURI
         ) external returns (uint256 childId);
 
+        // Returns true if the rock owes property tax
+        // Caller: Experience contract
+        function owePropertyTax(
+                uint256 rockId
+        ) external view returns (bool);
+
         // Getters
         function getRocks(uint256 metaversId) external view returns (uint256[] memory);
-        function getSalesTax(uint256 metaversId) external view returns (uint256);
-        function getPropertyTax(uint256 metaversId) external view returns (uint256);
+        function getSalesTaxRate(uint256 metaversId) external view returns (uint256);
+        function getPropertyTaxRate(uint256 metaversId) external view returns (uint256);
         function getKickstartReward(uint256 metaversId) external view returns (uint256);
         function getCreatorReward(uint256 metaversId) external view returns (uint256);
         function getAudienceReward(uint256 metaversId) external view returns (uint256);
         function getBreedingFee(uint256 metaversId) external view returns (uint256);
 
         // Setters
-        function setSalesTax(uint256 metaversId, uint256 salesTax) external;
-        function setPropertyTax(uint256 metaversId, uint256 propertyTax) external;
+        function setSalesTaxRate(uint256 metaversId, uint256 salesTaxRate) external;
+        function setPropertyTaxRate(uint256 metaversId, uint256 propertyTaxRate) external;
         function setKickstartReward(uint256 metaversId, uint256 kickstartReward) external;
         function setCreatorReward(uint256 metaversId, uint256 creatorReward) external; 
         function setAudienceReward(uint256 metaversId, uint256 audienceReward) external;

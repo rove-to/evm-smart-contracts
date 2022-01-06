@@ -35,8 +35,8 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
         struct Revenue {
                 uint256 breedingFee;
-                uint256 salesTax;
-                uint256 propertyTax;
+                uint256 salesTaxRate;
+                uint256 propertyTaxRate;
         }
 
         struct Expenditure {
@@ -53,6 +53,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         IRockNFT _rockNFT;
 
         mapping(uint256 => Metaverse) private _metaverses;
+        mapping(uint256 => uint256) propertyTaxes; // outstanding property taxes (rockId, tax)
 
         modifier onlyFounder(uint256 metaverseId) {
                 require(_metaverses[metaverseId].founder == msg.sender, "MetaverseNFT: not the founder");
@@ -133,16 +134,20 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 return childId;
         }
 
+        function owePropertyTax(uint256 rockId) external view returns (bool) {
+                return propertyTaxes[rockId] > 0;
+        }
+
         function setBreedingFee(uint256 metaversId, uint256 breedingFee) external {
                 _metaverses[metaversId].revenue.breedingFee = breedingFee;
         }
 
-        function setSalesTax(uint256 metaversId, uint256 salesTax) external {
-                _metaverses[metaversId].revenue.salesTax = salesTax;
+        function setSalesTaxRate(uint256 metaversId, uint256 salesTaxRate) external {
+                _metaverses[metaversId].revenue.salesTaxRate = salesTaxRate;
         }
 
-        function setPropertyTax(uint256 metaversId, uint256 propertyTax) external {
-                _metaverses[metaversId].revenue.propertyTax = propertyTax;
+        function setPropertyTaxRate(uint256 metaversId, uint256 propertyTaxRate) external {
+                _metaverses[metaversId].revenue.propertyTaxRate = propertyTaxRate;
         }
 
         function setKickstartReward(uint256 metaversId, uint256 kickstartReward) external {
@@ -161,12 +166,12 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 return _metaverses[metaversId].revenue.breedingFee;
         }
 
-        function getSalesTax(uint256 metaversId) external view returns (uint256) {
-                return _metaverses[metaversId].revenue.salesTax;
+        function getSalesTaxRate(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].revenue.salesTaxRate;
         }
 
-        function getPropertyTax(uint256 metaversId) external view returns (uint256) {
-                return _metaverses[metaversId].revenue.propertyTax;
+        function getPropertyTaxRate(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].revenue.propertyTaxRate;
         }
 
         function getKickstartReward(uint256 metaversId) external view returns (uint256) {
