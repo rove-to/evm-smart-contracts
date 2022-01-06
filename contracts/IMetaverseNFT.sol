@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 interface IMetaverseNFT {
 
-        // Mints a new Metaverse and returns its ID. Requires a METAVERSE_MINTING_FEE. 
+        // Rover pays a METAVERSE_MINTING_FEE and mints a new metaverse. 
         function mintMetaverse(
                 string memory name, 
                 uint256 numberOfGenesisRocks, 
                 string memory tokenURI
         ) external returns (uint256 metaverseId);
 
-        // Breeds a new Rock and returns its ID. Requires a ROCK_BREEDING_FEE.        
+        // Rover pays a ROCK_BREEDING_FEE and breeds a new rock. 
         function breedRock(
                 uint256 metaverseId, 
                 uint256 dadId,
