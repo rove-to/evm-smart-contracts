@@ -8,7 +8,7 @@ interface IMetaverseNFT {
                 string memory name, 
                 uint256 numberOfGenesisRocks, 
                 string memory tokenURI
-        ) external view returns (uint256 metaverseId);
+        ) external returns (uint256 metaverseId);
 
         // Breeds a new Rock and returns its ID. Requires a ROCK_BREEDING_FEE.        
         function breedRock(
