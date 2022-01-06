@@ -16,7 +16,7 @@ import "./IRockNFT.sol";
  * TODO:
  * [x] Mint a metaverse
  * [x] Minting gensis rocks
- * [x] Taxes
+ * [x] Revenue
  * [x] Expenditure
  * [ ] Metaverse DAO
  *
@@ -29,11 +29,12 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 address founder;
                 uint256[] rocks;
                 uint256 treasury;
-                Taxes taxes;
+                Revenue revenue;
                 Expenditure expenditure;
         }
 
-        struct Taxes {
+        struct Revenue {
+                uint256 breedingFee;
                 uint256 salesTax;
                 uint256 propertyTax;
         }
@@ -69,6 +70,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         }
 
         function mintMetaverse(
+                address founder,
                 string memory name, 
                 uint256 numberOfGenesisRocks,
                 string memory tokenURI
@@ -76,31 +78,33 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 external
                 returns (uint256)
         {
-                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("METAVERSE_MINTING_FEE")); 
+                _rove.transferFrom(founder, address(this), _globalParameters.get("METAVERSE_MINTING_FEE")); 
                 _counter.increment();
                 uint256 i = _counter.current();
 
                 Metaverse storage m = _metaverses[i];
                 m.name = name;
-                m.founder = msg.sender;
+                m.founder = founder;
 
-                _mint(msg.sender, i);
-                _mintGenesisRocks(i, numberOfGenesisRocks, tokenURI);
+                _mint(founder, i);
+                _mintGenesisRocks(i, founder, numberOfGenesisRocks, tokenURI);
                 _setTokenURI(i, tokenURI);
 
                 return i;
         }
 
         // TODO: watch out for gas fee.  
+        // TODO: what's the tokenURI here?
         function _mintGenesisRocks(
                 uint256 metaverseId, 
+                address owner,
                 uint256 numberOfGenesisRocks, 
                 string memory tokenURI
         ) 
                 internal 
         {
                 for (uint256 i = 0; i < numberOfGenesisRocks; i++) {
-                        uint256 rockId = _rockNFT.mintRock(msg.sender, metaverseId, tokenURI);
+                        uint256 rockId = _rockNFT.mintRock(metaverseId, owner, tokenURI);
                         _metaverses[metaverseId].rocks.push(rockId);
                 }
         }
@@ -109,6 +113,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         // TODO: should we let N rock parents where N > 2?
         function breedRock(
                 uint256 metaverseId, 
+                address owner,
                 uint256 dadId, 
                 uint256 momId, 
                 string memory tokenURI
@@ -116,18 +121,28 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 external 
                 returns (uint256) 
         {
-                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("ROCK_BREEDING_FEE")); 
-                uint256 childId = _rockNFT.breedRock(dadId, momId, tokenURI);
+                uint256 platformGlobalFee = _globalParameters.get("ROCK_BREEDING_FEE");
+                uint256 metaverseLocalFee = _metaverses[metaverseId].revenue.breedingFee;
+
+                _rove.transferFrom(owner, address(this), platformGlobalFee + metaverseLocalFee);
+                _metaverses[metaverseId].treasury += metaverseLocalFee;
+
+                uint256 childId = _rockNFT.breedRock(metaverseId, owner, dadId, momId, tokenURI);
                 _metaverses[metaverseId].rocks.push(childId);
+
                 return childId;
         }
 
+        function setBreedingFee(uint256 metaversId, uint256 breedingFee) external {
+                _metaverses[metaversId].revenue.breedingFee = breedingFee;
+        }
+
         function setSalesTax(uint256 metaversId, uint256 salesTax) external {
-                _metaverses[metaversId].taxes.salesTax = salesTax;
+                _metaverses[metaversId].revenue.salesTax = salesTax;
         }
 
         function setPropertyTax(uint256 metaversId, uint256 propertyTax) external {
-                _metaverses[metaversId].taxes.propertyTax = propertyTax;
+                _metaverses[metaversId].revenue.propertyTax = propertyTax;
         }
 
         function setKickstartReward(uint256 metaversId, uint256 kickstartReward) external {
@@ -142,12 +157,16 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 _metaverses[metaversId].expenditure.audienceReward = audienceReward;
         }
 
+        function getBreedingFee(uint256 metaversId) external view returns (uint256) {
+                return _metaverses[metaversId].revenue.breedingFee;
+        }
+
         function getSalesTax(uint256 metaversId) external view returns (uint256) {
-                return _metaverses[metaversId].taxes.salesTax;
+                return _metaverses[metaversId].revenue.salesTax;
         }
 
         function getPropertyTax(uint256 metaversId) external view returns (uint256) {
-                return _metaverses[metaversId].taxes.propertyTax;
+                return _metaverses[metaversId].revenue.propertyTax;
         }
 
         function getKickstartReward(uint256 metaversId) external view returns (uint256) {

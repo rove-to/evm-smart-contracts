@@ -79,6 +79,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         function mintExperience(
                 uint256 rockId,
+                address host,
                 string memory name,
                 string memory experienceType,
                 uint256 price,
@@ -88,8 +89,6 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 external
                 returns (uint256)
         {
-                address host = msg.sender;
-
                 // the host must either own or rent the rock
                 require(_rockNFT.hasAccess(host, rockId));
 

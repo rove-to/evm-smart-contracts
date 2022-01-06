@@ -91,7 +91,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _globalParameters = globalParameters;
         }
 
-        function mintRock(uint256 metaverseId, string memory tokenURI)
+        function mintRock(uint256 metaverseId, address owner, string memory tokenURI)
                 external
                 returns (uint256)
         {
@@ -105,7 +105,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 // 
                 //
 
-                _mint(msg.sender, i);
+                _mint(owner, i);
                 _setTokenURI(i, tokenURI);
 
                 return i;
@@ -113,14 +113,14 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         // @dev given 2 rock parents, breed a new child rock
         // TODO: should we let N rock parents where N > 2?
-        function breedRock(uint256 dadId, uint256 momId, string memory tokenURI) 
+        function breedRock(uint256 metaverseId, address owner, uint256 dadId, uint256 momId, string memory tokenURI) 
                 external 
                 returns (uint256) 
         {
-                require(ownerOf(dadId) == msg.sender);
-                require(ownerOf(momId) == msg.sender);
-
-                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("rockMintingFee")); 
+                require(ownerOf(dadId) == owner);
+                require(ownerOf(momId) == owner);
+                require(_rocks[dadId].metaverseId == metaverseId);
+                require(_rocks[momId].metaverseId == metaverseId);
 
                 _counter.increment();
                 uint256 i = _counter.current();
@@ -139,7 +139,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 //
                 //
 
-                _mint(msg.sender, i);
+                _mint(owner, i);
                 _setTokenURI(i, tokenURI);
 
                 return i;
