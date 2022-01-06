@@ -68,11 +68,15 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 _rove = rove;
         }
 
-        function mintMetaverse(string memory name, string memory tokenURI)
+        function mintMetaverse(
+                string memory name, 
+                uint256 numberOfGenesisRocks,
+                string memory tokenURI
+        )
                 external
                 returns (uint256)
         {
-                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("metaverseMintingFee")); 
+                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("METAVERSE_MINTING_FEE")); 
                 _counter.increment();
                 uint256 i = _counter.current();
 
@@ -81,32 +85,41 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 m.founder = msg.sender;
 
                 _mint(msg.sender, i);
-                _mintGenesisRocks(i, tokenURI);
+                _mintGenesisRocks(i, numberOfGenesisRocks, tokenURI);
                 _setTokenURI(i, tokenURI);
 
                 return i;
         }
 
-        // TODO: watch out for gas fee.  is minting 100 rocks ok?
-        function _mintGenesisRocks(uint256 metaverseId, string memory tokenURI) internal {
-
-                uint256 numberOfGenesisRocks = _globalParameters.get("numberOfGenesisRocks");
-
+        // TODO: watch out for gas fee.  
+        function _mintGenesisRocks(
+                uint256 metaverseId, 
+                uint256 numberOfGenesisRocks, 
+                string memory tokenURI
+        ) 
+                internal 
+        {
                 for (uint256 i = 0; i < numberOfGenesisRocks; i++) {
-                        mintRock(msg.sender, metaverseId, tokenURI);
+                        uint256 rockId = _rockNFT.mintRock(msg.sender, metaverseId, tokenURI);
+                        _metaverses[metaverseId].rocks.push(rockId);
                 }
-
         }
 
-        // TODO: what exactly is the tokenURI here?
-        function mintRock(address rover, uint256 metaverseId, string memory tokenURI) 
-                public
-                onlyFounder(metaverseId)
-                returns (uint256)
+        // @dev given 2 rock parents, breed a new child rock
+        // TODO: should we let N rock parents where N > 2?
+        function breedRock(
+                uint256 metaverseId, 
+                uint256 dadId, 
+                uint256 momId, 
+                string memory tokenURI
+        ) 
+                external 
+                returns (uint256) 
         {
-                uint256 rockId = _rockNFT.mintRock(rover, metaverseId, tokenURI);
-                _metaverses[metaverseId].rocks.push(rockId);
-                return rockId;
+                _rove.transferFrom(msg.sender, address(this), _globalParameters.get("ROCK_BREEDING_FEE")); 
+                uint256 childId = _rockNFT.breedRock(dadId, momId, tokenURI);
+                _metaverses[metaverseId].rocks.push(childId);
+                return childId;
         }
 
         function setSalesTax(uint256 metaversId, uint256 salesTax) external {

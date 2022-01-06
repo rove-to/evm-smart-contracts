@@ -62,7 +62,6 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 // 6: 00000110 stream + video
                 // etc
                 uint256 complexity;
->>>>>>> 5e8cbbae2e83089f33cf2bd9eebcaab860a41bb2
         }
 
         struct Lease {
@@ -92,9 +91,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _globalParameters = globalParameters;
         }
 
-        function mintRock(address rover, uint256 metaverseId, string memory tokenURI)
+        function mintRock(uint256 metaverseId, string memory tokenURI)
                 external
-                onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256)
         {
                 _counter.increment();
@@ -107,7 +105,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 // 
                 //
 
-                _mint(rover, i);
+                _mint(msg.sender, i);
                 _setTokenURI(i, tokenURI);
 
                 return i;
