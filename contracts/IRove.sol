@@ -14,11 +14,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 //     - 10% 4th year
 //
 // * Distribution: 
-//     - 50% for Community Treasury
+//     - 65% for community members
+//         - 5% for Airdrop
+//         - 10% for Ecosystem Incentives
+//         - 50% for Community Treasury
 //     - 20% for Team
-//     - 10% for Rove Foundation
-//     - 10% reserved for Exchange Liquidity
 //     - 10% reserved for Token Sales 
+//     - 5% reserved for Exchange Liquidity
 
 interface IRove is IERC20 {
 
