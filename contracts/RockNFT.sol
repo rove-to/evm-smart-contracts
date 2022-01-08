@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
 import "./IMetaverseNFT.sol";
+import "./IExperienceNFT.sol";
 
 /*
  * TODO:
@@ -25,23 +26,25 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         struct Rock {
 
                 uint256 metaverseId;
+                uint256 dad;
+                uint256 mom;
 
-                uint256 capacity; // the maximum number of Rovers the rock can host
+                // uint256 capacity; // the maximum number of Rovers the rock can host
 
-                // visual attributes
-                uint256 color; 
-                uint256 texture; 
+                // // visual attributes
+                // uint256 color; 
+                // uint256 texture; 
 
-                // coordinate
-                uint256 x; 
-                uint256 y; 
+                // // coordinate
+                // uint256 x; 
+                // uint256 y; 
 
-                // historical attributes
-                uint256 birthdate; // or birth block?
-                uint256 generation; // max(mom, dad) + 1
+                // // historical attributes
+                // uint256 birthdate; // or birth block?
+                // uint256 generation; // max(mom, dad) + 1
 
-                // special-effect attributes
-                uint256 gravity; // for VR experience, give Rovers the flying superpower 
+                // // special-effect attributes
+                // uint256 gravity; // for VR experience, give Rovers the flying superpower 
 
                 // the complexity of the rock. different complexity unlocks different experience types 
                 // on the rock. if the i-th bit is on, that experience type is enabled on the rock.
@@ -66,7 +69,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
                 // rental fees by experience type
                 // (experienceType, hosting fee)
-                mapping(uint256 => uint256) rentalFees;
+                // mapping(uint256 => uint256) rentalFees;
+                uint256[] timeSlots;
         }
 
         struct Lease {
@@ -83,24 +87,35 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         IParameterControl _globalParameters;
         IRove _rove;
         IMetaverseNFT _metaverseNFT;
+        IExperienceNFT _experienceNFT;
 
         mapping(uint256 => Rock) private _rocks;
         mapping(uint256 => Lease) private _leases;
 
+        modifier onlyExperienceNFT() {
+                require(_msgSender() == address(_experienceNFT), "only experience NFT");
+                _;
+        }
+
         constructor(
                 IRove rove,
                 IParameterControl globalParameters,
-                IMetaverseNFT metaverseNFT
+                IMetaverseNFT metaverseNFT,
+                IExperienceNFT experienceNFT,
+                address admin
         ) 
-                ERC721("Rock", "R") 
+                ERC721("Rock", "R")
         {
+                _setupRole(DEFAULT_ADMIN_ROLE, admin);
                 _rove = rove;
                 _globalParameters = globalParameters;
                 _metaverseNFT = metaverseNFT;
+                _experienceNFT = experienceNFT;
         }
 
         function mintRock(uint256 metaverseId, address owner, string memory tokenURI)
                 external
+                onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256)
         {
                 _counter.increment();
@@ -108,10 +123,6 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 uint256 i = _counter.current();
                 Rock storage r = _rocks[i];
                 r.metaverseId = metaverseId;
-
-                // TODO: populate random attributes
-                // 
-                //
 
                 _mint(owner, i);
                 _setTokenURI(i, tokenURI);
@@ -121,10 +132,11 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         // @dev given 2 rock parents, breed a new child rock
         // TODO: should we let N rock parents where N > 2?
-        function breedRock(uint256 metaverseId, address owner, uint256 dadId, uint256 momId, string memory tokenURI) 
+        function breedRock(uint256 metaverseId, uint256 dadId, uint256 momId, string memory tokenURI) 
                 external 
                 returns (uint256) 
         {
+                address owner = msg.sender;
                 require(ownerOf(dadId) == owner);
                 require(ownerOf(momId) == owner);
                 require(_rocks[dadId].metaverseId == metaverseId);
@@ -132,16 +144,17 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
                 _counter.increment();
                 uint256 i = _counter.current();
-
                 Rock storage child = _rocks[i];
-                Rock storage dad = _rocks[dadId];
-                Rock storage mom = _rocks[momId];
+                child.dad = dadId;
+                child.mom = momId;
+                // Rock storage dad = _rocks[dadId];
+                // Rock storage mom = _rocks[momId];
 
-                child.capacity = _breed(dad.capacity, mom.capacity, "capacity");
-                child.x = _breed(dad.x, mom.x, "x");
-                child.y = _breed(dad.y, mom.y, "y");
-                child.gravity = _breed(dad.gravity, mom.gravity, "gravity");
-                child.color = _breed(dad.color, mom.color, "color");
+                // child.capacity = _breed(dad.capacity, mom.capacity, "capacity");
+                // child.x = _breed(dad.x, mom.x, "x");
+                // child.y = _breed(dad.y, mom.y, "y");
+                // child.gravity = _breed(dad.gravity, mom.gravity, "gravity");
+                // child.color = _breed(dad.color, mom.color, "color");
 
                 // TODO: breed and populate other attributes
                 //
@@ -153,57 +166,58 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 return i;
         }
 
-        // @dev a child is an offspring of mom and dad
-        // TODO: move these parameters to Global Parameter contract so they can be adjusted via DAO
-        // TODO: should we add a (+) operator here so Rover can combine 2 rocks to make a bigger one?
-        function _breed(uint256 dad, uint256 mom, string memory attribute) internal view returns (uint256) {
-
-                uint256 offspring = _random(100, attribute, dad + mom);
-                uint256 child;
-
-                if (offspring < 50) {
-                        // 50% chance the child a combination of mom and dad
-                        uint256 dadWeight = _random(100, attribute, dad);
-                        uint256 momWeight = _random(100, attribute, mom);
-                        child = (dad * dadWeight + mom * momWeight) / (dadWeight + momWeight);
-                } else if (offspring < 75) {
-                        // 25% chance the child is exactly like dad
-                        child = dad;
+        /**
+        * @dev check the event time is overlap
+        */
+        function addTimeSlot(uint256 start, uint256 end, uint256 rockId) external onlyExperienceNFT() {
+                require(end > start, "invalid start and end time!");
+                require(start - block.timestamp < 1 weeks, "can not book event in this time!"); 
+                Rock storage rock = _rocks[rockId];
+                uint256 r = rock.timeSlots.length;
+                if (r == 0 || (rock.timeSlots[r - 1] < start)) {
+                        rock.timeSlots.push(start);
+                        rock.timeSlots.push(end);
                 } else {
-                        // 25% chance the child is exactly like mom
-                        child = mom;
+                        uint l = 0;
+                        r = r - 1;
+                        while (l != r) {
+                                uint m = (l + r + 1) / 2;
+                                if (start >= rock.timeSlots[m]) {
+                                        l = m;
+                                } else {
+                                        r = m - 1;
+                                }
+                        }
+                        require(l % 2 != 0 && start != rock.timeSlots[l], "this slot has been occupied!");
+                        require(rock.timeSlots[l + 1] > end, "end time overlapped!");
+                        rock.timeSlots = insertAtIndex(l, start, end, rock.timeSlots);
                 }
-
-                uint256 mutation = _random(100, attribute, dad * mom);
-                if (mutation < 5) {
-                        // there is a 5% chance of having a 10% decrease mutation
-                        child = child * 90 / 100;
-                } else if (mutation < 10) {
-                        // there is a 5% chance of having a 10% increase mutation
-                        child = child * 110 / 100;
-                }
-
-                return child;
         }
 
-        // @dev generate a random number between 0 and range
-        function _random(
-                uint256 range, 
-                string memory attribute, 
-                uint256 value
-        ) 
-                internal 
-                view 
-                returns (uint256) 
-        {
-                bytes memory package = abi.encodePacked(block.difficulty, block.timestamp, attribute, value);
-                uint256 randomHash = uint(keccak256(package));
-                return randomHash % range;
+        function insertAtIndex(uint256 index, uint256 start, uint256 end, uint256[] memory bookedTimes) internal returns(uint[] memory) {
+                uint256[] memory newBookedTimes = new uint[](bookedTimes.length);
+                uint j = 0;
+                for (uint i = 0; i < newBookedTimes.length;) {
+                        newBookedTimes[i] = bookedTimes[j];
+                        if (i == index) {
+                                newBookedTimes[i+1] = start;
+                                newBookedTimes[i+2] = end;
+                                i += 2;
+                        }
+                        j++;
+                        i++;
+                }                
+
+                return newBookedTimes;
         }
 
         function hasAccess(address rover, uint256 rockId) external view returns (bool) {
                 return (ownerOf(rockId) == rover) || (_leases[rockId].renter == rover);
         }
+
+        function getRock(uint256 rockID) external view returns (Rock memory) {
+                return _rocks[rockID];
+        }  
 
         function supportsInterface(bytes4 interfaceId) 
                 public 
@@ -217,4 +231,55 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                         interfaceId == type(IERC721Metadata).interfaceId || 
                         super.supportsInterface(interfaceId);
         }
+
+        // TODO;
+        // function insertTimeSlot() 
+
+        // @dev a child is an offspring of mom and dad
+        // TODO: move these parameters to Global Parameter contract so they can be adjusted via DAO
+        // TODO: should we add a (+) operator here so Rover can combine 2 rocks to make a bigger one?
+        // function _breed(uint256 dad, uint256 mom, string memory attribute) internal view returns (uint256) {
+
+        //         uint256 offspring = _random(100, attribute, dad + mom);
+        //         uint256 child;
+
+        //         if (offspring < 50) {
+        //                 // 50% chance the child a combination of mom and dad
+        //                 uint256 dadWeight = _random(100, attribute, dad);
+        //                 uint256 momWeight = _random(100, attribute, mom);
+        //                 child = (dad * dadWeight + mom * momWeight) / (dadWeight + momWeight);
+        //         } else if (offspring < 75) {
+        //                 // 25% chance the child is exactly like dad
+        //                 child = dad;
+        //         } else {
+        //                 // 25% chance the child is exactly like mom
+        //                 child = mom;
+        //         }
+
+        //         uint256 mutation = _random(100, attribute, dad * mom);
+        //         if (mutation < 5) {
+        //                 // there is a 5% chance of having a 10% decrease mutation
+        //                 child = child * 90 / 100;
+        //         } else if (mutation < 10) {
+        //                 // there is a 5% chance of having a 10% increase mutation
+        //                 child = child * 110 / 100;
+        //         }
+
+        //         return child;
+        // }
+
+        // // @dev generate a random number between 0 and range
+        // function _random(
+        //         uint256 range, 
+        //         string memory attribute, 
+        //         uint256 value
+        // ) 
+        //         internal 
+        //         view 
+        //         returns (uint256) 
+        // {
+        //         bytes memory package = abi.encodePacked(block.difficulty, block.timestamp, attribute, value);
+        //         uint256 randomHash = uint(keccak256(package));
+        //         return randomHash % range;
+        // }
 }

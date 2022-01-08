@@ -25,14 +25,6 @@ interface IExperienceNFT {
                 uint256[] memory shares
         ) external;
 
-        // Updates the ownership of one creator
-        // Caller: Host, Platform
-        function updateCreator(
-                uint256 experienceId, 
-                address creator, 
-                uint256 shares
-        ) external;
-
         // Gets ticket
         // Caller: Audience, Plaform
         function getTicket(uint256 experienceId) external;
@@ -46,5 +38,8 @@ interface IExperienceNFT {
         function collectPayment(uint256 experienceId) external;
 
         // Events
-        event NewExperience(uint256 indexed experienceId, uint256 indexed rockId, uint256 price);
+        event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
+        event NewExperience(uint256 experienceId, uint256 start, uint256 end, uint256 tokenURI);
+        event CollectPayment(uint256 experienceId, address creator, uint256 amount);
+        event NewTicket(uint256, address, string);
 }

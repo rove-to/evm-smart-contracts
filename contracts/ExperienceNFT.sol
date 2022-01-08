@@ -25,23 +25,20 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         struct Experience {
                 address host;
                 DAO creators;
-                string name;
                 uint256 price;
                 uint256 watchLaterPrice;
-                State state;
                 uint256 revenue;
+                uint256 start;
+                uint256 end;
+                uint256 experienceType;
+                uint256 ticketLeft;
+                string ticketUrl;
         }
 
         // Every experience is a "mini" DAO of creators. 
         struct DAO {
                 uint256 totalShares;
                 mapping(address => uint256) shares;
-        }
-
-        enum State {
-                MINTED,
-                STARTED,
-                ENDED
         }
 
         using Counters for Counters.Counter;
@@ -54,6 +51,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         IMetaverseNFT _metaverseNFT;
         IParameterControl private _globalParameters;
         IRove _pebble;
+        uint constant AMPLIFY = 10000;
 
         modifier onlyHost(uint256 experienceId) {
                 require(_experiences[experienceId].host == msg.sender, "ExperienceNFT: not the host");
@@ -64,6 +62,11 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(_experiences[experienceId].creators.shares[msg.sender] > 0, "ExperienceNFT: not a creator");
                 _;
         }
+
+        event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
+        event NewExperience(uint256 experienceId, uint256 start, uint256 end, string tokenURI);
+        event CollectPayment(uint256 experienceId, address creator, uint256 amount);
+        event NewTicket(uint256, address, string);
 
         constructor(
                 ITicketNFT ticketNFT, 
@@ -84,10 +87,13 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         function mintExperience(
                 uint256 rockId,
                 address host,
-                string memory name,
                 uint256 experienceType,
                 uint256 price,
                 uint256 watchLaterPrice,
+                uint256 start,
+                uint256 end,
+                uint256 totalTickets,
+                string memory ticketUrl,
                 string memory tokenURI
         )
                 external
@@ -97,29 +103,29 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(!_metaverseNFT.owePropertyTax(rockId));
 
                 // the host must either own or rent the rock
-                require(_rockNFT.hasAccess(host, rockId));
-
-                // pay rental fees
-                if (ownerOf(rockId) != host) {
-                        uint256 rentalFee = _rockNFT.getRentalFee(experienceType);
-                        if (rentalFee > 0) 
-                                _pebble.transferFrom(host, ownerOf(rockId), rentalFee);
-                }
-
+                require(_rockNFT.hasAccess(_msgSender(), rockId));
                 // mint the experience
                 _counter.increment();
                 uint256 i = _counter.current();
-
+                _rockNFT.addTimeSlot(start, end, rockId);
+                // pay rental fees
+                address rockOwner = _rockNFT.ownerOf(rockId);
+                if (rockOwner != host) {
+                        uint256 rentalFee = _rockNFT.getRentalFee(experienceType);
+                        if (rentalFee > 0) 
+                                _pebble.transferFrom(host, rockOwner, rentalFee);
+                }
                 Experience storage e = _experiences[i]; 
                 e.host = host;
-                e.name = name;
                 e.price = price;
                 e.watchLaterPrice = watchLaterPrice;
-                e.state = State.MINTED;
+                e.ticketUrl = ticketUrl;
+                e.ticketLeft = totalTickets;
 
                 _mint(host, i);
                 _setTokenURI(i, tokenURI);
 
+                emit NewExperience(i, start, end, tokenURI);
                 return i;
         }
 
@@ -134,26 +140,17 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(creators.length == shares.length, "ExperienceNFT: creators & shares length mismatch");
                 require(creators.length > 0, "ExperienceNFT: no creators");
 
-                for (uint256 i = 0; i < creators.length; i++) 
-                        updateCreator(experienceId, creators[i], shares[i]);
-        }
+                DAO storage _creators = _experiences[experienceId].creators;
+                for (uint256 i = 0; i < creators.length; i++) {
+                        require(creators[i] != address(0), "ExperienceNFT: creator address is 0");
+                        require(shares[i] > 0, "ExperienceNFT: shares are 0");
 
-        function updateCreator(
-                uint256 experienceId, 
-                address creator, 
-                uint256 shares
-        ) 
-                public 
-                onlyHost(experienceId)
-        {
-                require(creator != address(0), "ExperienceNFT: creator address is 0");
-                require(shares > 0, "ExperienceNFT: shares are 0");
+                        // update new shares for the creator
+                        _creators.totalShares = _creators.totalShares + shares[i] - _creators.shares[creators[i]];
+                        _creators.shares[creators[i]] = shares[i];
+                }
 
-                DAO storage creators = _experiences[experienceId].creators;
-
-                // update new shares for the creator
-                creators.totalShares = creators.totalShares - creators.shares[creator] + shares;
-                creators.shares[creator] = shares;
+                emit UpdateCreators(experienceId, creators, shares);
         }
 
         /*
@@ -165,42 +162,48 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 external 
                 onlyCreator(experienceId)
         {
-                require(_experiences[experienceId].state == State.ENDED);
+                Experience storage e = _experiences[experienceId];
+                require(block.timestamp > e.end, "ExperienceNFT: the event not ended yet");
 
-                DAO storage creators = _experiences[experienceId].creators;
                 address creator = msg.sender;
-
-                uint256 percentage = creators.shares[creator] / creators.totalShares;
-                uint256 amount = _experiences[experienceId].revenue * percentage;
+                
+                uint256 percentage = e.creators.shares[creator] * AMPLIFY / e.creators.totalShares;
+                uint256 amount = e.revenue * percentage / AMPLIFY;
                 
                 require(amount > 0, "ExperienceNFT: no payment due to creator");
 
                 _pebble.transfer(creator, amount);
+
+                emit CollectPayment(experienceId, creator, amount);
         }
 
         function getTicket(uint256 experienceId) external {
                 Experience storage e = _experiences[experienceId];
+                require(e.start > 0, "ExperienceNFT: this event is not exist" );
+                require(block.timestamp < e.end, "ExperienceNFT: the event is ended" );
+                require(e.ticketLeft > 0, "ExperienceNFT: ticket ran out of stock" );
+                e.ticketLeft -= 1;
+                address buyer = _msgSender();
 
                 if (e.price > 0) { 
-                        _pebble.transferFrom(msg.sender, address(this), e.price); 
+                        _pebble.transferFrom(buyer, address(this), e.price); 
                         e.revenue += e.price;
                 }
 
-                _ticketNFT.mintTicket(msg.sender, tokenURI(experienceId));
+                _ticketNFT.mintTicket(buyer, e.ticketUrl);
+
+                emit NewTicket(experienceId, buyer, e.ticketUrl);
         }
 
-        function hasTicket(uint256 ticketId) external view returns (bool) {
-                return _ticketNFT.ownerOf(ticketId) == msg.sender;
-        }
-
-        function endExperience(
-                uint256 experienceId 
-        ) 
-                external 
-                onlyHost(experienceId)
-        {
-                _experiences[experienceId].state = State.ENDED;
-        }
+        // todo: 
+        // function endExperience(
+        //         uint256 experienceId 
+        // ) 
+        //         external 
+        //         onlyHost(experienceId)
+        // {
+        //         _experiences[experienceId].state = State.ENDED;
+        // }
 
         function supportsInterface(bytes4 interfaceId) 
                 public 

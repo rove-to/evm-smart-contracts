@@ -16,7 +16,9 @@ contract NameNFT is AccessControl, ERC721 {
         mapping(uint256 => Name) private _names;
         mapping(string => bool) taken;
 
-        constructor() ERC721("Name", "N") {}
+        constructor(address admin) ERC721("Name", "N") {
+                _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        }
 
         function mintName(address rover, string memory name)
                 public

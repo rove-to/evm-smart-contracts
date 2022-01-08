@@ -23,5 +23,5 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 //     - 5% reserved for Exchange Liquidity
 
 interface IRove is IERC20 {
-
+    function mint(address to, uint256 amount) external;
 }

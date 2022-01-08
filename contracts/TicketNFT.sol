@@ -7,16 +7,13 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract TicketNFT is AccessControl, ERC721URIStorage {
 
-        struct Ticket {
-                uint256 experience;
-                uint256 number;
-        }
 
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
-        mapping(uint256 => Ticket) private _tickets;
 
-        constructor() ERC721("Ticket", "T") {}
+        constructor(address admin) ERC721("Ticket", "T") {
+                _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        }
 
         function mintTicket(address rover, string memory tokenURI)
                 public
@@ -26,7 +23,6 @@ contract TicketNFT is AccessControl, ERC721URIStorage {
                 _counter.increment();
 
                 uint256 i = _counter.current();
-                _tickets[i] = Ticket(0, 0);
                 _mint(rover, i);
                 _setTokenURI(i, tokenURI);
 

@@ -38,4 +38,8 @@ interface IRockNFT {
                 uint256 momId, 
                 string memory tokenURI
         ) external returns (uint256 childId);
+
+        // add time slot for evnet on rock
+        function addTimeSlot(uint256 start, uint256 end, uint256 rockId) external;
+        function ownerOf(uint256 rockId) external view returns (address);
 }
