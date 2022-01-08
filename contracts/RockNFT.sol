@@ -194,8 +194,8 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 }
         }
 
-        function insertAtIndex(uint256 index, uint256 start, uint256 end, uint256[] memory bookedTimes) internal returns(uint[] memory) {
-                uint256[] memory newBookedTimes = new uint[](bookedTimes.length);
+        function insertAtIndex(uint256 index, uint256 start, uint256 end, uint256[] memory bookedTimes) pure internal returns(uint[] memory) {
+                uint256[] memory newBookedTimes = new uint[](bookedTimes.length + 2);
                 uint j = 0;
                 for (uint i = 0; i < newBookedTimes.length;) {
                         newBookedTimes[i] = bookedTimes[j];
