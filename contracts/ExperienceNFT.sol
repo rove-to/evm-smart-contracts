@@ -30,7 +30,6 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 uint256 revenue;
                 uint256 start;
                 uint256 end;
-                uint256 experienceType;
                 uint256 ticketLeft;
                 string ticketUrl;
         }
@@ -50,7 +49,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         IRockNFT private _rockNFT;
         IMetaverseNFT _metaverseNFT;
         IParameterControl private _globalParameters;
-        IRove _pebble;
+        IRove _rove;
         uint constant AMPLIFY = 10000;
 
         modifier onlyHost(uint256 experienceId) {
@@ -73,7 +72,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 IRockNFT rockNFT, 
                 IMetaverseNFT metaverseNFT,
                 IParameterControl globalParameters,
-                IRove pebble
+                IRove rove
         ) 
                 ERC721("Experience", "E") 
         {
@@ -81,13 +80,12 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 _rockNFT = rockNFT;
                 _metaverseNFT = metaverseNFT;
                 _globalParameters = globalParameters;
-                _pebble = pebble;
+                _rove = rove;
         }
 
         function mintExperience(
                 uint256 rockId,
                 address host,
-                uint256 experienceType,
                 uint256 price,
                 uint256 watchLaterPrice,
                 uint256 start,
@@ -103,17 +101,18 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 require(!_metaverseNFT.owePropertyTax(rockId));
 
                 // the host must either own or rent the rock
-                require(_rockNFT.hasAccess(_msgSender(), rockId));
+                // require(_rockNFT.hasAccess(_msgSender(), rockId));
                 // mint the experience
                 _counter.increment();
                 uint256 i = _counter.current();
                 _rockNFT.addTimeSlot(start, end, rockId);
                 // pay rental fees
                 address rockOwner = _rockNFT.ownerOf(rockId);
+                require(rockOwner != address(0), "ExperienceNFT: this rock is not exist or burned");
                 if (rockOwner != host) {
-                        uint256 rentalFee = _rockNFT.getRentalFee(experienceType);
+                        uint256 rentalFee = _rockNFT.getRentalFee(rockId);
                         if (rentalFee > 0) 
-                                _pebble.transferFrom(host, rockOwner, rentalFee);
+                                _rove.transferFrom(host, rockOwner, rentalFee);
                 }
                 Experience storage e = _experiences[i]; 
                 e.host = host;
@@ -172,7 +171,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 
                 require(amount > 0, "ExperienceNFT: no payment due to creator");
 
-                _pebble.transfer(creator, amount);
+                _rove.transfer(creator, amount);
 
                 emit CollectPayment(experienceId, creator, amount);
         }
@@ -186,7 +185,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 address buyer = _msgSender();
 
                 if (e.price > 0) { 
-                        _pebble.transferFrom(buyer, address(this), e.price); 
+                        _rove.transferFrom(buyer, address(this), e.price); 
                         e.revenue += e.price;
                 }
 

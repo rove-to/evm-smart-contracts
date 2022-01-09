@@ -8,13 +8,13 @@ interface IExperienceNFT {
         function mintExperience(
                 uint256 rockId,
                 address host,
-                string memory name,
-                uint256 experienceType,
                 uint256 price,
                 uint256 watchLaterPrice,
+                uint256 start,
+                uint256 end,
+                uint256 totalTickets,
+                string memory ticketUrl,
                 string memory tokenURI
-                // TODO: start_time & end_time? 
-                // TODO: scheduling, avoid conflict - onchain or offchain?
         ) external returns (uint256 experienceId);
 
         // Updates the ownership of multiple creators

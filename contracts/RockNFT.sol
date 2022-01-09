@@ -71,15 +71,16 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 // (experienceType, hosting fee)
                 // mapping(uint256 => uint256) rentalFees;
                 uint256[] timeSlots;
+                uint256 rentalFee;
         }
 
-        struct Lease {
-                address renter;
-                uint256 from;
-                uint256 to;
-                uint256 base;
-                uint256 revenueShare;
-        }
+        // struct Lease {
+        //         address renter;
+        //         uint256 from;
+        //         uint256 to;
+        //         uint256 base;
+        //         uint256 revenueShare;
+        // }
 
         using Counters for Counters.Counter;
         Counters.Counter private _counter;
@@ -90,13 +91,16 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         IExperienceNFT _experienceNFT;
 
         mapping(uint256 => Rock) private _rocks;
-        mapping(uint256 => Lease) private _leases;
+        // mapping(uint256 => Lease) private _leases;
 
         modifier onlyExperienceNFT() {
                 require(_msgSender() == address(_experienceNFT), "only experience NFT");
                 _;
         }
 
+        event UpdateRockFee(address, uint256, uint256);
+
+        // admin of rock is metaverse nft
         constructor(
                 IRove rove,
                 IParameterControl globalParameters,
@@ -113,7 +117,12 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _experienceNFT = experienceNFT;
         }
 
-        function mintRock(uint256 metaverseId, address owner, string memory tokenURI)
+        function mintRock(
+                uint256 metaverseId, 
+                address owner, 
+                uint256 rentalFee,
+                string memory tokenURI
+        )
                 external
                 onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256)
@@ -123,6 +132,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 uint256 i = _counter.current();
                 Rock storage r = _rocks[i];
                 r.metaverseId = metaverseId;
+                r.rentalFee = rentalFee;
 
                 _mint(owner, i);
                 _setTokenURI(i, tokenURI);
@@ -132,8 +142,15 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         // @dev given 2 rock parents, breed a new child rock
         // TODO: should we let N rock parents where N > 2?
-        function breedRock(uint256 metaverseId, uint256 dadId, uint256 momId, string memory tokenURI) 
+        function breedRock(
+                uint256 metaverseId, 
+                uint256 dadId, 
+                uint256 momId, 
+                uint256 rentalFee,
+                string memory tokenURI
+        ) 
                 external 
+                onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256) 
         {
                 address owner = msg.sender;
@@ -147,6 +164,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 Rock storage child = _rocks[i];
                 child.dad = dadId;
                 child.mom = momId;
+                child.rentalFee = rentalFee;
                 // Rock storage dad = _rocks[dadId];
                 // Rock storage mom = _rocks[momId];
 
@@ -172,11 +190,11 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         function addTimeSlot(uint256 start, uint256 end, uint256 rockId) external onlyExperienceNFT() {
                 require(end > start, "invalid start and end time!");
                 require(start - block.timestamp < 1 weeks, "can not book event in this time!"); 
-                Rock storage rock = _rocks[rockId];
+                Rock memory rock = _rocks[rockId];
                 uint256 r = rock.timeSlots.length;
                 if (r == 0 || (rock.timeSlots[r - 1] < start)) {
-                        rock.timeSlots.push(start);
-                        rock.timeSlots.push(end);
+                        _rocks[rockId].timeSlots.push(start);
+                        _rocks[rockId].timeSlots.push(end);
                 } else {
                         uint l = 0;
                         r = r - 1;
@@ -190,7 +208,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                         }
                         require(l % 2 != 0 && start != rock.timeSlots[l], "this slot has been occupied!");
                         require(rock.timeSlots[l + 1] > end, "end time overlapped!");
-                        rock.timeSlots = insertAtIndex(l, start, end, rock.timeSlots);
+                        _rocks[rockId].timeSlots = insertAtIndex(l, start, end, rock.timeSlots);
                 }
         }
 
@@ -211,12 +229,24 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 return newBookedTimes;
         }
 
-        function hasAccess(address rover, uint256 rockId) external view returns (bool) {
-                return (ownerOf(rockId) == rover) || (_leases[rockId].renter == rover);
+        function updateRentalFee(uint256 rockId, uint256 fee) external {
+                require(msg.sender == ownerOf(rockId), "Rock NFT: only rock owner");
+                Rock storage rock = _rocks[rockId];
+                rock.rentalFee = fee;
+
+                emit UpdateRockFee(msg.sender, rockId, fee);
+        }      
+
+        // function hasAccess(address rover, uint256 rockId) external view returns (bool) {
+        //         return (ownerOf(rockId) == rover) || (_leases[rockId].renter == rover);
+        // }
+
+        function getRentalFee(uint256 rockId) external view returns (uint256) {
+                return _rocks[rockId].rentalFee;
         }
 
-        function getRock(uint256 rockID) external view returns (Rock memory) {
-                return _rocks[rockID];
+        function getRock(uint256 rockId) external view returns (Rock memory) {
+                return _rocks[rockId];
         }  
 
         function supportsInterface(bytes4 interfaceId) 

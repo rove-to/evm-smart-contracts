@@ -5,11 +5,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MyToken is ERC20, AccessControl {
+contract Rove is ERC20, AccessControl {
     // Create a new role identifier for the minter role
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor(address minter) ERC20("MyToken", "TKN") {
+    constructor(address minter) ERC20("ROVER", "ROVER") {
         // Grant the minter role to a specified account
         _setupRole(MINTER_ROLE, minter);
     }
