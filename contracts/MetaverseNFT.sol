@@ -6,8 +6,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
-import "./IRockNFT.sol";
+import "./RockNFT.sol";
 import "./utils/constants.sol";
+import "./IMetaverseNFT.sol";
+
 /**
  * @dev Implementation of the Metaverse element in Rove
  *
@@ -47,7 +49,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
 
         IParameterControl _globalParameters;
         IRove _rove;
-        IRockNFT _rockNFT;
+        RockNFT _rockNFT;
 
         mapping(uint256 => Metaverse) private _metaverses;
         mapping(uint256 => uint256) private _propertyTaxes; // outstanding property taxes (rockId, tax)
@@ -59,17 +61,19 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
 
         event NewMetaverse(address owner, uint256 metaverseId, uint256[] rocks, uint256[] rentalFees, string[] rockTokenURIs, string tokenURI);
         event Breed(address owner, uint256 dadId, uint256 momId, uint256 rockId, uint256 metaverseId, uint256 rentalFee);
+        event RockContractCreated(address contractId);
 
         constructor(
                 IParameterControl globalParameters,
-                IRove rove,
-                IRockNFT rock
+                IRove rove
         ) 
                 ERC721("Metaverse", "M") 
         {
                 _globalParameters = globalParameters;
                 _rove = rove;
-                _rockNFT = rock;
+                _rockNFT = new RockNFT(rove, globalParameters, IMetaverseNFT(address(this)));
+
+                emit RockContractCreated(address(_rockNFT));
         }
 
         function mintMetaverse(

@@ -23,5 +23,8 @@
   },
   "directories": {
     "test": "test"
+  },
+  "dependencies": {
+    "truffle-privatekey-provider": "^1.5.0"
   }
 }

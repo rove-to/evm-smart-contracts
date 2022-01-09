@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./ITicketNFT.sol";
 import "./IRockNFT.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
 import "./IMetaverseNFT.sol";
+import "./TicketNFT.sol";
 
 /*
  * TODO:
@@ -45,7 +45,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
         mapping(uint256 => Experience) private _experiences;
 
-        ITicketNFT private _ticketNFT;
+        TicketNFT private _ticketNFT;
         IRockNFT private _rockNFT;
         IMetaverseNFT _metaverseNFT;
         IParameterControl private _globalParameters;
@@ -65,10 +65,10 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
         event NewExperience(uint256 experienceId, uint256 start, uint256 end, string tokenURI);
         event CollectPayment(uint256 experienceId, address creator, uint256 amount);
-        event NewTicket(uint256, address, string);
+        event NewTicket(uint256 experienceId, address buyer, string tokenURI);
+        event TicketNFTCreated(address);
 
         constructor(
-                ITicketNFT ticketNFT, 
                 IRockNFT rockNFT, 
                 IMetaverseNFT metaverseNFT,
                 IParameterControl globalParameters,
@@ -76,11 +76,13 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
         ) 
                 ERC721("Experience", "E") 
         {
-                _ticketNFT = ticketNFT;
+                _ticketNFT = new TicketNFT(address(this));
                 _rockNFT = rockNFT;
                 _metaverseNFT = metaverseNFT;
                 _globalParameters = globalParameters;
                 _rove = rove;
+
+                emit TicketNFTCreated(address(_ticketNFT));
         }
 
         function mintExperience(

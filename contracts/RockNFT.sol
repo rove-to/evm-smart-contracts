@@ -7,7 +7,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
 import "./IRove.sol";
 import "./IMetaverseNFT.sol";
-import "./IExperienceNFT.sol";
+import "./ExperienceNFT.sol";
+import "./IRockNFT.sol";
 
 /*
  * TODO:
@@ -88,7 +89,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         IParameterControl _globalParameters;
         IRove _rove;
         IMetaverseNFT _metaverseNFT;
-        IExperienceNFT _experienceNFT;
+        ExperienceNFT _experienceNFT;
 
         mapping(uint256 => Rock) private _rocks;
         // mapping(uint256 => Lease) private _leases;
@@ -99,22 +100,23 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         }
 
         event UpdateRockFee(address, uint256, uint256);
+        event ExperienceContractCreated(address contractId);
 
         // admin of rock is metaverse nft
         constructor(
                 IRove rove,
                 IParameterControl globalParameters,
-                IMetaverseNFT metaverseNFT,
-                IExperienceNFT experienceNFT,
-                address admin
+                IMetaverseNFT metaverseNFT
         ) 
                 ERC721("Rock", "R")
         {
-                _setupRole(DEFAULT_ADMIN_ROLE, admin);
+                _setupRole(DEFAULT_ADMIN_ROLE, address(metaverseNFT));
                 _rove = rove;
                 _globalParameters = globalParameters;
                 _metaverseNFT = metaverseNFT;
-                _experienceNFT = experienceNFT;
+                _experienceNFT = new ExperienceNFT(IRockNFT(address(this)), metaverseNFT, globalParameters, rove);
+
+                emit ExperienceContractCreated(address(_experienceNFT));
         }
 
         function mintRock(
@@ -144,6 +146,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
         // TODO: should we let N rock parents where N > 2?
         function breedRock(
                 uint256 metaverseId, 
+                address owner,
                 uint256 dadId, 
                 uint256 momId, 
                 uint256 rentalFee,
@@ -153,7 +156,6 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 onlyRole(DEFAULT_ADMIN_ROLE)
                 returns (uint256) 
         {
-                address owner = msg.sender;
                 require(ownerOf(dadId) == owner);
                 require(ownerOf(momId) == owner);
                 require(_rocks[dadId].metaverseId == metaverseId);
