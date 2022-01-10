@@ -131,19 +131,26 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
                 uint256 dadId, 
                 uint256 momId, 
                 uint256 rentalFee,
+                Revenue memory revenue,
+                Expenditure memory expenditure,
                 string memory tokenURI
         ) 
                 external 
                 returns (uint256) 
         {
                 address owner = msg.sender;
-                uint256 platformGlobalFee = _globalParameters.get(ROCK_BREEDING_FEE);
-                uint256 metaverseLocalFee = _metaverses[metaverseId].revenue.breedingFee;
+                {
+                        uint256 platformGlobalFee = _globalParameters.get(ROCK_BREEDING_FEE);
+                        uint256 metaverseLocalFee = _metaverses[metaverseId].revenue.breedingFee;
 
-                _rove.transferFrom(owner, address(this), platformGlobalFee + metaverseLocalFee);
-                _metaverses[metaverseId].treasury += metaverseLocalFee;
+                        _rove.transferFrom(owner, address(this), platformGlobalFee + metaverseLocalFee);
+                        _metaverses[metaverseId].treasury += metaverseLocalFee;
+                }
 
                 uint256 childId = _rockNFT.breedRock(metaverseId, owner, dadId, momId, rentalFee, tokenURI);
+                Metaverse storage m = _metaverses[childId];
+                m.revenue = revenue;
+                m.expenditure = expenditure;
 
                 emit Breed(owner, dadId, momId, childId, metaverseId, rentalFee);
                 return childId;
@@ -167,6 +174,10 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
 
         function getExpenditure(uint256 metaverseId) external view returns(Expenditure memory) {
                 return _metaverses[metaverseId].expenditure;
+        }
+
+        function getRockNFT() external view returns(address) {
+                return address(_rockNFT);
         }
 
         function supportsInterface(bytes4 interfaceId) 

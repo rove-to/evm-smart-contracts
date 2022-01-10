@@ -48,6 +48,9 @@ interface IRockNFT {
         function getRentalFee(uint256 rockId) external view returns (uint256);
         function updateRentalFee(uint256 rockId, uint256 fee) external;
 
+        // get experienceNFT address
+        function getExperienceNFT() external view returns (address);
+
         // events
         event UpdateRockFee(address owner, uint256 rockId, uint256 rentalFee);
 }

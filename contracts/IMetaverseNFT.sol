@@ -21,6 +21,8 @@ interface IMetaverseNFT {
                 address founder,
                 uint256[] memory rentalFees,
                 string[] memory rockTokenURIs,
+                Revenue memory revenue,
+                Expenditure memory expenditure,
                 string memory tokenURI
         ) external returns (uint256 metaverseId);
 
@@ -32,6 +34,8 @@ interface IMetaverseNFT {
                 uint256 dadId,
                 uint256 momId,
                 uint256 rentalFee,
+                Revenue memory revenue,
+                Expenditure memory expenditure,
                 string memory tokenURI
         ) external returns (uint256 childId);
 
@@ -52,7 +56,7 @@ interface IMetaverseNFT {
         function getRevenue(uint256 metaverseId) external view returns(Revenue memory);
         function getExpenditure(uint256 metaverseId) external view returns(Expenditure memory);
         function getMetaerse(uint256 metaverseId) external view returns(Expenditure memory);
-
+        function getRockNFT() external view returns(address);
 
         // // Setters
         // function setSalesTaxRate(uint256 metaversId, uint256 salesTaxRate) external;

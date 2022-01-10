@@ -251,6 +251,10 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 return _rocks[rockId];
         }  
 
+        function getExperienceNFT() external view returns (address) {
+                return address(_experienceNFT);
+        }
+
         function supportsInterface(bytes4 interfaceId) 
                 public 
                 view 
