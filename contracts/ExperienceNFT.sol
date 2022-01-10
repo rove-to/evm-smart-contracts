@@ -196,6 +196,10 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 emit NewTicket(experienceId, buyer, e.ticketUrl);
         }
 
+        function getTicketNFT() external view returns (address) {
+                return address(_ticketNFT);
+        }
+
         // todo: 
         // function endExperience(
         //         uint256 experienceId 

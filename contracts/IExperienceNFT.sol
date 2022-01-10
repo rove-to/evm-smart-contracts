@@ -36,7 +36,7 @@ interface IExperienceNFT {
         // Collects payment
         // Caller: Creator, Platform
         function collectPayment(uint256 experienceId) external;
-
+        function getTicketNFT() external view returns (address);
         // Events
         event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
         event NewExperience(uint256 experienceId, uint256 start, uint256 end, uint256 tokenURI);
