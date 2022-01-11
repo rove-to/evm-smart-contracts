@@ -5,12 +5,35 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./IRockNFT.sol";
 import "./IParameterControl.sol";
-import "./IRove.sol";
-import "./IMetaverseNFT.sol";
 import "./TicketNFT.sol";
 import "./utils/constants.sol";
+
+interface IRockNFT_ {
+        function addTimeSlot(uint256 start, uint256 end, uint256 rockId) external;
+        function ownerOf(uint256 rockId) external view returns (address);
+        function getMetaverseId(uint256 rockId) external view returns (uint256); 
+        function getRentalFee(uint256 rockId) external view returns (uint256);
+}
+
+interface IRove_ {
+        function transferFrom(address sender, address recipient, uint amount) external;
+        function transfer(address recipient, uint amount) external;
+}
+
+interface IMetaverseNFT_ {
+        struct Revenue {
+                uint256 breedingFee;
+                uint256 salesTaxRate;
+                uint256 propertyTaxRate;
+        }
+
+        struct Metaverse {
+                address metaverseDAO;
+                Revenue revenue;
+        }
+        function getMetaverseNFT(uint256 metaverseId) external view returns(Metaverse memory);
+}
 
 /*
  * TODO:
@@ -46,10 +69,10 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
         mapping(uint256 => Experience) private _experiences;
 
         TicketNFT private _ticketNFT;
-        IRockNFT private _rockNFT;
-        IMetaverseNFT _metaverseNFT;
+        IRockNFT_ private _rockNFT;
+        IMetaverseNFT_ _metaverseNFT;
         IParameterControl private _globalParameters;
-        IRove _rove;
+        IRove_ _rove;
 
         modifier onlyHost(uint256 experienceId) {
                 require(ownerOf(experienceId) == _msgSender(), "ExperienceNFT: not the host");
@@ -69,18 +92,18 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
         event TicketNFTCreated(address);
 
         constructor(
-                IRockNFT rockNFT, 
-                IMetaverseNFT metaverseNFT,
+                address rockNFT, 
+                address metaverseNFT,
                 IParameterControl globalParameters,
-                IRove rove
+                address rove
         ) 
                 ERC721("Experience", "E") 
         {
                 _ticketNFT = new TicketNFT(address(this));
-                _rockNFT = rockNFT;
-                _metaverseNFT = metaverseNFT;
+                _rockNFT = IRockNFT_(rockNFT);
+                _metaverseNFT = IMetaverseNFT_(metaverseNFT);
                 _globalParameters = globalParameters;
-                _rove = rove;
+                _rove = IRove_(rove);
 
                 emit TicketNFTCreated(address(_ticketNFT));
         }
@@ -128,7 +151,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 address host
         ) internal {
                 address rockOwner = _rockNFT.ownerOf(rockId);
-                IMetaverseNFT.Metaverse memory metaverse;
+                IMetaverseNFT_.Metaverse memory metaverse;
                 require(rockOwner != address(0), "ExperienceNFT: this rock is not exist or burned");
                 if (rockOwner != host) {
                         uint256 rockTimeCostPerUnit = _globalParameters.get(ROCK_TIME_COST_UNIT);
@@ -182,11 +205,10 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 address creator = _msgSender();
                 uint256 amount = e.creators.shares[creator] * e.revenue / e.creators.totalShares;
                 require(amount > 0, "ExperienceNFT: no payment due to creator");
-                IMetaverseNFT.Metaverse memory metaverse = _metaverseNFT.getMetaverseNFT(_rockNFT.getMetaverseId(_experiences[experienceId].rockId));
+                IMetaverseNFT_.Metaverse memory metaverse = _metaverseNFT.getMetaverseNFT(_rockNFT.getMetaverseId(_experiences[experienceId].rockId));
                 (uint256 globalTax, uint256 metaverseTax) = payTaxes(GLOBAL_SALES_TAX, metaverse.revenue.salesTaxRate, amount, metaverse.metaverseDAO);
                 amount = amount - globalTax - metaverseTax;
 
-                _rove.transfer(creator, amount);
                 e.creators.shares[creator] = 0;
                 _rove.transfer(creator, amount);
 

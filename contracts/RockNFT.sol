@@ -114,7 +114,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
                 _rove = rove;
                 _globalParameters = globalParameters;
                 _metaverseNFT = metaverseNFT;
-                _experienceNFT = new ExperienceNFT(IRockNFT(address(this)), metaverseNFT, globalParameters, rove);
+                _experienceNFT = new ExperienceNFT(address(this), address(metaverseNFT), globalParameters, address(rove));
 
                 emit ExperienceContractCreated(address(_experienceNFT));
         }
