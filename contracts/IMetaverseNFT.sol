@@ -35,12 +35,6 @@ interface IMetaverseNFT {
                 string memory tokenURI
         ) external returns (uint256 childId);
 
-        // Returns true if the rock owes property tax
-        // Caller: Experience contract
-        function owePropertyTax(
-                uint256 rockId
-        ) external view returns (bool);
-
         // Getters
         // function getRocks(uint256 metaversId) external view returns (uint256[] memory);
         // function getSalesTaxRate(uint256 metaversId) external view returns (uint256);

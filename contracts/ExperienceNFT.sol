@@ -124,7 +124,6 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 address host = _msgSender();
                 {               
                 address rockOwner = _rockNFT.ownerOf(rockId);
-                require(rockOwner != address(0), "this rock is not exist or burned");
                 if (rockOwner != host) {
                         uint256 rockTimeCostPerUnit =  _globalParameters.get(ROCK_TIME_COST_UNIT);
                         uint256 timeRange = end - start;

@@ -44,7 +44,6 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
         RockNFT _rockNFT;
 
         mapping(uint256 => Metaverse) private _metaverses;
-        mapping(uint256 => uint256) private _propertyTaxes; // outstanding property taxes (rockId, tax)
 
         modifier onlyOwner(uint256 metaverseId) {
                 require(ownerOf(metaverseId) == msg.sender, "MetaverseNFT: not the founder");
@@ -82,7 +81,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
                 require(rentalFees.length == rockTokenURIs.length, "MetaverseNFT: input rentalFees and tokeURI are not match");
                 require(rentalFees.length > 1, "MetaverseNFT: at least 2 genesis rocks created");
                 require(revenue.salesTaxRate < MAX_PERCENT && revenue.propertyTaxRate < MAX_PERCENT, "MetaverseNFT: invalid tax rates");
-                _rove.transferFrom(_msgSender(), address(uint160(_globalParameters.get(GLOBAL_ROVE_DAO))), _globalParameters.get(ROCK_RENTING_FEE) * rentalFees.length); 
+                _rove.transferFrom(_msgSender(), address(uint160(_globalParameters.get(GLOBAL_ROVE_DAO))), _globalParameters.get(ROCK_BREEDING_FEE) * rentalFees.length); 
                 _counter.increment();
                 uint256 i = _counter.current();
 
@@ -129,6 +128,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
                 external 
                 returns (uint256) 
         {
+                require(dadId != momId);
                 address owner = msg.sender;
                 Metaverse storage m = _metaverses[metaverseId];
                 if (_globalParameters.get(ROCK_BREEDING_FEE) > 0) {
@@ -143,10 +143,6 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage, Constant {
 
                 emit Breed(owner, dadId, momId, childId, metaverseId, rentalFee);
                 return childId;
-        }
-
-        function owePropertyTax(uint256 rockId) external view returns (bool) {
-                return _propertyTaxes[rockId] > 0;
         }
 
         function setRevenue(uint256 metaverseId, Revenue memory revenue) external onlyOwner(metaverseId) {
