@@ -233,8 +233,7 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         function updateRentalFee(uint256 rockId, uint256 fee) external {
                 require(msg.sender == ownerOf(rockId), "Rock NFT: only rock owner");
-                Rock storage rock = _rocks[rockId];
-                rock.rentalFee = fee;
+                _rocks[rockId].rentalFee = fee;
 
                 emit UpdateRockFee(msg.sender, rockId, fee);
         }      
@@ -249,7 +248,11 @@ contract RockNFT is AccessControl, ERC721URIStorage {
 
         function getRock(uint256 rockId) external view returns (Rock memory) {
                 return _rocks[rockId];
-        }  
+        }
+
+        function getMetaverseId(uint256 rockId) external view returns (uint256) {
+                return _rocks[rockId].metaverseId;
+        }    
 
         function getExperienceNFT() external view returns (address) {
                 return address(_experienceNFT);

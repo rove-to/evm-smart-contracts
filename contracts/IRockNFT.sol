@@ -47,6 +47,7 @@ interface IRockNFT {
         // returns the fee of rock 
         function getRentalFee(uint256 rockId) external view returns (uint256);
         function updateRentalFee(uint256 rockId, uint256 fee) external;
+        function getMetaverseId(uint256 rockId) external view returns (uint256); 
 
         // get experienceNFT address
         function getExperienceNFT() external view returns (address);

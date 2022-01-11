@@ -17,10 +17,22 @@ contract ParameterControl is Constant {
         address private _admin;
         mapping(string => uint256) private _params;
 
-        constructor(address admin, uint256 breedingFee, uint256 mintMetaverseFee) {
+        constructor(
+                address admin, 
+                uint256 breedingFee, 
+                uint256 rockRentingFee,
+                uint256 costPerUnit,
+                uint256 hostingFee,
+                uint160 globalRoveDao,
+                uint256 salesTax
+        ) {
                 _admin = admin;
                 _params[ROCK_BREEDING_FEE] = breedingFee;
-                _params[METAVERSE_MINTING_FEE] = mintMetaverseFee;
+                _params[ROCK_RENTING_FEE] = rockRentingFee;
+                _params[ROCK_TIME_COST_UNIT] = costPerUnit;
+                _params[HOSTING_FEE] = hostingFee;
+                _params[GLOBAL_ROVE_DAO] = globalRoveDao;
+                _params[GLOBAL_SALES_TAX] = salesTax;
         }
 
         function get(string memory key) external view returns (uint256) {

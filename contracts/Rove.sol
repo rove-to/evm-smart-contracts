@@ -7,16 +7,15 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Rove is ERC20, AccessControl {
     // Create a new role identifier for the minter role
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor(address minter) ERC20("ROVER", "ROVER") {
+    constructor(address admin) ERC20("ROVER", "ROVER") {
         // Grant the minter role to a specified account
-        _setupRole(MINTER_ROLE, minter);
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     function mint(address to, uint256 amount) public {
         // Check that the calling account has the minter role
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a minter");
         _mint(to, amount);
     }
 }

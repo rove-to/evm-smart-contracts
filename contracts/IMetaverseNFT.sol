@@ -9,20 +9,19 @@ interface IMetaverseNFT {
                 uint256 propertyTaxRate;
         }
 
-        struct Expenditure {
-                uint256 kickstartReward;
-                uint256 creatorReward;
-                uint256 audienceReward;
+        struct Metaverse {
+                address metaverseDAO;
+                Revenue revenue;
         }
 
         // Mints a new metaverse. Rover must pay minting fee.
         // Caller: Platform
         function mintMetaverse(
                 address founder,
+                address metaverseDAO,
                 uint256[] memory rentalFees,
                 string[] memory rockTokenURIs,
                 Revenue memory revenue,
-                Expenditure memory expenditure,
                 string memory tokenURI
         ) external returns (uint256 metaverseId);
 
@@ -30,12 +29,9 @@ interface IMetaverseNFT {
         // Caller: Platform
         function breedRock(
                 uint256 metaverseId, 
-                address owner,
                 uint256 dadId,
                 uint256 momId,
                 uint256 rentalFee,
-                Revenue memory revenue,
-                Expenditure memory expenditure,
                 string memory tokenURI
         ) external returns (uint256 childId);
 
@@ -54,9 +50,9 @@ interface IMetaverseNFT {
         // function getAudienceReward(uint256 metaversId) external view returns (uint256);
         // function getBreedingFee(uint256 metaversId) external view returns (uint256);
         function getRevenue(uint256 metaverseId) external view returns(Revenue memory);
-        function getExpenditure(uint256 metaverseId) external view returns(Expenditure memory);
-        function getMetaerse(uint256 metaverseId) external view returns(Expenditure memory);
         function getRockNFT() external view returns(address);
+        function getMetaverseNFT(uint256 metaverseId) external view returns(Metaverse memory);
+        function getMetaverseDAO(uint256 metaverseId) external view returns(address);
 
         // // Setters
         // function setSalesTaxRate(uint256 metaversId, uint256 salesTaxRate) external;
@@ -66,7 +62,6 @@ interface IMetaverseNFT {
         // function setAudienceReward(uint256 metaversId, uint256 audienceReward) external;
         // function setBreedingFee(uint256 metaversId, uint256 breedingFee) external; 
         function setRevenue(uint256 metaverseId, Revenue memory revenue) external;
-        function setExpenditure(uint256 metaverseId, Expenditure memory expenditure) external;
 
         // Events
         event NewMetaverse(address owner, uint256 metaverseId, uint256[] rocks, uint256[] rentalFees, string[] rockTokenURIs, string tokenURI);

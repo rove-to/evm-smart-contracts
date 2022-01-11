@@ -7,9 +7,7 @@ interface IExperienceNFT {
         // Caller: Platform 
         function mintExperience(
                 uint256 rockId,
-                address host,
                 uint256 price,
-                uint256 watchLaterPrice,
                 uint256 start,
                 uint256 end,
                 uint256 totalTickets,
@@ -37,9 +35,11 @@ interface IExperienceNFT {
         // Caller: Creator, Platform
         function collectPayment(uint256 experienceId) external;
         function getTicketNFT() external view returns (address);
+        function setPrice(uint256 experienceId, uint256 price) external;
         // Events
         event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
         event NewExperience(uint256 experienceId, uint256 start, uint256 end, uint256 tokenURI);
         event CollectPayment(uint256 experienceId, address creator, uint256 amount);
+        event UpdateTicketPrice(uint256 experienceId, uint256 price);
         event NewTicket(uint256, address, string);
 }
