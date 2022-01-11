@@ -18,14 +18,28 @@ contract("MetaverseNFT", function (accounts) {
   });
 
   let revenue = [web3.utils.toBN(1e18), web3.utils.toBN(1e18), web3.utils.toBN(1e18)];
-  let expenditure = [web3.utils.toBN(1e18), web3.utils.toBN(1e18), web3.utils.toBN(1e18)];
   let rentalFees = [web3.utils.toBN(1e18), web3.utils.toBN(1e18)];
   let rockTokenURIs = ['Im rock 1', 'Im rock 2'];
   let metaverURI = 'Im metaverse 1';
 
   it("should fail", async () => {
-    await truffleAssert.reverts(metaverseNFT.mintMetaverse(accounts[0], rentalFees, rockTokenURIs, revenue, expenditure, metaverURI));
+    await truffleAssert.reverts(metaverseNFT.mintMetaverse(accounts[0], rentalFees, rockTokenURIs, revenue, metaverURI));
   });
   
+  it('should mint the token', async () => {
+    await roveToken.mint(accounts[0], web3.utils.toBN(100e18), {from: accounts[0]});
+    const value = await roveToken.balanceOf(accounts[0]);
+    const totalSupply = await roveToken.totalSupply();
 
+    assert.equal(0, web3.utils.toBN(100e18).cmp(value));
+    assert.equal(0, web3.utils.toBN(100e18).cmp(totalSupply));
+  });
+
+  it('create new metaverse', async () => {
+    await roveToken.approve(metaverseNFT.address, web3.utils.toBN(1000e18), {from: accounts[0]});
+    await metaverseNFT.mintMetaverse(accounts[0], accounts[0], [web3.utils.toBN(1e18), web3.utils.toBN(1e18)], ['Im rock 1', 'Im rock 2'], 'Im metaverse 1');
+
+    assert.equal(0, web3.utils.toBN(100e18).cmp(value));
+    assert.equal(0, web3.utils.toBN(100e18).cmp(totalSupply));
+  });
 });
