@@ -26,6 +26,7 @@ const GLOBAL_SALES_TAX = '1000';
 
 module.exports = async function(deployer, network, accounts) {
   // todo: update accordingly to the network
+  const adminDefault = accounts[0];
   await deployer.deploy(Rove, adminDefault);
   const roveIns = await Rove.deployed();
   await deployer.deploy(NameNFT, adminDefault);
