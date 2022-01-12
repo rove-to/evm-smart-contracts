@@ -3,6 +3,7 @@ const ExperienceNFT = artifacts.require("ExperienceNFT");
 const RockNFT = artifacts.require("RockNFT");
 const TicketNFT = artifacts.require("TicketNFT");
 const Rove = artifacts.require("Rove");
+const ParameterControl = artifacts.require("ParameterControl");
 const truffleAssert = require('truffle-assertions');
 var Web3 = require('web3');
 const web3 = new Web3();
@@ -23,6 +24,7 @@ contract("ExperienceNFT", function (accounts) {
   let rentalFees = [web3.utils.toBN(1e18), web3.utils.toBN(1e18)];
   let rockTokenURIs = ['Im rock 1', 'Im rock 2'];
   let metaverURI = 'Im metaverse 1';
+  let parameterControlIns;
 
   before("should init instance of contracts", async function () {
     metaverseNFT = await MetaverseNFT.deployed();
@@ -33,6 +35,7 @@ contract("ExperienceNFT", function (accounts) {
     experienceContractId = await rockNFT.getExperienceNFT();
     console.log({experienceContractId});
     experienceNFT = await ExperienceNFT.at(experienceContractId);
+    parameterControlIns = await ParameterControl.deployed();
   });
 
   it('should not equal to zero', async () => {
@@ -61,11 +64,31 @@ contract("ExperienceNFT", function (accounts) {
       Math.floor(Date.now() / 1000) + 200,
       Math.floor(Date.now() / 1000) + 500,
       10,
+      'Im ticket 1',
       'Im experience 1', 
-      {from: accounts[0]}
+      {from: accounts[0]},
     );
     let roveAfterEvent = await roveToken.balanceOf(accounts[0]);
     assert.equal(0, roveBeforeEvent.cmp(roveAfterEvent));
+    await truffleAssert.reverts(experienceNFT.mintExperience(
+      1,
+      web3.utils.toBN(1e18),
+      Math.floor(Date.now() / 1000) + 200,
+      Math.floor(Date.now() / 1000) + 500,
+      10,
+      'Im ticket 1',
+      'Im experience 1', 
+      {from: accounts[0]}),
+    );
+  });
+
+  it('user another host to create event', async () => {
+    const mintAmount = web3.utils.toBN(100e18);
+    await roveToken.mint(accounts[1], mintAmount);
+    await roveToken.approve(experienceNFT.address, mintAmount, {from: accounts[1]});
+    const approved = await roveToken.allowance(accounts[1], experienceNFT.address);
+    console.log('approved ', approved.toString());
+    assert.equal(true, approved.toString() === mintAmount.toString());
 
     await truffleAssert.reverts(experienceNFT.mintExperience(
       1,
@@ -73,29 +96,32 @@ contract("ExperienceNFT", function (accounts) {
       Math.floor(Date.now() / 1000) + 200,
       Math.floor(Date.now() / 1000) + 500,
       10,
-      'Im experience 1', {from: accounts[0]}));
-    await roveToken.mint(accounts[1], web3.utils.toBN(100e18));
-    await roveToken.approve(metaverseNFT.address, web3.utils.toBN('100000000000000000000'), {from: accounts[1]});
-    await truffleAssert.reverts(experienceNFT.mintExperience(
-      1,
-      web3.utils.toBN(1e18),
-      Math.floor(Date.now() / 1000) + 200,
-      Math.floor(Date.now() / 1000) + 500,
-      10,
-      'Im experience 1', {from: accounts[1]}));
-
-    roveBeforeEvent = await roveToken.balanceOf(accounts[1]);
+      'Im ticket 2',
+      'Im experience 2', 
+      {from: accounts[1]}
+      )
+);
+    let roveBeforeEvent = await roveToken.balanceOf(accounts[1]);
     console.log(roveBeforeEvent.toString());
+
+    const start = Math.floor(Date.now() / 1000) + 700;
+    const end = Math.floor(Date.now() / 1000) + 900;
+
     await experienceNFT.mintExperience(
       1,
       web3.utils.toBN(1e18),
-      Math.floor(Date.now() / 1000) + 700,
-      Math.floor(Date.now() / 1000) + 900,
+      start,
+      end,
       10,
-      'Im experience 2', {from: accounts[1]});
-    roveAfterEvent = await roveToken.balanceOf(accounts[1]);
+      'Im ticket 2',
+      'Im experience 2', 
+      { from: accounts[1] },
+    );
+    let roveAfterEvent = await roveToken.balanceOf(accounts[1]);
     console.log(roveAfterEvent.toString());
-    // assert.equal(-1, roveBeforeEvent.cmp(roveAfterEvent));
+    assert.equal(1, roveBeforeEvent.cmp(roveAfterEvent));
+    const bal = await experienceNFT.balanceOf(accounts[1]);
+    assert.equal(1, bal.cmp(0));
   });
 
 });

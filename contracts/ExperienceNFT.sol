@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./IParameterControl.sol";
 import "./TicketNFT.sol";
@@ -44,7 +43,7 @@ interface IMetaverseNFT_ {
  *
  */
 
-contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
+contract ExperienceNFT is ERC721URIStorage, Constant {
 
         struct Experience {
                 uint256 rockId;
@@ -127,9 +126,11 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 if (rockOwner != host) {
                         uint256 rockTimeCostPerUnit =  _globalParameters.get(ROCK_TIME_COST_UNIT);
                         uint256 timeRange = end - start;
-                        uint256 rentalFee = _rockNFT.getRentalFee(rockId) * (timeRange / rockTimeCostPerUnit + timeRange % rockTimeCostPerUnit > 0 ? 1 : 0);
-                        if (rentalFee > 0) {
-                                payRentFee(rockId, rentalFee, rockOwner, host);
+                        if (rockTimeCostPerUnit > 0) {
+                                uint256 rentalFee = _rockNFT.getRentalFee(rockId) * (timeRange / rockTimeCostPerUnit + (timeRange % rockTimeCostPerUnit > 0 ? 1 : 0));
+                                if (rentalFee > 0) {
+                                        payRentFee(rockId, rentalFee, rockOwner, host);
+                                }
                         }
                 }
                 }
@@ -153,7 +154,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
 
         function payRentFee(uint256 rockId, uint256 rentalFee, address rockOwner, address host) internal {
                 IMetaverseNFT_.Metaverse memory metaverse = _metaverseNFT.getMetaverseNFT(_rockNFT.getMetaverseId(rockId));
-                rentalFee = payTaxes(HOSTING_FEE, metaverse.revenue.propertyTaxRate, rentalFee, metaverse.metaverseDAO);
+                rentalFee = payTaxes(HOSTING_FEE, metaverse.revenue.propertyTaxRate, rentalFee, metaverse.metaverseDAO, host, false);
                 _rove.transferFrom(host, rockOwner, rentalFee);
         }
 
@@ -198,7 +199,7 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 uint256 amount = e.creators.shares[creator] * e.revenue / e.creators.totalShares;
                 require(amount > 0, "no payment due to creator");
                 IMetaverseNFT_.Metaverse memory metaverse = _metaverseNFT.getMetaverseNFT(_rockNFT.getMetaverseId(_experiences[experienceId].rockId));
-                amount = payTaxes(GLOBAL_SALES_TAX, metaverse.revenue.salesTaxRate, amount, metaverse.metaverseDAO);
+                amount = payTaxes(GLOBAL_SALES_TAX, metaverse.revenue.salesTaxRate, amount, metaverse.metaverseDAO, address(0), true);
 
                 e.creators.shares[creator] = 0;
                 _rove.transfer(creator, amount);
@@ -206,14 +207,22 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
                 emit CollectPayment(experienceId, creator, amount);
         }
 
-        function payTaxes(string memory global, uint256 metversePercent, uint256 amount, address metaverseDAO) internal returns(uint256) {
+        function payTaxes(string memory global, uint256 metversePercent, uint256 amount, address metaverseDAO, address host, bool isClaim) internal returns(uint256) {
                 uint256 globalTax = amount * _globalParameters.get(global) / MAX_PERCENT;
                 if (globalTax > 0) {
-                        _rove.transfer(address(uint160(_globalParameters.get(GLOBAL_ROVE_DAO))), globalTax);
+                        if (isClaim) {
+                                _rove.transfer(address(uint160(_globalParameters.get(GLOBAL_ROVE_DAO))), globalTax);
+                        }  else {
+                                _rove.transferFrom(host, address(uint160(_globalParameters.get(GLOBAL_ROVE_DAO))), globalTax);
+                        }
                 }
                 uint256 metaverseTax = amount * metversePercent / MAX_PERCENT;
                 if (metaverseTax > 0) {
-                        _rove.transfer(metaverseDAO, metaverseTax);
+                        if (isClaim) {
+                                _rove.transfer(metaverseDAO, metaverseTax);
+                        } else {
+                                _rove.transferFrom(host, metaverseDAO, globalTax);
+                        }
                 }
 
                 return amount - globalTax - metaverseTax;
@@ -246,18 +255,5 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage, Constant {
 
         function getTicketNFT() external view returns (address) {
                 return address(_ticketNFT);
-        }
-
-        function supportsInterface(bytes4 interfaceId) 
-                public 
-                view 
-                virtual 
-                override(AccessControl, ERC721) 
-                returns (bool) 
-        { 
-                return 
-                        interfaceId == type(IERC721).interfaceId || 
-                        interfaceId == type(IERC721Metadata).interfaceId || 
-                        super.supportsInterface(interfaceId);
         }
 }
