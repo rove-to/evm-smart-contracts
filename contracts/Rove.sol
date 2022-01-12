@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract Rove is ERC20, AccessControl {
     // Create a new role identifier for the minter role
 
-    constructor(address admin) ERC20("ROVER", "ROVER") {
+    constructor(address admin) ERC20("ROVE", "RVE") {
         // Grant the minter role to a specified account
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
