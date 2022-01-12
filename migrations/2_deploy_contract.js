@@ -25,6 +25,9 @@ const GLOBAL_ROVE_DAO = adminDefault;
 const GLOBAL_SALES_TAX = '1000';
 
 module.exports = async function(deployer, network, accounts) {
+  if (network != 'development') {
+     return;
+  }
   // todo: update accordingly to the network
   const adminDefault = accounts[0];
   await deployer.deploy(Rove, adminDefault);
