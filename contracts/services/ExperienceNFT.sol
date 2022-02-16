@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./ITicketNFT.sol";
-import "./IRockNFT.sol";
-import "./IParameterControl.sol";
-import "./IRove.sol";
-import "./IMetaverseNFT.sol";
+import "../goods/IRockNFT.sol";
+import "../goods/IMetaverseNFT.sol";
+import "../governance/IParameterControl.sol";
+import "../monetary/IRove.sol";
 
 /*
  * TODO:

@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./IParameterControl.sol";
-import "./IRove.sol";
-import "./IMetaverseNFT.sol";
+import "../governance/IParameterControl.sol";
+import "../monetary/IRove.sol";
+import "../goods/IMetaverseNFT.sol";
 
 /*
  * TODO:
