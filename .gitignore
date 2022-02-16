@@ -32,3 +32,9 @@ build/
 .node-xmlhttprequest-*
 
 .idea
+
+artifacts
+
+cache
+
+yarn.lock
