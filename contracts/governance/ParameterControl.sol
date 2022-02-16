@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./utils/constants.sol";
+import "../utils/constants.sol";
 
 /*
  * @dev Implementation of a programmable parameter control.

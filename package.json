@@ -18,7 +18,10 @@
   },
   "homepage": "https://github.com/rove-to/evm-smart-contracts#readme",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@openzeppelin/contracts": "^4.4.1",
+    "dotenv": "^16.0.0",
+    "hardhat": "^2.8.4",
     "truffle": "^5.4.27"
   },
   "directories": {

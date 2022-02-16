@@ -94,10 +94,10 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 returns (uint256)
         {
                 // the rock must not owe any property tax
-                require(!_metaverseNFT.owePropertyTax(rockId));
+                // require(!_metaverseNFT.owePropertyTax(rockId));
 
                 // the host must either own or rent the rock
-                require(_rockNFT.hasAccess(host, rockId));
+                // require(_rockNFT.hasAccess(host, rockId));
 
                 // pay rental fees
                 if (ownerOf(rockId) != host) {

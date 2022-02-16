@@ -104,8 +104,9 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         ) 
                 internal 
         {
+                uint256 fee = 0;
                 for (uint256 i = 0; i < numberOfGenesisRocks; i++) {
-                        uint256 rockId = _rockNFT.mintRock(metaverseId, owner, tokenURI);
+                        uint256 rockId = _rockNFT.mintRock(metaverseId, owner, fee, tokenURI);
                         _metaverses[metaverseId].rocks.push(rockId);
                 }
         }
@@ -124,11 +125,11 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
         {
                 uint256 platformGlobalFee = _globalParameters.get("ROCK_BREEDING_FEE");
                 uint256 metaverseLocalFee = _metaverses[metaverseId].revenue.breedingFee;
-
+                uint256 rentalFee = 0;
                 _rove.transferFrom(owner, address(this), platformGlobalFee + metaverseLocalFee);
                 _metaverses[metaverseId].treasury += metaverseLocalFee;
 
-                uint256 childId = _rockNFT.breedRock(metaverseId, owner, dadId, momId, tokenURI);
+                uint256 childId = _rockNFT.breedRock(metaverseId, owner, dadId, momId, rentalFee, tokenURI);
                 _metaverses[metaverseId].rocks.push(childId);
 
                 return childId;

@@ -10,7 +10,7 @@ module.exports = {
   networks: {
     hardhat: {},
     rinkeby: {
-      url: process.env.RINKEBY_DEV_API_URL,
+      url: process.env.RINKEBY_API_URL,
       accounts: [`0x${process.env.PRIVATE_KEY}`],
     },
     ropsten: {
