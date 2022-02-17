@@ -1,0 +1,25 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-object-type",
+      "value": "Object NFTs"
+    },
+    {
+      "trait_type": "rove-asset-bundle",
+      "value": "https://gateway.pinata.cloud/ipfs/QmSYPxKup3E2aZ5ssP6LPZXA2vG5NnzPRTFYXRV7HVPywi"
+    },
+    {
+      "trait_type": "Breed",
+      "value": "Maltipoo 1"
+    },
+    {
+      "trait_type": "Eye color",
+      "value": "Mocha 1"
+    }
+  ],
+  "description": "Test rove object cute robot 1",
+  "image": "https://gateway.pinata.cloud/ipfs/QmZuPoFueE7zZMoEyGkkkYaqYzpzQm7mSRVZP4MaPYF8CQ",
+  "name": "Corgy dog",
+  "external_url": "https://rove-dev.moshwithme.io/",
+  "animation_url": ""
+}
