@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 /**
  * @dev A token holder contract that will allow a beneficiary to extract the
@@ -76,6 +77,7 @@ contract RoveTokenTimelock {
      * time.
      */
     function release() public virtual {
+        console.log("call release for token lock time address %s, block timestamp %s, release Time %s", address(this), block.timestamp, releaseTime());
         require(block.timestamp >= releaseTime(), "TokenTimelock: current time is before release time");
 
         uint256 amount = token().balanceOf(address(this));
@@ -85,15 +87,19 @@ contract RoveTokenTimelock {
         // 65% for community members
         uint256 community = amount.div(20);
         community = community.mul(13);
+        console.log("community: ", community);
         // 20% for Team
         uint256 team = amount.div(5);
-        community = community.mul(1);
+        team = team.mul(1);
+        console.log("team: ", team);
         // 10% reserved for Token Sales 
         uint256 sales = amount.div(10);
         sales = sales.mul(1);
+        console.log("sales: ", sales);
         // 5% reserved for Exchange Liquidity
         uint256 liquidity = amount.div(20);
         liquidity = liquidity.mul(1);
+        console.log("liquidity: ", liquidity);
 
         uint256 temp = community + team;
         temp = temp + sales;
