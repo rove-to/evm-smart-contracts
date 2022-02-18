@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "hardhat_c": "npx hardhat compile",
-    "hardhat_d": "node ./scripts/1_deploy.js"
+    "deploy_rove_token": "node ./scripts/roveToken/1_deploy_Rove_Token.js",
+    "schedule_rove_token": "node ./scripts/roveToken/2_schedule_Rove_Token.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,8 @@
     "@alch/alchemy-web3": "^1.2.4",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@openzeppelin/contracts": "^4.4.1",
+    "chai": "^4.3.6",
+    "chai-bignumber": "^3.0.0",
     "dotenv": "^16.0.0",
     "ethers": "^5.5.4",
     "hardhat": "^2.8.4",

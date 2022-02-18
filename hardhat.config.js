@@ -6,7 +6,7 @@ require("@nomiclabs/hardhat-ethers");
 
 module.exports = {
   solidity: "0.8.1",
-  defaultNetwork: "rinkeby",
+  defaultNetwork: "ropsten",
   networks: {
     hardhat: {},
     rinkeby: {
@@ -22,4 +22,7 @@ module.exports = {
       accounts: [`0x${process.env.PRIVATE_KEY}`],
     },
   },
+  mocha: {
+    timeout: 400000
+  }
 };
