@@ -71,6 +71,13 @@ contract RoveTokenTimelock {
     function releaseTime() public view virtual returns (uint256) {
         return _releaseTime;
     }
+    
+    function current_balance() public view returns (uint256) {
+        address temp = address(this);
+        uint256 balance = token().balanceOf(temp);
+        console.log("token lock time address %s has balance %s", address(this), balance);
+        return balance;
+    }
 
     /**
      * @dev Transfers tokens held by the timelock to the beneficiary. Will only succeed if invoked after the release

@@ -17,7 +17,6 @@ contract RoveToken is ERC20, AccessControl {
     // admin is a multi sig address
     constructor(address admin_) ERC20("ROVE", "RVE") {
         console.log("Deploy Rove token", "RVE");
-        console.log("Mint to admin address", _admin);
         _admin = admin_;
         console.log("Mint to admin address", _admin);
         // Grant the minter role to a specified account
