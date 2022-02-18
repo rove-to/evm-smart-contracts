@@ -7,10 +7,6 @@ const expect = chai.expect;
 
 const admin_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
-function addMinutes(date, minutes) {
-    return new Date(date.getTime() + minutes * 60 * 1000);
-}
-
 function addSeconds(date, seconds) {
     return new Date(date.getTime() + seconds * 1000);
 }
@@ -57,8 +53,7 @@ describe("Token contract", function () {
         '0x095442A025B1772093473b018ec9A9c427E6e806',
         '0x8748610D04C99AB70B7b5938efd3EF72768D7256'
     ];
-    const releaseDeltaMinutes = 1;
-    const releaseDeltaSeconds = 10;
+    const releaseDeltaSeconds = 60;
 
     /*`beforeEach` will run before each test, re-deploying the contract every
     time. It receives a callback, which can be async.*/
@@ -80,7 +75,7 @@ describe("Token contract", function () {
         * */
         for (let i = 1; i <= 4; i++) {
             let roveTokenTimelockContract = await ethers.getContractFactory("RoveTokenTimelock");
-            let releaseTimeSecond = Math.floor(addMinutes(now, releaseDeltaMinutes * i).getTime() / 1000);
+            let releaseTimeSecond = Math.floor(addSeconds(now, releaseDeltaSeconds * i).getTime() / 1000);
             let roveTokenTimelock = await roveTokenTimelockContract.deploy(
                 roveToken.address,
                 addresses,
@@ -144,7 +139,7 @@ describe("Token contract", function () {
             console.log("--- Call release for token locktime");
             for (let i = 0; i < 4; i++) {
                 let lock = roveTokenlockTimeArrays[i];
-                await sleep(65 * releaseDeltaMinutes);
+                await sleep(releaseDeltaSeconds + 5);
                 await lock.release();
                 console.log("release for %s", lock.address);
             }
