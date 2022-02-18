@@ -52,7 +52,7 @@ describe("Token contract", function () {
         '0x095442A025B1772093473b018ec9A9c427E6e806',
         '0x8748610D04C99AB70B7b5938efd3EF72768D7256'
     ];
-    const releaseDelta = 3;
+    const releaseDelta = 1;
 
     /*`beforeEach` will run before each test, re-deploying the contract every
     time. It receives a callback, which can be async.*/
@@ -87,12 +87,12 @@ describe("Token contract", function () {
     });
 
     // You can nest describe calls to create subsections.
-    describe("Deployment Rove Token", function () {
+    describe("** Deployment Rove Token", function () {
         /*`it` is another Mocha function. This is the one you use to define your
         tests. It receives the test name, and a callback function.*/
 
         // If the callback function is async, Mocha will `await` it.
-        it("Should set the right owner/admin", async function () {
+        it("* Should set the right owner/admin", async function () {
             // Expect receives a value, and wraps it in an Assertion object. These
             // objects have a lot of utility methods to assert values.
 
@@ -105,7 +105,7 @@ describe("Token contract", function () {
             expect(await roveToken.admin()).to.equal(admin_address);
         });
 
-        it("Should assign the total supply of tokens to the admin", async function () {
+        it("* Should assign the total supply of tokens to the admin", async function () {
             const decimals = await roveToken.decimals();
             expect(decimals).to.equal(4);
 
@@ -116,16 +116,17 @@ describe("Token contract", function () {
             expect(adminBalance).to.equal(totalSupply);
         });
     });
-    describe("Minting Schedule", function () {
+    describe("** Minting Schedule", function () {
         it("Should send token to 4 token time lock contract address", async function () {
-            console.log("Minting Schedule on timelock contracts", roveTokenlockTimeAddressArrays);
+            console.log("--- Minting Schedule on timelock contracts", roveTokenlockTimeAddressArrays);
             await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
 
-            console.log("Check amount of admin address is 0");
+            console.log("--- Check amount of admin address now is 0");
             const adminBalance = await roveToken.balanceOf(admin_address);
             console.log("adminBalance after token lock limit", adminBalance);
             expect(adminBalance).to.equal(0);
 
+            console.log("--- Check amount of 'token time lock' address now is available");
             for (let i = 0; i < 4; i++) {
                 await sleep(10);
                 let lock = roveTokenlockTimeArrays[i];
@@ -133,24 +134,27 @@ describe("Token contract", function () {
                 console.log("balance of %s is %s", lock.address, balance);
                 expect(balance).to.gt(0);
             }
-        });
-
-        it("Call release for token locktime", async function () {
+            
+            console.log("--- Call release for token locktime");
             for (let i = 0; i < 4; i++) {
                 let lock = roveTokenlockTimeArrays[i];
-                await sleep(90 * releaseDelta);
+                await sleep(65 * releaseDelta);
                 await lock.release();
                 console.log("release for %s", lock.address);
             }
 
-            console.log("Check balance of all address after release time");
-            let totalBalance = 0;
+            console.log("--- Check balance of all address after release time");
+            let totalBalance = new BigNumber(0);
             for (let i = 0; i < addresses.length; i++) {
                 let addr = addresses[i];
                 let balance = await roveToken.balanceOf(addr);
-                totalBalance += balance;
+                totalBalance = totalBalance + balance;
                 console.log("balance of %s is %s", addr, balance);
             }
+            console.log("all address has total balance is %s", totalBalance);
+            const totalSupply = await roveToken.totalSupply();
+            console.log("totalSupply", totalSupply);
+            expect(totalBalance).to.equal(totalSupply);
         });
     });
     /*describe("Transactions", function () {
