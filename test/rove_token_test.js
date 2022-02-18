@@ -1,11 +1,13 @@
+var {solidity} = require("ethereum-waffle");
 var chai = require('chai');
-//use default BigNumber
-chai.use(require('chai-bignumber')());
+chai.use(solidity);
+const {ethers} = require("hardhat");
 
-// We import Chai to use its asserting functions here.
-const {expect} = require("chai");
+const admin_address = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
-const admin_address = process.env.PUBLIC_KEY;
+function addMinutes(date, minutes) {
+    return new Date(date.getTime() + minutes * 60000);
+}
 
 /*`describe` is a Mocha function that allows you to organize your tests. It's
 not actually needed, but having your tests organized makes debugging them
@@ -24,25 +26,52 @@ describe("Token contract", function () {
     /*A common pattern is to declare some variables, and assign them in the
     `before` and `beforeEach` callbacks.*/
 
-    let Token;
+    let tokenContract;
     let roveToken;
     let owner;
     let addr1;
     let addr2;
+    let addr3;
+    let addr4;
     let addrs;
+
+    // token time lock contract
+    const now = new Date();
+    let roveTokenlockTimeArrays = [];
+    const addresses = [
+        '0xF61234046A18b07Bf1486823369B22eFd2C4507F',
+        '0xdD3B4d6aCfDE5Ee45dB3eF933204E3388C0C2930',
+        '0x095442A025B1772093473b018ec9A9c427E6e806',
+        '0x8748610D04C99AB70B7b5938efd3EF72768D7256'
+    ];
 
     /*`beforeEach` will run before each test, re-deploying the contract every
     time. It receives a callback, which can be async.*/
     beforeEach(async function () {
         // Get the ContractFactory and Signers here.
-        Token = await ethers.getContractFactory("RoveToken");
+        tokenContract = await ethers.getContractFactory("RoveToken");
         [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
-        /*To deploy our contract, we just have to call Token.deploy() and await
+        /*To deploy our token contract, we just have to call Token.deploy() and await
         for it to be deployed(), which happens once its transaction has been
         mined.*/
-        roveToken = await Token.deploy(admin_address);
+        roveToken = await tokenContract.deploy(admin_address);
         console.log("Rove token contract address", roveToken.address);
+
+        /*
+        * Deploy our minting schedule
+        * */
+        for (let i = 1; i <= 4; i++) {
+            let roveTokenTimelockContract = await ethers.getContractFactory("RoveTokenTimelock");
+            let releaseTime = addMinutes(now, 10 * i).getTime();
+            let roveTokenTimelock = await roveTokenTimelockContract.deploy(
+                roveToken.address,
+                addresses,
+                releaseTime,
+            );
+            console.log("Rove Time lock 1st year deployed: ", roveTokenTimelock.address, releaseTime);
+            roveTokenlockTimeArrays.push(roveTokenTimelock.address);
+        }
     });
 
     // You can nest describe calls to create subsections.
@@ -51,7 +80,7 @@ describe("Token contract", function () {
         tests. It receives the test name, and a callback function.*/
 
         // If the callback function is async, Mocha will `await` it.
-        it("Should set the right owner/admin", async function () {
+        /*it("Should set the right owner/admin", async function () {
             // Expect receives a value, and wraps it in an Assertion object. These
             // objects have a lot of utility methods to assert values.
 
@@ -62,17 +91,25 @@ describe("Token contract", function () {
             // This test expects the admin variable stored in the contract to be equal
             // to our admin address.
             expect(await roveToken.admin()).to.equal(admin_address);
-        });
+        });*/
 
-        it("Should assign the total supply of tokens to the admin", async function () {
+        /*it("Should assign the total supply of tokens to the admin", async function () {
+            const decimals = await roveToken.decimals();
+            expect(decimals).to.equal(4);
+
             const adminBalance = await roveToken.balanceOf(admin_address);
             console.log("adminBalance", adminBalance);
             const totalSupply = await roveToken.totalSupply();
             console.log("totalSupply", totalSupply);
-            expect(totalSupply).to.be.bignumber.at.most(adminBalance);
+            expect(adminBalance).to.equal(totalSupply);
+        });*/
+    });
+    describe("Minting Schedule", function () {
+        it("Should send token to 4 token time lock contract address", async function () {
+            console.log("Minting Schedule on timelock contracts", roveTokenlockTimeArrays);
+            await roveToken.schedule_minting(roveTokenlockTimeArrays);
         });
     });
-
     /*describe("Transactions", function () {
         it("Should transfer tokens between accounts", async function () {
             // Transfer 50 tokens from owner to addr1
