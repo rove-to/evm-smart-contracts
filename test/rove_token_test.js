@@ -2,12 +2,17 @@ var {solidity} = require("ethereum-waffle");
 var chai = require('chai');
 chai.use(solidity);
 const {ethers} = require("hardhat");
+const BigNumber = require("big-number");
 const expect = chai.expect;
 
 const admin_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 function addMinutes(date, minutes) {
-    return new Date(date.getTime() + minutes * 60000);
+    return new Date(date.getTime() + minutes * 60 * 1000);
+}
+
+function addSeconds(date, seconds) {
+    return new Date(date.getTime() + seconds * 1000);
 }
 
 function sleep(second) {
@@ -52,7 +57,8 @@ describe("Token contract", function () {
         '0x095442A025B1772093473b018ec9A9c427E6e806',
         '0x8748610D04C99AB70B7b5938efd3EF72768D7256'
     ];
-    const releaseDelta = 1;
+    const releaseDeltaMinutes = 1;
+    const releaseDeltaSeconds = 10;
 
     /*`beforeEach` will run before each test, re-deploying the contract every
     time. It receives a callback, which can be async.*/
@@ -74,7 +80,7 @@ describe("Token contract", function () {
         * */
         for (let i = 1; i <= 4; i++) {
             let roveTokenTimelockContract = await ethers.getContractFactory("RoveTokenTimelock");
-            let releaseTimeSecond = Math.floor(addMinutes(now, releaseDelta * i).getTime() / 1000);
+            let releaseTimeSecond = Math.floor(addMinutes(now, releaseDeltaMinutes * i).getTime() / 1000);
             let roveTokenTimelock = await roveTokenTimelockContract.deploy(
                 roveToken.address,
                 addresses,
@@ -138,17 +144,18 @@ describe("Token contract", function () {
             console.log("--- Call release for token locktime");
             for (let i = 0; i < 4; i++) {
                 let lock = roveTokenlockTimeArrays[i];
-                await sleep(65 * releaseDelta);
+                await sleep(65 * releaseDeltaMinutes);
                 await lock.release();
                 console.log("release for %s", lock.address);
             }
 
             console.log("--- Check balance of all address after release time");
+            var BigNumber = require('big-number');
             let totalBalance = new BigNumber(0);
             for (let i = 0; i < addresses.length; i++) {
                 let addr = addresses[i];
                 let balance = await roveToken.balanceOf(addr);
-                totalBalance = totalBalance + balance;
+                totalBalance = totalBalance.plus(balance);
                 console.log("balance of %s is %s", addr, balance);
             }
             console.log("all address has total balance is %s", totalBalance);
