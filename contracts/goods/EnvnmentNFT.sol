@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "hardhat/console.sol";
 
 /*
  * TODO:
@@ -14,24 +15,37 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract EnvironmentNFT is ERC1155Tradable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    uint256 private _newItemId;
 
     constructor(address _proxyRegistryAddress)
     ERC1155Tradable(
-        "Rove Environment Test",
-        "REsT",
+        "Rove Environments",
+        "REs",
         "",
         _proxyRegistryAddress
     ) public {
     }
 
-    function mintNFT(address recipient, string memory tokenURI)
+    function newItemId() public view returns (uint256) {
+        return _newItemId;
+    }
+
+    function mintNFT(address recipient, uint256 initialSupply, string memory tokenURI)
     public onlyOwner
     returns (uint256)
     {
         _tokenIds.increment();
 
-        uint256 newItemId = _tokenIds.current();
-        create(recipient, newItemId, 1, tokenURI, "0x");
-        return newItemId;
+        _newItemId = _tokenIds.current();
+        create(recipient, _newItemId, initialSupply, tokenURI, "0x");
+
+        console.log(
+            "mintNFT erc-1155 %s, owner %s, total %s",
+            address(this),
+            recipient,
+            initialSupply
+        );
+        console.log("tokenid: ", _newItemId);
+        return _newItemId;
     }
 }
