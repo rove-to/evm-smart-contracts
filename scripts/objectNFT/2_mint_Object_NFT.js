@@ -24,7 +24,7 @@ async function mintObjectNFT(network, PUBLIC_KEY, contractAddress, tokenURI) {
         to: contractAddress,
         nonce: nonce,
         gas: 500000,
-        data: nftContract.methods.mintNFT(PUBLIC_KEY, tokenURI).encodeABI(),
+        data: nftContract.methods.mintNFT(PUBLIC_KEY, 1, tokenURI).encodeABI(),
     }
 
     const signPromise = web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
