@@ -19,10 +19,13 @@ contract RoveToken is ERC20, AccessControl {
         console.log("Deploy Rove token", "RVE");
         _admin = admin_;
         console.log("Mint to admin address", _admin);
+        
         // Grant the minter role to a specified account
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-        _mint(_admin, 1000000000 * (10 ** uint256(decimals())));
-        console.log("Total supply for admin address", 1000000000);
+        uint256 _totalSupplyRove = 1000000000;
+        // mint RVE for admin account
+        _mint(_admin, _totalSupplyRove * (10 ** uint256(decimals())));
+        console.log("Total supply for admin address", _totalSupplyRove);
     }
 
     function decimals() public view virtual override returns (uint8) {
@@ -44,6 +47,8 @@ contract RoveToken is ERC20, AccessControl {
     }
 
     function schedule_minting(address[4] memory timeLockContracts) public returns (uint256) {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a minter");
+        
         _roveTokenTimelockContract = timeLockContracts;
         uint256 total = totalSupply();
         console.log("total supply", total);
