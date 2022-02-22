@@ -5,6 +5,10 @@
       "value": "Environment NFTs"
     },
     {
+      "trait_type": "rove-nft-type-ver",
+      "value": "1.0"
+    },
+    {
       "trait_type": "rove-asset-bundle",
       "value": "https://gateway.pinata.cloud/ipfs/QmSYPxKup3E2aZ5ssP6LPZXA2vG5NnzPRTFYXRV7HVPywi"
     },
