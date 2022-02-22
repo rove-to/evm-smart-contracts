@@ -2,7 +2,7 @@
   "attributes": [
     {
       "trait_type": "rove-nft-type",
-      "value": "Environment NFTs"
+      "value": "Rock NFTs"
     },
     {
       "trait_type": "rove-asset-bundle",
@@ -21,7 +21,7 @@
       "value": "Mocha 1"
     }
   ],
-  "description": "Rove environment NFTs",
+  "description": "Rove rock NFTs",
   "image": "https://gateway.pinata.cloud/ipfs/QmZuPoFueE7zZMoEyGkkkYaqYzpzQm7mSRVZP4MaPYF8CQ",
   "name": "Corgy dog",
   "external_url": "https://rove-dev.moshwithme.io/",

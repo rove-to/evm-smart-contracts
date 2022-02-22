@@ -6,7 +6,7 @@ require("@nomiclabs/hardhat-ethers");
 
 module.exports = {
     solidity: "0.8.1",
-    defaultNetwork: "local",
+    defaultNetwork: "mumbai",
     networks: {
         hardhat: {},
         local: {
