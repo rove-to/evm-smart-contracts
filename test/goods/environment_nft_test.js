@@ -36,7 +36,7 @@ describe("** NFTs erc-1155 contract", function () {
     });
     describe("* Mint NFT erc-1155", function () {
         it("- Check total supply of minted NFT token", async function () {
-            /*let recipient = nft_owner_address;
+            let recipient = nft_owner_address;
             let initSupply = 10;
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
@@ -54,7 +54,7 @@ describe("** NFTs erc-1155 contract", function () {
             // check total supply of token id
             let totalSupply = await environmentNFT.totalSupply(tokenID);
             console.log("totalSupply init:", totalSupply);
-            expect(totalSupply).to.equal(initSupply);*/
+            expect(totalSupply).to.equal(initSupply);
         });
     });
     describe("* Transactions", function () {
