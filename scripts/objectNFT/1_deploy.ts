@@ -1,9 +1,10 @@
-import config from "../../config";
+import * as dotenv from 'dotenv';
+
 import {ObjectNFT} from "./objectNFT";
 
 (async () => {
     try {
-        const objectNFT = new ObjectNFT(config.ACCESS_TOKEN, config.PRIVATE_KEY, config.PUBLIC_KEY);
+        const objectNFT = new ObjectNFT(process.env.ACCESS_TOKEN, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         const address = await objectNFT.deploy();
         console.log("ObjectNFT deployed address: ", address);
     } catch (e) {

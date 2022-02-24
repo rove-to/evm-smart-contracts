@@ -1,11 +1,8 @@
 import * as dotenv from 'dotenv';
-
 var mime = require('mime-types')
 dotenv.config();
-import config from '../../config';
 import * as path from "path";
 import {Buffer} from "buffer";
-import env = require("hardhat");
 
 var fs = require('fs');
 const axios = require('axios').default;
@@ -13,7 +10,7 @@ const axios = require('axios').default;
 class PinataIpfsStorage {
     accessToken: string;
 
-    constructor(accessToken: string) {
+    constructor(accessToken: any) {
         this.accessToken = accessToken;
     }
 
@@ -159,7 +156,7 @@ export {PinataIpfsStorage};
 
 /*(async () => {
     try {
-        var pinataIpfsStorage = new PinataIpfsStorage(config.ACCESS_TOKEN);
+        var pinataIpfsStorage = new PinataIpfsStorage(process.env.ACCESS_TOKEN);
         const pinatahashlink = await pinataIpfsStorage.uploadObjectNFT(
             "./metadatajson/Test-Drive-Unlimited-new-2-icon.png",
             "./metadatajson/corgi.arc",

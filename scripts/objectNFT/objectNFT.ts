@@ -10,7 +10,7 @@ class ObjectNFT {
     senderPublicKey: string;
     senderPrivateKey: string;
 
-    constructor(network: string, senderPrivateKey: string, senderPublicKey: string) {
+    constructor(network: any, senderPrivateKey: any, senderPublicKey: any) {
         this.network = network;
         this.senderPrivateKey = senderPrivateKey;
         this.senderPublicKey = senderPublicKey;
@@ -31,17 +31,17 @@ class ObjectNFT {
         return ObjectNFTDeploy.address;
     }
 
-    async mintObjectNFT(ownerAddress: string, contractAddress: string, initSupply: number, tokenURI: string, gas: number) {
-        let API_URL: string;
+    async mintObjectNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+        let API_URL: any;
         if (this.network === 'mumbai') {
-            API_URL = config.POLYGON_MUMBAI_API_URL;
+            API_URL = process.env.POLYGON_MUMBAI_API_URL;
         } else {
             console.log("Not is mumbai");
             return;
         }
 
         // load contract
-        let contract = require(path.resolve("../../artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
+        let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
 
