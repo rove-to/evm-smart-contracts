@@ -157,7 +157,7 @@ class PinataIpfsStorage {
 
 export {PinataIpfsStorage};
 
-(async () => {
+/*(async () => {
     try {
         var pinataIpfsStorage = new PinataIpfsStorage(config.ACCESS_TOKEN);
         const pinatahashlink = await pinataIpfsStorage.uploadObjectNFT(
@@ -169,4 +169,4 @@ export {PinataIpfsStorage};
         // Deal with the fact the chain failed
         console.log(e);
     }
-})();
+})();*/
