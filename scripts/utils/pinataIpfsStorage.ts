@@ -19,6 +19,7 @@ class PinataIpfsStorage {
 
     async axiosPost(url: string, data: object) {
         try {
+            console.log(this.accessToken);
             const resp = await axios.post(url, data, {
                 headers: {
                     Authorization: 'Bearer ' + this.accessToken
