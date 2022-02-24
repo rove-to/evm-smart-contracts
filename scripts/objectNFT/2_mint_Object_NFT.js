@@ -5,8 +5,9 @@ const contract = require("../artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.j
 
 var API_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY
+const PUBLIC_KEY = process.env.PUBLIC_KEY
 
-async function mintObjectNFT(network, PUBLIC_KEY, contractAddress, tokenURI) {
+async function mintObjectNFT(network, owner_address, contractAddress, init_supply, tokenURI) {
     if (network === 'rinkeby') {
         API_URL = process.env.RINKEBY_API_URL
     } else {
@@ -24,7 +25,7 @@ async function mintObjectNFT(network, PUBLIC_KEY, contractAddress, tokenURI) {
         to: contractAddress,
         nonce: nonce,
         gas: 500000,
-        data: nftContract.methods.mintNFT(PUBLIC_KEY, 1, tokenURI).encodeABI(),
+        data: nftContract.methods.mintNFT(owner_address, init_supply, tokenURI).encodeABI(),
     }
 
     const signPromise = web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
@@ -49,8 +50,10 @@ async function mintObjectNFT(network, PUBLIC_KEY, contractAddress, tokenURI) {
             )
         })
         .catch((err) => {
-            console.log("Promise failed:", err)
         })
 }
 
-mintObjectNFT(process.env.NETWORK, process.env.PUBLIC_KEY, process.env.OBJECT_NFT_SC, "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH");
+mintObjectNFT(process.env.NETWORK,
+    ,
+    process.env.OBJECT_NFT_SC,
+    "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH");

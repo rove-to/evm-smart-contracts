@@ -154,14 +154,16 @@ class PinataIpfsStorage {
     }
 }
 
+export {PinataIpfsStorage};
+
 (async () => {
     try {
         var pinataIpfsStorage = new PinataIpfsStorage(config.ACCESS_TOKEN);
-        const pinatahash = await pinataIpfsStorage.uploadObjectNFT(
+        const pinatahashlink = await pinataIpfsStorage.uploadObjectNFT(
             "./metadatajson/Test-Drive-Unlimited-new-2-icon.png",
             "./metadatajson/corgi.arc",
             './metadatajson/object_nft.json');
-        console.log("result: ", pinatahash);
+        console.log("result: ", pinatahashlink);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
