@@ -12,15 +12,15 @@ import "hardhat/console.sol";
  *
  */
 
-contract ObjectNFT is ERC1155Tradable {
+contract EnvironmentNFT is ERC1155Tradable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     uint256 private _newItemId;
 
     constructor(address _proxyRegistryAddress)
     ERC1155Tradable(
-        "Rove Objects",
-        "ROs",
+        "Rove Environments",
+        "REs",
         "",
         _proxyRegistryAddress
     ) public {

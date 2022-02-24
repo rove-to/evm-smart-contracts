@@ -3,4 +3,6 @@
 RockNFT
 [] 
 
+# Compile
+- yarn hardhat: compile with hardhat
 

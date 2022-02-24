@@ -1,0 +1,12 @@
+const addresses = [
+    '0xF61234046A18b07Bf1486823369B22eFd2C4507F',
+    '0xdD3B4d6aCfDE5Ee45dB3eF933204E3388C0C2930',
+    '0x095442A025B1772093473b018ec9A9c427E6e806',
+    '0x8748610D04C99AB70B7b5938efd3EF72768D7256'
+];
+
+module.exports =
+    {
+        addresses
+    }
+;

@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "network": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy_token": "node ./scripts/roveToken/1_deploy_Rove_Token.js",
+    "schedule_token": "node ./scripts/roveToken/2_schedule_Rove_Token.js"
   },
   "repository": {
     "type": "git",
@@ -18,10 +22,25 @@
   },
   "homepage": "https://github.com/rove-to/evm-smart-contracts#readme",
   "devDependencies": {
+    "@alch/alchemy-web3": "^1.2.4",
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@openzeppelin/contracts": "^4.4.1",
-    "truffle": "^5.4.26"
+    "axios": "^0.26.0",
+    "big-number": "^2.0.0",
+    "chai": "^4.3.6",
+    "chai-bignumber": "^3.0.0",
+    "dotenv": "^16.0.0",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.5.4",
+    "hardhat": "^2.8.4",
+    "truffle": "^5.4.27"
   },
   "directories": {
     "test": "test"
+  },
+  "dependencies": {
+    "truffle-assertions": "^0.9.2",
+    "truffle-privatekey-provider": "^1.5.0",
+    "web3": "^1.6.1"
   }
 }

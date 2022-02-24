@@ -1,0 +1,33 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Object NFTs"
+    },
+    {
+      "trait_type": "rove-nft-type-ver",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle",
+      "value": "https://gateway.pinata.cloud/ipfs/QmSYPxKup3E2aZ5ssP6LPZXA2vG5NnzPRTFYXRV7HVPywi"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ext",
+      "value": ".arc"
+    },
+    {
+      "trait_type": "Breed",
+      "value": "Maltipoo 1"
+    },
+    {
+      "trait_type": "Eye color",
+      "value": "Mocha 1"
+    }
+  ],
+  "description": "Rove object NFTs",
+  "image": "https://gateway.pinata.cloud/ipfs/QmZuPoFueE7zZMoEyGkkkYaqYzpzQm7mSRVZP4MaPYF8CQ",
+  "name": "Corgy dog",
+  "external_url": "https://rove-dev.moshwithme.io/",
+  "animation_url": ""
+}

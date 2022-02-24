@@ -7,14 +7,12 @@ interface IExperienceNFT {
         // Caller: Platform 
         function mintExperience(
                 uint256 rockId,
-                address host,
-                string memory name,
-                uint256 experienceType,
                 uint256 price,
-                uint256 watchLaterPrice,
+                uint256 start,
+                uint256 end,
+                uint256 totalTickets,
+                string memory ticketUrl,
                 string memory tokenURI
-                // TODO: start_time & end_time? 
-                // TODO: scheduling, avoid conflict - onchain or offchain?
         ) external returns (uint256 experienceId);
 
         // Updates the ownership of multiple creators
@@ -23,14 +21,6 @@ interface IExperienceNFT {
                 uint256 experienceId, 
                 address[] memory creators, 
                 uint256[] memory shares
-        ) external;
-
-        // Updates the ownership of one creator
-        // Caller: Host, Platform
-        function updateCreator(
-                uint256 experienceId, 
-                address creator, 
-                uint256 shares
         ) external;
 
         // Gets ticket
@@ -44,7 +34,12 @@ interface IExperienceNFT {
         // Collects payment
         // Caller: Creator, Platform
         function collectPayment(uint256 experienceId) external;
-
+        function getTicketNFT() external view returns (address);
+        function setPrice(uint256 experienceId, uint256 price) external;
         // Events
-        event NewExperience(uint256 indexed experienceId, uint256 indexed rockId, uint256 price);
+        event UpdateCreators(uint256 experienceId, address[] creators, uint256[] shares);
+        event NewExperience(uint256 experienceId, uint256 start, uint256 end, uint256 tokenURI);
+        event CollectPayment(uint256 experienceId, address creator, uint256 amount);
+        event UpdateTicketPrice(uint256 experienceId, uint256 price);
+        event NewTicket(uint256, address, string);
 }
