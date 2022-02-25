@@ -19,9 +19,9 @@ contract ParameterControl is AccessControl {
     mapping(string => string) private _params;
 
     constructor(
-        address admin
+        address admin_
     ) {
-        _admin = admin;
+        _admin = admin_;
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
     }
 
@@ -34,14 +34,15 @@ contract ParameterControl is AccessControl {
     }
 
     function set(string memory key, string memory value) external {
+        console.log("msg.sender %s", msg.sender);
         require(msg.sender == _admin);
         _params[key] = value;
     }
 
-    function updateAdmin(address admin) external {
+    function updateAdmin(address admin_) external {
         require(msg.sender == _admin);
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
-        console.log("set new admin %s -> %s", _admin, admin);
-        _admin = admin;
+        console.log("set new admin %s -> %s", _admin, admin_);
+        _admin = admin_;
     }
 }
