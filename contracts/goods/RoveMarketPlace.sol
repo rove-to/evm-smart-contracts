@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.0;
 
 import "../utils/ERC1155Tradable.sol";
@@ -14,8 +16,8 @@ contract RoveMarketPlace {
     event BalanceWithdrawn (address indexed beneficiary, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
 
-    address operator;
-    address roveToken; // require using this erc-20 token in this market
+    address private _operator;
+    address private _roveToken; // require using this erc-20 token in this market
 
     struct offering {
         address offerer;
@@ -28,12 +30,20 @@ contract RoveMarketPlace {
     mapping(bytes32 => offering) offeringRegistry;
     mapping(address => uint) balances;
 
-    constructor (address _operator, address _roveToken) {
-        console.log("Deploy Rove market place operator %s, rove token %s", _operator, _roveToken);
-        operator = _operator;
-        roveToken = _roveToken;
+    constructor (address operator_, address roveToken_) {
+        console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
+        _operator = operator_;
+        _roveToken = roveToken_;
     }
 
+    function operator() public view returns(address) {
+        return _operator;
+    }
+
+    function roveToken() public view returns(address) {
+        return _roveToken;
+    }
+    
     function toHex16(bytes16 data) internal pure returns (bytes32 result) {
         result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000 |
         (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
@@ -56,7 +66,7 @@ contract RoveMarketPlace {
     }
 
     function placeOffering(address _offerer, address _hostContract, uint _tokenId, uint _price) external {
-        require(msg.sender == operator, "Only operator dApp can create offerings");
+        require(msg.sender == _operator, "Only operator dApp can create offerings");
 
         // create offering nonce by counter
         _offeringNonces.increment();
@@ -80,10 +90,10 @@ contract RoveMarketPlace {
 
     function closeOffering(bytes32 _offeringId) external payable {
         console.log("start close _offeringId: ", toHex(_offeringId));
-        ERC20 _roveToken = ERC20(roveToken);
+        ERC20 roveToken = ERC20(_roveToken);
         uint price = offeringRegistry[_offeringId].price;
         console.log("get price of offering: %s", price);
-        uint256 balance = _roveToken.balanceOf(msg.sender);
+        uint256 balance = roveToken.balanceOf(msg.sender);
         console.log("get balance erc-20 token of sender(buyer): %s", balance);
 
         // check require
@@ -107,8 +117,8 @@ contract RoveMarketPlace {
         // ...
 
         // tranfer erc-20 token to this market contract
-        _roveToken.transferFrom(msg.sender, address(this), price);
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", roveToken, address(this), price);
+        roveToken.transferFrom(msg.sender, address(this), price);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _roveToken, address(this), price);
         // update balance of offerer
         balances[offeringRegistry[_offeringId].offerer] += price;
         console.log("update balance of offerer: %s +%s", offeringRegistry[_offeringId].offerer, price);
@@ -124,8 +134,8 @@ contract RoveMarketPlace {
         console.log("balance of sender: ", balances[msg.sender]);
         require(balances[msg.sender] > 0, "You don't have any balance to withdraw");
 
-        ERC20 _roveToken = ERC20(roveToken);
-        uint256 balance = _roveToken.balanceOf(address(this));
+        ERC20 roveToken = ERC20(_roveToken);
+        uint256 balance = roveToken.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
         require(balance > balances[msg.sender], "Not enough balance for withdraw");
@@ -134,8 +144,8 @@ contract RoveMarketPlace {
         // tranfer erc-20 token from this market contract to sender
         uint amount = balances[msg.sender];
         //payable(msg.sender).transfer(amount);
-        _roveToken.transferFrom(address(this), msg.sender, amount);
-        console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), msg.sender);
+        roveToken.transferFrom(address(this), msg.sender, amount);
+        console.log("tranfer erc-20 %s from this market contract %s to sender %s", _roveToken, address(this), msg.sender);
 
         // reset balance
         balances[msg.sender] = 0;
@@ -144,10 +154,10 @@ contract RoveMarketPlace {
     }
 
     function changeOperator(address _newOperator) external {
-        require(msg.sender == operator, "only the operator can change the current operator");
-        address previousOperator = operator;
-        operator = _newOperator;
-        emit OperatorChanged(previousOperator, operator);
+        require(msg.sender == _operator, "only the operator can change the current operator");
+        address previousOperator = _operator;
+        _operator = _newOperator;
+        emit OperatorChanged(previousOperator, _operator);
     }
 
     function viewOfferingNFT(bytes32 _offeringId) external view returns (address, uint, uint, bool){
