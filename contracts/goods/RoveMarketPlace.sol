@@ -36,14 +36,14 @@ contract RoveMarketPlace {
         _roveToken = roveToken_;
     }
 
-    function operator() public view returns(address) {
+    function operator() public view returns (address) {
         return _operator;
     }
 
-    function roveToken() public view returns(address) {
+    function roveToken() public view returns (address) {
         return _roveToken;
     }
-    
+
     function toHex16(bytes16 data) internal pure returns (bytes32 result) {
         result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000 |
         (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
@@ -85,7 +85,7 @@ contract RoveMarketPlace {
         // get uri of erc-1155
         ERC1155Tradable hostContract = ERC1155Tradable(offeringRegistry[offeringId].hostContract);
         string memory uri = hostContract.uri(_tokenId);
-        emit  OfferingPlaced(offeringId, _hostContract, _offerer, _tokenId, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, _offerer, _tokenId, _price, uri);
     }
 
     function closeOffering(bytes32 _offeringId) external payable {
