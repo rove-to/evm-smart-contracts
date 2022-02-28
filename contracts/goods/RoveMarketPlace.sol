@@ -20,6 +20,8 @@ contract RoveMarketPlace {
     address private _operator;
     address private _roveToken; // require using this erc-20 token in this market
 
+    mapping(address => uint) private _balances;
+
     struct offering {
         address offerer;
         address hostContract;
@@ -29,7 +31,7 @@ contract RoveMarketPlace {
     }
 
     mapping(bytes32 => offering) offeringRegistry;
-    mapping(address => uint) private _balances;
+    bytes32[] private _arrayOffering;
 
     constructor (address operator_, address roveToken_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
@@ -43,6 +45,10 @@ contract RoveMarketPlace {
 
     function roveToken() public view returns (address) {
         return _roveToken;
+    }
+
+    function arrayOffering() public view returns (bytes32[] memory) {
+        return _arrayOffering;
     }
 
     function toHex16(bytes16 data) internal pure returns (bytes32 result) {
@@ -96,6 +102,7 @@ contract RoveMarketPlace {
         console.log("init offeringId: %s", toHex(offeringId));
 
         string memory uri = hostContract.uri(_tokenId);
+        _arrayOffering.push(offeringId);
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
@@ -176,7 +183,7 @@ contract RoveMarketPlace {
 
         // reset balance
         _balances[withdrawer] = 0;
-//        roveToken.approve(withdrawer, _balances[withdrawer]);
+        //        roveToken.approve(withdrawer, _balances[withdrawer]);
 
         emit BalanceWithdrawn(withdrawer, amount);
     }
@@ -194,5 +201,11 @@ contract RoveMarketPlace {
 
     function viewBalances(address _address) external view returns (uint) {
         return (_balances[_address]);
+    }
+
+    function closeOfferingNFT(bytes32 _offeringId) external {
+        require(msg.sender == _operator, "Only operator dApp can close offerings");
+        offeringRegistry[_offeringId].closed = true;
+        emit OfferingClosed(_offeringId, address(0));
     }
 }
