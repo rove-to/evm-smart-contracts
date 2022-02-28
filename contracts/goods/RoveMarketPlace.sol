@@ -28,6 +28,13 @@ contract RoveMarketPlace {
 
     mapping(address => uint) private _balances;
 
+    struct profit {
+        uint256 profitPecentCreator;
+        uint256 profitCreator;
+        uint256 profitPecentOperator;
+        uint256 profitOperator;
+    }
+
     struct offering {
         address offerer;
         address hostContract;
@@ -153,28 +160,27 @@ contract RoveMarketPlace {
 
         // logic for 
         // profit of operator here
-        /*uint256 originPrice = price;
+        uint256 originPrice = price;
         ParameterControl parameterController = ParameterControl(_parameterControl);
-        uint256 _profitPercent = parameterController.getUInt256("MARKET_PROFIT");
-        uint256 _profit = 0;
-        if (_profitPercent > 0) {
-            _profit = originPrice.div(100).mul(_profitPercent);
-            price -= _profit;
-            console.log("market operator profit %s", _profit);
+        profit memory _profit = profit(0, 0, 0, 0);
+        _profit.profitPecentOperator = parameterController.getUInt256("MARKET_PROFIT");
+        if (_profit.profitPecentOperator > 0) {
+            _profit.profitOperator = originPrice.div(100).mul(_profit.profitPecentOperator);
+            price -= _profit.profitOperator;
+            console.log("market operator profit %s", _profit.profitOperator);
             // update balance(on market) of operator
-            _balances[_operator] += _profit;
+            _balances[_operator] += _profit.profitOperator;
         }
         // profit of minter nfts here
-        _profitPercent = parameterController.getUInt256("CREATOR_PROFIT");
-        _profit = 0;
-        if (_profitPercent > 0) {
-            _profit = originPrice.div(100).mul(_profitPercent);
-            price -= _profit;
-            console.log("creator profit %s", _profit);
+        _profit.profitPecentCreator = parameterController.getUInt256("CREATOR_PROFIT");
+        if (_profit.profitPecentCreator > 0) {
+            _profit.profitCreator = originPrice.div(100).mul(_profit.profitPecentCreator);
+            price -= _profit.profitCreator;
+            console.log("creator profit %s", _profit.profitCreator);
             // update balance(on market) of creator erc-1155
             address creator = hostContract.getCreator(tokenID);
-            _balances[creator] += _profit;
-        }*/
+            _balances[creator] += _profit.profitCreator;
+        }
 
         // tranfer erc-20 token to this market contract
         console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", buyer, address(this), price);
@@ -239,7 +245,7 @@ contract RoveMarketPlace {
         return (_balances[_address]);
     }
 
-    function closeOfferingNFT(bytes32 _offeringId) external {
+    function opertorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == _operator, "Only operator dApp can close offerings");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
