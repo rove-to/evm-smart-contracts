@@ -1,51 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/constants.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "hardhat/console.sol";
 
 /*
  * @dev Implementation of a programmable parameter control.
  *
  * [x] Add (key, value)
  * [x] Add access control 
- * [ ] Use string instead of uint256. Add a string to uint parser.
+ * [x] Use string instead of uint256. Add a string to uint parser.
  *
  */
 
-contract ParameterControl is Constant {
+contract ParameterControl is AccessControl {
 
-        address private _admin;
-        mapping(string => uint256) private _params;
+    address private _admin;
+    mapping(string => string) private _params;
 
-        constructor(
-                address admin, 
-                uint256 breedingFee, 
-                uint256 rockRentingFee,
-                uint256 costPerUnit,
-                uint256 hostingFee,
-                uint160 globalRoveDao,
-                uint256 salesTax
-        ) {
-                _admin = admin;
-                _params[ROCK_BREEDING_FEE] = breedingFee;
-                _params[ROCK_RENTING_FEE] = rockRentingFee;
-                _params[ROCK_TIME_COST_UNIT] = costPerUnit;
-                _params[HOSTING_FEE] = hostingFee;
-                _params[GLOBAL_ROVE_DAO] = globalRoveDao;
-                _params[GLOBAL_SALES_TAX] = salesTax;
-        }
+    constructor(
+        address admin_
+    ) {
+        _admin = admin_;
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+    }
 
-        function get(string memory key) external view returns (uint256) {
-                return _params[key];
-        }
+    function admin() external view returns (address) {
+        return _admin;
+    }
 
-        function set(string memory key, uint256 value) external {
-                require(msg.sender == _admin);
-                _params[key] = value;
-        }
+    function get(string memory key) external view returns (string memory) {
+        return _params[key];
+    }
 
-        function updateAdmin(address admin) external {
-                require(msg.sender == _admin);
-                _admin = admin;
-        }
+    function set(string memory key, string memory value) external {
+        console.log("msg.sender %s", msg.sender);
+        require(msg.sender == _admin);
+        _params[key] = value;
+    }
+
+    function updateAdmin(address admin_) external {
+        require(msg.sender == _admin);
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
+        console.log("set new admin %s -> %s", _admin, admin_);
+        _admin = admin_;
+    }
 }
