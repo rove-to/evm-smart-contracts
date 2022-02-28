@@ -247,15 +247,11 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         return _exists(_id);
     }
 
-    /**
-     * This is used instead of msg.sender as transactions won't be sent by the original token owner, but by OpenSea.
-     */
-//    function _msgSender()
-//    internal
-//    override
-//    view
-//    returns (address sender)
-//    {
-//        return ContextMixin.msgSender();
-//    }
+    function getCreator(uint256 id)
+    public
+    view
+    returns (address sender)
+    {
+        return creators[id];
+    }
 }

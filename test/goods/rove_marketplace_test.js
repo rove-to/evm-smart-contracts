@@ -111,6 +111,9 @@ describe("Marketplace contract", function () {
             expect(price).to.equal(priceOffer);
 
             // view offering
+            let offerings = await roveMarketplace.arrayOffering();
+            console.log("********", offerings, offeringId);
+            expect(offeringId).to.equal(offerings[0]);
             hostContract, tokenId1, price, closed = await roveMarketplace.viewOfferingNFT(offeringId);
             expect(hostContract).to.equal(objectNFTAddress);
             expect(tokenId1).to.equal(tokenID);

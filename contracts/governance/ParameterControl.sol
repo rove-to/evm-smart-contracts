@@ -17,6 +17,8 @@ contract ParameterControl is AccessControl {
 
     address private _admin;
     mapping(string => string) private _params;
+    mapping(string => int) private _paramsInt;
+    mapping(string => uint256) private _paramsUInt256;
 
     constructor(
         address admin_
@@ -29,14 +31,34 @@ contract ParameterControl is AccessControl {
         return _admin;
     }
 
-    function get(string memory key) external view returns (string memory) {
+    function get(string memory key) public view returns (string memory) {
         return _params[key];
+    }
+
+    function getInt(string memory key) public view returns (int) {
+        return _paramsInt[key];
+    }
+
+    function getUInt256(string memory key) public view returns (uint256) {
+        return _paramsUInt256[key];
     }
 
     function set(string memory key, string memory value) external {
         console.log("msg.sender %s", msg.sender);
         require(msg.sender == _admin);
         _params[key] = value;
+    }
+
+    function setInt(string memory key, int value) external {
+        console.log("msg.sender %s", msg.sender);
+        require(msg.sender == _admin);
+        _paramsInt[key] = value;
+    }
+
+    function setUInt256(string memory key, uint256 value) external {
+        console.log("msg.sender %s", msg.sender);
+        require(msg.sender == _admin);
+        _paramsUInt256[key] = value;
     }
 
     function updateAdmin(address admin_) external {

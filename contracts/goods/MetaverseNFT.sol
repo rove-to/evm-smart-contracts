@@ -79,7 +79,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 external
                 returns (uint256)
         {
-                _rove.transferFrom(founder, address(this), _globalParameters.get("METAVERSE_MINTING_FEE")); 
+                _rove.transferFrom(founder, address(this), _globalParameters.getUInt256("METAVERSE_MINTING_FEE")); 
                 _counter.increment();
                 uint256 i = _counter.current();
 
@@ -123,7 +123,7 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                 external 
                 returns (uint256) 
         {
-                uint256 platformGlobalFee = _globalParameters.get("ROCK_BREEDING_FEE");
+                uint256 platformGlobalFee = _globalParameters.getUInt256("ROCK_BREEDING_FEE");
                 uint256 metaverseLocalFee = _metaverses[metaverseId].revenue.breedingFee;
                 uint256 rentalFee = 0;
                 _rove.transferFrom(owner, address(this), platformGlobalFee + metaverseLocalFee);
