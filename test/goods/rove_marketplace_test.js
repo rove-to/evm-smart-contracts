@@ -21,9 +21,11 @@ describe("Marketplace contract", function () {
     let objectNFT;
     let objectNFTAddress;
     let tokenID;
+    const initSupply = 10;
     const nftOwner = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
     const buyer = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'; // default for local
     const buyerPrivateKey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
+    const buyerBalance = 1000;
 
     let roveMarketplace;
     let roveMarketplaceAddress;
@@ -37,7 +39,7 @@ describe("Marketplace contract", function () {
         roveToken = await roveTokenContract.deploy(nftOwner);
         roveTokenContractAddress = roveToken.address;
         console.log("Rove token contract address", roveTokenContractAddress);
-        roveToken.transfer(buyer, 10000);// transfer 10000 rove to buyer
+        roveToken.transfer(buyer, buyerBalance);// transfer buyerBalance rove to buyer
 
         // deploy nft
         let proxyRegistryAddress = "";
@@ -51,7 +53,6 @@ describe("Marketplace contract", function () {
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
         // mint nft
-        let initSupply = 10;
         let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
         await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
         tokenID = await objectNFT.newItemId()
@@ -136,7 +137,6 @@ describe("Marketplace contract", function () {
             if (signedTx.rawTransaction != null) {
                 await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
             }
-            // await signedTx.wait();
             
             // buyer close order
             nonce = await web3.eth.getTransactionCount(buyer, "latest") //get latest nonce
@@ -151,7 +151,16 @@ describe("Marketplace contract", function () {
             if (signedTx.rawTransaction != null) {
                 await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
             }
-            // await signedTx.await();
+            
+            // check balance
+            const nftOwnerBalanceRoveToken = await roveMarketplace.viewBalances(nftOwner);
+            expect(nftOwnerBalanceRoveToken).to.equal(priceOffer);
+            const buyerBalanceRoveToken = await roveToken.balanceOf(buyer);
+            expect(buyerBalanceRoveToken).to.equal(buyerBalance - priceOffer);
+            
+            const nftOwnerBalanceNFT = await objectNFT.balanceOf(nftOwner, tokenID);
+            const buyerBalanceNFT = await objectNFT.balanceOf(buyer, tokenID);
+            expect(nftOwnerBalanceNFT.add(buyerBalanceNFT)).to.equal(initSupply);
         });
     });
 });
