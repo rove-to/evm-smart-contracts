@@ -33,6 +33,7 @@ contract RoveMarketPlace {
         uint256 profitCreator;
         uint256 profitPecentOperator;
         uint256 profitOperator;
+        uint256 originPrice;
     }
 
     struct offering {
@@ -160,12 +161,11 @@ contract RoveMarketPlace {
 
         // logic for 
         // profit of operator here
-        uint256 originPrice = price;
         ParameterControl parameterController = ParameterControl(_parameterControl);
-        profit memory _profit = profit(0, 0, 0, 0);
+        profit memory _profit = profit(0, 0, 0, 0, price);
         _profit.profitPecentOperator = parameterController.getUInt256("MARKET_PROFIT");
         if (_profit.profitPecentOperator > 0) {
-            _profit.profitOperator = originPrice.div(100).mul(_profit.profitPecentOperator);
+            _profit.profitOperator = _profit.originPrice.div(100).mul(_profit.profitPecentOperator);
             price -= _profit.profitOperator;
             console.log("market operator profit %s", _profit.profitOperator);
             // update balance(on market) of operator
@@ -174,7 +174,7 @@ contract RoveMarketPlace {
         // profit of minter nfts here
         _profit.profitPecentCreator = parameterController.getUInt256("CREATOR_PROFIT");
         if (_profit.profitPecentCreator > 0) {
-            _profit.profitCreator = originPrice.div(100).mul(_profit.profitPecentCreator);
+            _profit.profitCreator = _profit.originPrice.div(100).mul(_profit.profitPecentCreator);
             price -= _profit.profitCreator;
             console.log("creator profit %s", _profit.profitCreator);
             // update balance(on market) of creator erc-1155
