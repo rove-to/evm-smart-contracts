@@ -67,7 +67,7 @@ contract RoveMarketPlace {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _offerer, address _hostContract, uint _tokenId, uint _price) external {
+    function placeOffering(address _hostContract, uint _tokenId, uint _price) external {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -89,14 +89,14 @@ contract RoveMarketPlace {
         // init offering id
         bytes32 offeringId = keccak256(abi.encodePacked(newItemId, _hostContract, _tokenId));
         // create offering by id
-        offeringRegistry[offeringId].offerer = _offerer;
+        offeringRegistry[offeringId].offerer = nftOwner;
         offeringRegistry[offeringId].hostContract = _hostContract;
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
         console.log("init offeringId: %s", toHex(offeringId));
 
         string memory uri = hostContract.uri(_tokenId);
-        emit OfferingPlaced(offeringId, _hostContract, _offerer, _tokenId, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
     function closeOffering(bytes32 _offeringId) external payable {

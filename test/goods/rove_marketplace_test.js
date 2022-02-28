@@ -93,7 +93,7 @@ describe("Marketplace contract", function () {
 
             // place offering
             const priceOffer = 5 * decimals;
-            tx = await roveMarketplace.placeOffering(nftOwner, objectNFTAddress, tokenID, priceOffer);
+            tx = await roveMarketplace.placeOffering(objectNFTAddress, tokenID, priceOffer);
             receipt = await tx.wait();
             events = receipt.events?.filter((x) => {
                 return x.event == "OfferingPlaced"
@@ -137,7 +137,7 @@ describe("Marketplace contract", function () {
 
             // nftOwner place offering with price 5 rove token
             const priceOffer = 5 * decimals;
-            tx = await roveMarketplace.placeOffering(nftOwner, objectNFTAddress, tokenID, priceOffer);
+            tx = await roveMarketplace.placeOffering(objectNFTAddress, tokenID, priceOffer);
             receipt = await tx.wait();
             events = receipt.events?.filter((x) => {
                 return x.event == "OfferingPlaced"
