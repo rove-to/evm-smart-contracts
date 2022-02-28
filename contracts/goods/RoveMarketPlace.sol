@@ -130,7 +130,7 @@ contract RoveMarketPlace {
             hostContractOffering,
             tokenID,
             offerer
-//            buyer
+        //            buyer
         );
 
         // TODO: logic for 
@@ -140,9 +140,14 @@ contract RoveMarketPlace {
         // tranfer erc-20 token to this market contract
         console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", buyer, address(this), price);
         token.transferFrom(buyer, address(this), price);
+
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", offeringRegistry[_offeringId].offerer, price);
-        _balances[offeringRegistry[_offeringId].offerer] += price;
+        console.log("update balance of offerer: %s +%s", offerer, price);
+        _balances[offerer] += price;
+        //        uint256 currentBalance = _balances[offerer];
+        //        console.log("approve %s %s %s", address(this), offerer, currentBalance);
+        //        token.approve(offerer, currentBalance);
+
         // close offering
         offeringRegistry[_offeringId].closed = true;
         console.log("close offering: ", toHex(_offeringId));
@@ -151,27 +156,29 @@ contract RoveMarketPlace {
     }
 
     function withdrawBalance() external {
+        address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        console.log("balance of sender: ", _balances[msg.sender]);
-        require(_balances[msg.sender] > 0, "You don't have any balance to withdraw");
+        console.log("balance of sender: ", _balances[withdrawer]);
+        require(_balances[withdrawer] > 0, "You don't have any balance to withdraw");
 
         ERC20 roveToken = ERC20(_roveToken);
         uint256 balance = roveToken.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
-        require(balance > _balances[msg.sender], "Not enough balance for withdraw");
+        require(balance >= _balances[withdrawer], "Not enough balance for withdraw");
 
 
         // tranfer erc-20 token from this market contract to sender
-        uint amount = _balances[msg.sender];
-        //payable(msg.sender).transfer(amount);
-        roveToken.transferFrom(address(this), msg.sender, amount);
-        console.log("tranfer erc-20 %s from this market contract %s to sender %s", _roveToken, address(this), msg.sender);
+        uint amount = _balances[withdrawer];
+        //payable(withdrawer).transfer(amount);
+        console.log("tranfer erc-20 %s from this market contract %s to sender %s", _roveToken, address(this), withdrawer);
+        roveToken.transfer(withdrawer, amount);
 
         // reset balance
-        _balances[msg.sender] = 0;
+        _balances[withdrawer] = 0;
+//        roveToken.approve(withdrawer, _balances[withdrawer]);
 
-        emit BalanceWithdrawn(msg.sender, amount);
+        emit BalanceWithdrawn(withdrawer, amount);
     }
 
     function changeOperator(address _newOperator) external {

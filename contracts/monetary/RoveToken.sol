@@ -26,7 +26,7 @@ contract RoveToken is ERC20, AccessControl {
         console.log("Total supply for admin address", _totalSupplyRove);
     }
 
-    function decimals() public view virtual override returns (uint8) {
+    function decimals() public view override returns (uint8) {
         return 4;
     }
 
@@ -34,6 +34,7 @@ contract RoveToken is ERC20, AccessControl {
         return _admin;
     }
 
+    // TODO: remove this func
     function mint(address to, uint256 amount) public {
         // Check that the calling account has the minter role
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a minter");
