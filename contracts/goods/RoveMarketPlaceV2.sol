@@ -2,11 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
+
+import "../utils/ERC1155Tradable.sol";
+import "../governance/ParameterControl.sol";
 
 contract RoveMarketPlaceV2 {
     using SafeMath for uint; //
@@ -22,8 +24,17 @@ contract RoveMarketPlaceV2 {
 
     address private _operator;
     address private _roveToken; // require using this erc-20 token in this market
+    address private _parameterControl;
 
     mapping(address => uint) private _balances;
+
+    struct profit {
+        uint256 profitPecentCreator;
+        uint256 profitCreator;
+        uint256 profitPecentOperator;
+        uint256 profitOperator;
+        uint256 originPrice;
+    }
 
     struct offering {
         address offerer;
@@ -37,10 +48,11 @@ contract RoveMarketPlaceV2 {
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
-    constructor (address operator_, address roveToken_) {
+    constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
         _operator = operator_;
         _roveToken = roveToken_;
+        _parameterControl = parameterControl_;
     }
 
     function operator() public view returns (address) {
@@ -50,7 +62,7 @@ contract RoveMarketPlaceV2 {
     function roveToken() public view returns (address) {
         return _roveToken;
     }
-    
+
     function arrayOffering() public view returns (bytes32[] memory) {
         return _arrayOffering;
     }
@@ -113,18 +125,29 @@ contract RoveMarketPlaceV2 {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
+    struct closeOfferingData {
+        address buyer;
+        uint price;
+        uint totalPrice;
+        uint256 balanceBuyer;
+        uint256 approvalToken;
+    }
+
     function closeOffering(bytes32 _offeringId, uint _amount) external payable {
         // buyer is sender
-        address buyer = msg.sender;
-
         ERC20 token = ERC20(_roveToken);
-        uint price = offeringRegistry[_offeringId].price;
-        console.log("get price of offering: %s", price);
-        uint totalPrice = price.mul(_amount);
-        console.log("get total price of offering: %s", totalPrice);
-        uint256 balanceBuyer = token.balanceOf(buyer);
-        console.log("get balance erc-20 token of buyer %s: %s", buyer, balanceBuyer);
-        uint256 approvalToken = token.allowance(buyer, address(this));
+        
+        closeOfferingData memory _temp = closeOfferingData(
+            msg.sender,
+            offeringRegistry[_offeringId].price,
+            offeringRegistry[_offeringId].price.mul(_amount),
+            token.balanceOf(msg.sender),
+            token.allowance(msg.sender, address(this))
+        );
+        
+        console.log("get price of offering: %s", _temp.price);
+        console.log("get total price of offering: %s", _temp.totalPrice);
+        console.log("get balance erc-20 token of buyer %s: %s", _temp.buyer, _temp.balanceBuyer);
 
         // get offer
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
@@ -133,43 +156,62 @@ contract RoveMarketPlaceV2 {
         address offerer = offeringRegistry[_offeringId].offerer;
 
         // check require
-        require(approvalToken == price, "this contract address is not approved for spending erc-20");
+        require(_temp.approvalToken == _temp.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
-        require(balanceBuyer >= totalPrice, "Buyer not enough funds erc-20 to buy");
+        require(_temp.balanceBuyer >= _temp.totalPrice, "Buyer not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, buyer, tokenID, _amount, "0x");
+        hostContract.safeTransferFrom(offerer, _temp.buyer, tokenID, _amount, "0x");
         console.log("safeTransferFrom erc-1155 tokenID %s from %s to buyer %s",
             tokenID,
             offerer,
-            buyer
+            _temp.buyer
         );
 
-        // TODO: logic for 
-        // profit of operator/erc-1155 minter here
-        // ...
+        // logic for 
+        // profit of operator here
+        ParameterControl parameterController = ParameterControl(_parameterControl);
+        profit memory _profit = profit(0, 0, 0, 0, _temp.totalPrice);
+        _profit.profitPecentOperator = parameterController.getUInt256("MARKET_PROFIT");
+        if (_profit.profitPecentOperator > 0) {
+            _profit.profitOperator = _profit.originPrice.div(100).mul(_profit.profitPecentOperator);
+            _temp.totalPrice -= _profit.profitOperator;
+            console.log("market operator profit %s", _profit.profitOperator);
+            // update balance(on market) of operator
+            _balances[_operator] += _profit.profitOperator;
+        }
+        // profit of minter nfts here
+        _profit.profitPecentCreator = parameterController.getUInt256("CREATOR_PROFIT");
+        if (_profit.profitPecentCreator > 0) {
+            _profit.profitCreator = _profit.originPrice.div(100).mul(_profit.profitPecentCreator);
+            _temp.totalPrice -= _profit.profitCreator;
+            console.log("creator profit %s", _profit.profitCreator);
+            // update balance(on market) of creator erc-1155
+            address creator = hostContract.getCreator(tokenID);
+            _balances[creator] += _profit.profitCreator;
+        }
 
         // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", buyer, address(this), price);
-        token.transferFrom(buyer, address(this), totalPrice);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _temp.buyer, address(this), _temp.totalPrice);
+        token.transferFrom(_temp.buyer, address(this), _temp.totalPrice);
         offeringRegistry[_offeringId].amount -= _amount;
 
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", offerer, totalPrice);
-        _balances[offerer] += totalPrice;
+        console.log("update balance of offerer: %s +%s", offerer, _temp.totalPrice);
+        _balances[offerer] += _temp.totalPrice;
 
         // close offering
         uint remainAmount = offeringRegistry[_offeringId].amount;
         if (remainAmount == 0) {
             offeringRegistry[_offeringId].closed = true;
             console.log("close offering: ", toHex(_offeringId));
-            emit OfferingClosed(_offeringId, buyer);
+            emit OfferingClosed(_offeringId, _temp.buyer);
         } else {
             console.log("remain amount of offering %s:%s", toHex(_offeringId), remainAmount);
-            emit OfferingRemain(_offeringId, buyer, remainAmount);
+            emit OfferingRemain(_offeringId, _temp.buyer, remainAmount);
         }
     }
 
