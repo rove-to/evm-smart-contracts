@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "network": "npx hardhat node",
-    "compile": "npx hardhat compile",
-    "test": "npx hardhat test",
-    "deploy_token": "node ./scripts/roveToken/1_deploy_Rove_Token.js",
-    "schedule_token": "node ./scripts/roveToken/2_schedule_Rove_Token.js"
+    "hh:network": "npx hardhat node",
+    "hh:compile": "npx hardhat compile",
+    "hh:test": "npx hardhat test",
+    "hh:deploy_token": "node ./scripts/roveToken/1_deploy_Rove_Token.js",
+    "hh:schedule_token": "node ./scripts/roveToken/2_schedule_Rove_Token.js"
   },
   "repository": {
     "type": "git",
