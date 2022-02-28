@@ -61,9 +61,15 @@ describe("Marketplace contract", function () {
         await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
         tokenID = await objectNFT.newItemId()
 
+        // deploy param
+        let param = await ethers.getContractFactory("ParameterControl");
+        let paramAddress = await param.deploy(operator_address);
+        paramAddress = paramAddress.address;
+        console.log("Paran control contract address", paramAddress);
+        
         // deploy market
         let marketContract = await ethers.getContractFactory("RoveMarketPlace");
-        roveMarketplace = await marketContract.deploy(operator_address, roveTokenContractAddress);
+        roveMarketplace = await marketContract.deploy(operator_address, roveTokenContractAddress, paramAddress);
         roveMarketplaceAddress = roveMarketplace.address;
         console.log("Rove Market place contract address", roveMarketplaceAddress);
     });
