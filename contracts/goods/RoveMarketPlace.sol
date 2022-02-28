@@ -2,12 +2,16 @@
 
 pragma solidity ^0.8.0;
 
-import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
+import "../utils/ERC1155Tradable.sol";
+import "../governance/ParameterControl.sol";
+
 contract RoveMarketPlace {
+    using SafeMath for uint;
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
@@ -15,10 +19,12 @@ contract RoveMarketPlace {
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event BalanceWithdrawn (address indexed beneficiary, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
+    event ParameterControlChanged (address previousOperator, address newOperator);
     event ApprovalForAll(address owner, address operator, bool approved);
 
     address private _operator;
     address private _roveToken; // require using this erc-20 token in this market
+    address private _parameterControl;
 
     mapping(address => uint) private _balances;
 
@@ -33,14 +39,19 @@ contract RoveMarketPlace {
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
-    constructor (address operator_, address roveToken_) {
+    constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
         _operator = operator_;
         _roveToken = roveToken_;
+        _parameterControl = parameterControl_;
     }
 
     function operator() public view returns (address) {
         return _operator;
+    }
+
+    function parameterControl() public view returns (address) {
+        return _parameterControl;
     }
 
     function roveToken() public view returns (address) {
@@ -140,9 +151,30 @@ contract RoveMarketPlace {
         //            buyer
         );
 
-        // TODO: logic for 
-        // profit of operator/erc-1155 minter here
-        // ...
+        // logic for 
+        // profit of operator here
+        /*uint256 originPrice = price;
+        ParameterControl parameterController = ParameterControl(_parameterControl);
+        uint256 _profitPercent = parameterController.getUInt256("MARKET_PROFIT");
+        uint256 _profit = 0;
+        if (_profitPercent > 0) {
+            _profit = originPrice.div(100).mul(_profitPercent);
+            price -= _profit;
+            console.log("market operator profit %s", _profit);
+            // update balance(on market) of operator
+            _balances[_operator] += _profit;
+        }
+        // profit of minter nfts here
+        _profitPercent = parameterController.getUInt256("CREATOR_PROFIT");
+        _profit = 0;
+        if (_profitPercent > 0) {
+            _profit = originPrice.div(100).mul(_profitPercent);
+            price -= _profit;
+            console.log("creator profit %s", _profit);
+            // update balance(on market) of creator erc-1155
+            address creator = hostContract.getCreator(tokenID);
+            _balances[creator] += _profit;
+        }*/
 
         // tranfer erc-20 token to this market contract
         console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", buyer, address(this), price);
@@ -151,9 +183,6 @@ contract RoveMarketPlace {
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, price);
         _balances[offerer] += price;
-        //        uint256 currentBalance = _balances[offerer];
-        //        console.log("approve %s %s %s", address(this), offerer, currentBalance);
-        //        token.approve(offerer, currentBalance);
 
         // close offering
         offeringRegistry[_offeringId].closed = true;
@@ -193,6 +222,13 @@ contract RoveMarketPlace {
         address previousOperator = _operator;
         _operator = _newOperator;
         emit OperatorChanged(previousOperator, _operator);
+    }
+
+    function changeParameterControl(address _new) external {
+        require(msg.sender == _operator, "only the operator can change the current _parameterControl");
+        address previousParameterControl = _parameterControl;
+        _parameterControl = _new;
+        emit ParameterControlChanged(previousParameterControl, _parameterControl);
     }
 
     function viewOfferingNFT(bytes32 _offeringId) external view returns (address, uint, uint, bool){
