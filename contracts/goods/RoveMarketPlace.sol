@@ -161,8 +161,8 @@ contract RoveMarketPlace {
         console.log("balance of sender: ", _balances[withdrawer]);
         require(_balances[withdrawer] > 0, "You don't have any balance to withdraw");
 
-        ERC20 roveToken = ERC20(_roveToken);
-        uint256 balance = roveToken.balanceOf(address(this));
+        ERC20 token = ERC20(_roveToken);
+        uint256 balance = token.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
         require(balance >= _balances[withdrawer], "Not enough balance for withdraw");
@@ -172,7 +172,7 @@ contract RoveMarketPlace {
         uint amount = _balances[withdrawer];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", _roveToken, address(this), withdrawer);
-        roveToken.transfer(withdrawer, amount);
+        token.transfer(withdrawer, amount);
 
         // reset balance
         _balances[withdrawer] = 0;
