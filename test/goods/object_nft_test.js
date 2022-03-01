@@ -8,12 +8,6 @@ const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
 const {createAlchemyWeb3} = require("@alch/alchemy-web3");
 
-function sleep(second) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, second * 1000);
-    });
-}
-
 describe("** NFTs erc-1155 contract", function () {
     let objectNFT;
     let objectNFTAddress;
@@ -93,7 +87,7 @@ describe("** NFTs erc-1155 contract", function () {
             if (signedTx.rawTransaction != null) {
                 await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
             }
-            
+
             let tokenID = await objectNFT.newItemId()
             console.log("tokenID", tokenID);
             expect(tokenID).to.equal(newItemId + 1);
@@ -105,7 +99,7 @@ describe("** NFTs erc-1155 contract", function () {
         });
     });
     describe("* Transactions", function () {
-        it("- Should transfer erc-1155 between accounts", async function () {
+        it.only("- Should transfer erc-1155 between accounts", async function () {
             let nftOwner = nft_owner_contract_address;
             let receiver1 = addresses[1];
             let receiver_privatekey1 = private_keys[1];
@@ -143,13 +137,11 @@ describe("** NFTs erc-1155 contract", function () {
             await tx.wait();
             let balance_erc1155_receiver = await objectNFT.balanceOf(receiver1, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
-            await sleep(10);
             let balance_erc1155_owner = await objectNFT.balanceOf(nftOwner, tokenID);
             console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            await sleep(10);
             expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(initSupply);
 
-            
+
             // continue transfer
             let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
             const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
@@ -169,12 +161,10 @@ describe("** NFTs erc-1155 contract", function () {
             }
             balance_erc1155_receiver = await objectNFT.balanceOf(receiver2, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
-            await sleep(10);
             balance_erc1155_owner = await objectNFT.balanceOf(receiver1, tokenID);
             console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            await sleep(10);
             expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(amount);
-            
+
         });
     });
 });
