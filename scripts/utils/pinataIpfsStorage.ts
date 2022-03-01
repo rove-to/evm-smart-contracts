@@ -115,7 +115,10 @@ class PinataIpfsStorage {
                           model3DPath: string,
                           assetBundlePath: string,
                           assetAddressablePath: string,
-                          nftJsonTemplatePath: string
+                          nftJsonTemplatePath: string,
+                          name:string,
+                          description:string,
+                          attributes:object[],
     ) {
         let fileFullPath;
 
@@ -134,24 +137,39 @@ class PinataIpfsStorage {
         console.log("3d model: ", pinataUrl3DModel);
 
         // upload asset bundle
-        console.log("--- Upload asset bundle ---");
-        fileFullPath = path.resolve(assetBundlePath); //"./metadatajson/corgi.glb"
-        let pinataUrlAssetBundle = await this.uploadFilePinata(fileFullPath);
-        pinataUrlAssetBundle = this.pinataGatewateHash(pinataUrlAssetBundle);
-        console.log("asset bundle: ", pinataUrlAssetBundle);
+        let pinataUrlAssetBundle:string;
+        if (assetBundlePath.length) {
+            console.log("--- Upload asset bundle ---");
+            fileFullPath = path.resolve(assetBundlePath); //"./metadatajson/corgi.glb"
+            pinataUrlAssetBundle = await this.uploadFilePinata(fileFullPath);
+            pinataUrlAssetBundle = this.pinataGatewateHash(pinataUrlAssetBundle);
+            console.log("asset bundle: ", pinataUrlAssetBundle);
+        }
 
-        // upload asset bundle
-        console.log("--- Upload 3D model glb/gltf ---");
-        fileFullPath = path.resolve(assetAddressablePath); //"./metadatajson/corgi.glb"
-        let pinataUrlAssetAddressable = await this.uploadFilePinata(fileFullPath);
-        pinataUrlAssetAddressable = this.pinataGatewateHash(pinataUrlAssetAddressable);
-        console.log("Asset Addressable: ", pinataUrlAssetAddressable);
+        // upload asset addressable
+        let pinataUrlAssetAddressable:string;
+        if (assetAddressablePath.length > 0) {
+            console.log("--- Upload asset addressable ---");
+            fileFullPath = path.resolve(assetAddressablePath); //"./metadatajson/corgi.glb"
+            pinataUrlAssetAddressable = await this.uploadFilePinata(fileFullPath);
+            pinataUrlAssetAddressable = this.pinataGatewateHash(pinataUrlAssetAddressable);
+            console.log("Asset Addressable: ", pinataUrlAssetAddressable);
+        }
 
         // pin json metadata
         console.log("--- Pin json metadata ---");
         fileFullPath = path.resolve(nftJsonTemplatePath);//'./metadatajson/object_nft.json'
         const rawdata = await fs.promises.readFile(fileFullPath).catch((err: unknown) => console.error('Failed to read file', err));
         let objecNFTMetadataJson = JSON.parse(rawdata);
+        objecNFTMetadataJson.name = name;
+        objecNFTMetadataJson.description = description;
+        
+        if (attributes.length > 0) {
+            for (let i = 0;i<attributes.length; i++) {
+                objecNFTMetadataJson.attributes.push(attributes[i]);
+            }
+        }
+        
         objecNFTMetadataJson.image = pinataUrl2DThumbnail;
         objecNFTMetadataJson.animation_url = pinataUrl3DModel
         objecNFTMetadataJson.attributes.forEach(function (item: any) {

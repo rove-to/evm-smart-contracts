@@ -15,19 +15,11 @@
     {
       "trait_type": "rove-asset-addressable",
       "value": "asset addressable link ipfs"
-    },
-    {
-      "trait_type": "Breed",
-      "value": "Maltipoo 1"
-    },
-    {
-      "trait_type": "Eye color",
-      "value": "Mocha 1"
     }
   ],
   "description": "Rove environment NFTs",
   "image": "2d image thumbnail ipfs",
-  "name": "Corgy dog",
+  "name": "nft name",
   "external_url": "https://rove-dev.moshwithme.io/",
   "animation_url": "3d glb/gltf ipfs"
 }
