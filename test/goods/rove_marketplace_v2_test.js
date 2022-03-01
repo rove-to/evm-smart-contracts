@@ -194,7 +194,9 @@ describe("Marketplace contract", function () {
             expect(buyerBalanceRoveToken).to.equal(buyerBalance * decimals - priceOffer * amountCloseOffer);
 
             let nftOwnerBalanceNFT = await objectNFT.balanceOf(nftOwner, tokenID);
+            expect(nftOwnerBalanceNFT).to.equal(initSupply - amountCloseOffer);
             const buyerBalanceNFT = await objectNFT.balanceOf(buyer, tokenID);
+            expect(buyerBalanceNFT).to.equal(amountCloseOffer);
             expect(nftOwnerBalanceNFT.add(buyerBalanceNFT)).to.equal(initSupply);
 
             // call withdraw for owner nft for get rove token
