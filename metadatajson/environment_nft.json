@@ -5,16 +5,16 @@
       "value": "Environment NFTs"
     },
     {
-      "trait_type": "rove-nft-type-ver",
+      "trait_type": "rove-nft-version",
       "value": "1.0"
     },
     {
       "trait_type": "rove-asset-bundle",
-      "value": "https://gateway.pinata.cloud/ipfs/QmSYPxKup3E2aZ5ssP6LPZXA2vG5NnzPRTFYXRV7HVPywi"
+      "value": "asset bundle link ipfs"
     },
     {
-      "trait_type": "rove-asset-bundle-ext",
-      "value": ".arc"
+      "trait_type": "rove-asset-addressable",
+      "value": "asset addressable link ipfs"
     },
     {
       "trait_type": "Breed",
@@ -26,8 +26,8 @@
     }
   ],
   "description": "Rove environment NFTs",
-  "image": "https://gateway.pinata.cloud/ipfs/QmZuPoFueE7zZMoEyGkkkYaqYzpzQm7mSRVZP4MaPYF8CQ",
+  "image": "2d image thumbnail ipfs",
   "name": "Corgy dog",
   "external_url": "https://rove-dev.moshwithme.io/",
-  "animation_url": ""
+  "animation_url": "3d glb/gltf ipfs"
 }

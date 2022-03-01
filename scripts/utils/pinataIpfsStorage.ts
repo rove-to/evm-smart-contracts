@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv';
+
 var mime = require('mime-types')
 dotenv.config();
 import * as path from "path";
@@ -110,7 +111,12 @@ class PinataIpfsStorage {
         return pinataHash;
     }
 
-    async uploadObjectNFT(image2DPath: string, model3DPath: string, objectNFTJsonTemplatePath: string) {
+    async uploadObjectNFT(image2DPath: string,
+                          model3DPath: string,
+                          assetBundlePath: string,
+                          assetAddressablePath: string,
+                          nftJsonTemplatePath: string
+    ) {
         let fileFullPath;
 
         // upload 2D image file
@@ -120,29 +126,45 @@ class PinataIpfsStorage {
         pinataUrl2DThumbnail = this.pinataGatewateHash(pinataUrl2DThumbnail);
         console.log("2d image: ", pinataUrl2DThumbnail);
 
-        // upload 3D model file
-        console.log("--- Upload 3D model ---");
-        fileFullPath = path.resolve(model3DPath); //"./metadatajson/corgi.arc"
+        // upload 3D model file glb/gltf
+        console.log("--- Upload 3D model glb/gltf ---");
+        fileFullPath = path.resolve(model3DPath); //"./metadatajson/corgi.glb"
         let pinataUrl3DModel = await this.uploadFilePinata(fileFullPath);
         pinataUrl3DModel = this.pinataGatewateHash(pinataUrl3DModel);
         console.log("3d model: ", pinataUrl3DModel);
 
+        // upload asset bundle
+        console.log("--- Upload asset bundle ---");
+        fileFullPath = path.resolve(assetBundlePath); //"./metadatajson/corgi.glb"
+        let pinataUrlAssetBundle = await this.uploadFilePinata(fileFullPath);
+        pinataUrlAssetBundle = this.pinataGatewateHash(pinataUrlAssetBundle);
+        console.log("asset bundle: ", pinataUrlAssetBundle);
+
+        // upload asset bundle
+        console.log("--- Upload 3D model glb/gltf ---");
+        fileFullPath = path.resolve(assetAddressablePath); //"./metadatajson/corgi.glb"
+        let pinataUrlAssetAddressable = await this.uploadFilePinata(fileFullPath);
+        pinataUrlAssetAddressable = this.pinataGatewateHash(pinataUrlAssetAddressable);
+        console.log("Asset Addressable: ", pinataUrlAssetAddressable);
+
         // pin json metadata
         console.log("--- Pin json metadata ---");
-        fileFullPath = path.resolve(objectNFTJsonTemplatePath);//'./metadatajson/object_nft.json'
+        fileFullPath = path.resolve(nftJsonTemplatePath);//'./metadatajson/object_nft.json'
         const rawdata = await fs.promises.readFile(fileFullPath).catch((err: unknown) => console.error('Failed to read file', err));
         let objecNFTMetadataJson = JSON.parse(rawdata);
         objecNFTMetadataJson.image = pinataUrl2DThumbnail;
+        objecNFTMetadataJson.animation_url = pinataUrl3DModel
         objecNFTMetadataJson.attributes.forEach(function (item: any) {
             if (item.trait_type == "rove-asset-bundle") {
-                item.value = pinataUrl3DModel;
+                item.value = pinataUrlAssetBundle;
+            }
+            if (item.trait_type == "rove-asset-addressable") {
+                item.value = pinataUrlAssetAddressable;
             }
         });
         let jsonDataStr = JSON.stringify(objecNFTMetadataJson);
-        // console.log("json metadata:", jsonDataStr);
         let pinataJsonMetadata = await this.pinJson(jsonDataStr);
         pinataJsonMetadata = this.pinataGatewateHash(pinataJsonMetadata);
-        // console.log(pinataJsonMetadata);
 
         return pinataJsonMetadata;
     }
