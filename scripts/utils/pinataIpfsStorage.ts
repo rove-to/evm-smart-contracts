@@ -8,6 +8,34 @@ import {Buffer} from "buffer";
 var fs = require('fs');
 const axios = require('axios').default;
 
+class PinataData {
+    image2DPath: string;
+    model3DPath: string;
+    assetBundlePath: string;
+    assetAddressablePath: string;
+    nftJsonTemplatePath: string;
+    name: string;
+    description: string;
+    attributes: any;
+
+    constructor(image2DPath: string, model3DPath: string,
+                assetBundlePath: string,
+                assetAddressablePath: string,
+                nftJsonTemplatePath: string,
+                name: string,
+                description: string,
+                attributes: any) {
+        this.image2DPath = image2DPath;
+        this.model3DPath = model3DPath;
+        this.assetBundlePath = assetBundlePath;
+        this.assetAddressablePath = assetAddressablePath;
+        this.nftJsonTemplatePath = nftJsonTemplatePath;
+        this.name = name;
+        this.description = description;
+        this.attributes = attributes;
+    }
+}
+
 class PinataIpfsStorage {
     accessToken: string;
 
@@ -111,32 +139,24 @@ class PinataIpfsStorage {
         return pinataHash;
     }
 
-    async uploadObjectNFT(image2DPath: string,
-                          model3DPath: string,
-                          assetBundlePath: string,
-                          assetAddressablePath: string,
-                          nftJsonTemplatePath: string,
-                          name: string,
-                          description: string,
-                          attributes: object[],
-    ) {
+    async uploadObjectNFT(pinnataData: PinataData) {
         let fileFullPath;
 
         // upload 2D image file
         let pinataUrl2DThumbnail: string = '';
-        if (image2DPath.length > 0) {
+        if (pinnataData.image2DPath.length > 0) {
             console.log("--- Upload 2D image ---");
-            fileFullPath = path.resolve(image2DPath);// 
+            fileFullPath = path.resolve(pinnataData.image2DPath);// 
             pinataUrl2DThumbnail = await this.uploadFilePinata(fileFullPath);
             pinataUrl2DThumbnail = this.pinataGatewateHash(pinataUrl2DThumbnail);
             console.log("2d image: ", pinataUrl2DThumbnail);
         }
 
         // upload 3D model file glb/gltf
-        let pinataUrl3DModel:string = '';
-        if (model3DPath.length >0 ) {
+        let pinataUrl3DModel: string = '';
+        if (pinnataData.model3DPath.length > 0) {
             console.log("--- Upload 3D model glb/gltf ---");
-            fileFullPath = path.resolve(model3DPath); //"./metadatajson/corgi.glb"
+            fileFullPath = path.resolve(pinnataData.model3DPath); //"./metadatajson/corgi.glb"
             pinataUrl3DModel = await this.uploadFilePinata(fileFullPath);
             pinataUrl3DModel = this.pinataGatewateHash(pinataUrl3DModel);
             console.log("3d model: ", pinataUrl3DModel);
@@ -144,9 +164,9 @@ class PinataIpfsStorage {
 
         // upload asset bundle
         let pinataUrlAssetBundle: string = '';
-        if (assetBundlePath.length) {
+        if (pinnataData.assetBundlePath.length) {
             console.log("--- Upload asset bundle ---");
-            fileFullPath = path.resolve(assetBundlePath); //"./metadatajson/corgi.glb"
+            fileFullPath = path.resolve(pinnataData.assetBundlePath); //"./metadatajson/corgi.glb"
             pinataUrlAssetBundle = await this.uploadFilePinata(fileFullPath);
             pinataUrlAssetBundle = this.pinataGatewateHash(pinataUrlAssetBundle);
             console.log("asset bundle: ", pinataUrlAssetBundle);
@@ -154,9 +174,9 @@ class PinataIpfsStorage {
 
         // upload asset addressable
         let pinataUrlAssetAddressable: string = '';
-        if (assetAddressablePath.length > 0) {
+        if (pinnataData.assetAddressablePath.length > 0) {
             console.log("--- Upload asset addressable ---");
-            fileFullPath = path.resolve(assetAddressablePath); //"./metadatajson/corgi.glb"
+            fileFullPath = path.resolve(pinnataData.assetAddressablePath); //"./metadatajson/corgi.glb"
             pinataUrlAssetAddressable = await this.uploadFilePinata(fileFullPath);
             pinataUrlAssetAddressable = this.pinataGatewateHash(pinataUrlAssetAddressable);
             console.log("Asset Addressable: ", pinataUrlAssetAddressable);
@@ -164,20 +184,24 @@ class PinataIpfsStorage {
 
         // pin json metadata
         console.log("--- Pin json metadata ---");
-        fileFullPath = path.resolve(nftJsonTemplatePath);//'./metadatajson/object_nft.json'
+        fileFullPath = path.resolve(pinnataData.nftJsonTemplatePath);//'./metadatajson/object_nft.json'
         const rawdata = await fs.promises.readFile(fileFullPath).catch((err: unknown) => console.error('Failed to read file', err));
         let objecNFTMetadataJson = JSON.parse(rawdata);
-        if (name.length > 0) {
-            objecNFTMetadataJson.name = name;
+        if (pinnataData.name.length > 0) {
+            objecNFTMetadataJson.name = pinnataData.name;
         }
-        if (description.length > 0) {
-            objecNFTMetadataJson.description = description;
+        if (pinnataData.description.length > 0) {
+            objecNFTMetadataJson.description = pinnataData.description;
         }
-
-        if (attributes.length > 0) {
-            for (let i = 0; i < attributes.length; i++) {
-                objecNFTMetadataJson.attributes.push(attributes[i]);
+        try {
+            pinnataData.attributes = JSON.parse(pinnataData.attributes);
+            if (pinnataData.attributes.length > 0) {
+                for (let i = 0; i < pinnataData.attributes.length; i++) {
+                    objecNFTMetadataJson.attributes.push(pinnataData.attributes[i]);
+                }
             }
+        } catch {
+            console.log("can not parse attributes")
         }
         objecNFTMetadataJson.image = pinataUrl2DThumbnail;
         objecNFTMetadataJson.animation_url = pinataUrl3DModel
@@ -201,7 +225,7 @@ class PinataIpfsStorage {
     }
 }
 
-export {PinataIpfsStorage};
+export {PinataIpfsStorage, PinataData};
 
 /*(async () => {
     try {
