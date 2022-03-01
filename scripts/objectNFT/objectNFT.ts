@@ -17,6 +17,11 @@ class ObjectNFT {
     }
 
     async deploy() {
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+        
         const ObjectNFT = await ethers.getContractFactory("ObjectNFT");
         const ObjectNFTDeploy = await ObjectNFT.deploy();
 
