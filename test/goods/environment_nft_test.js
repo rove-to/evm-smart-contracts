@@ -6,11 +6,7 @@ const expect = chai.expect;
 const {addresses} = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 let nft_owner_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
-function sleep(second) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, second * 1000);
-    });
-}
+
 describe("** NFTs erc-1155 contract", function () {
     let environmentNFT;
 
@@ -60,7 +56,7 @@ describe("** NFTs erc-1155 contract", function () {
     describe("* Transactions", function () {
         it("- Should transfer erc-1155 between accounts", async function () {
             let nftOwner = nft_owner_address;
-            let receiver = addresses[0];
+            let receiver = addresses[1];
             let initSupply = 100;
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
@@ -93,10 +89,8 @@ describe("** NFTs erc-1155 contract", function () {
             await tx.wait();
             let balance_erc1155_receiver = await environmentNFT.balanceOf(receiver, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
-            await sleep(10);
             let balance_erc1155_owner = await environmentNFT.balanceOf(nftOwner, tokenID);
             console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            await sleep(10);
             expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(initSupply);
         });
     });
