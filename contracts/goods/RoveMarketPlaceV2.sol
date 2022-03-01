@@ -28,11 +28,11 @@ contract RoveMarketPlaceV2 {
 
     mapping(address => uint) private _balances;
 
-    struct profit {
-        uint256 profitPecentCreator;
-        uint256 profitCreator;
-        uint256 profitPecentOperator;
-        uint256 profitOperator;
+    struct benefit {
+        uint256 benefitPecentCreator;
+        uint256 benefitCreator;
+        uint256 benefitPecentOperator;
+        uint256 benefitOperator;
         uint256 originPrice;
     }
 
@@ -137,7 +137,7 @@ contract RoveMarketPlaceV2 {
         // buyer is sender
         ERC20 token = ERC20(_roveToken);
 
-        closeOfferingData memory _temp = closeOfferingData(
+        closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
             offeringRegistry[_offeringId].price,
             offeringRegistry[_offeringId].price.mul(_amount),
@@ -145,9 +145,9 @@ contract RoveMarketPlaceV2 {
             token.allowance(msg.sender, address(this))
         );
 
-        console.log("get price of offering: %s", _temp.price);
-        console.log("get total price of offering: %s", _temp.totalPrice);
-        console.log("get balance erc-20 token of buyer %s: %s", _temp.buyer, _temp.balanceBuyer);
+        console.log("get price of offering: %s", _closeOfferingData.price);
+        console.log("get total price of offering: %s", _closeOfferingData.totalPrice);
+        console.log("get balance erc-20 token of buyer %s: %s", _closeOfferingData.buyer, _closeOfferingData.balanceBuyer);
 
         // get offer
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
@@ -156,62 +156,62 @@ contract RoveMarketPlaceV2 {
         address offerer = offeringRegistry[_offeringId].offerer;
 
         // check require
-        require(_temp.approvalToken == _temp.totalPrice, "this contract address is not approved for spending erc-20");
+        require(_closeOfferingData.approvalToken == _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
-        require(_temp.balanceBuyer >= _temp.totalPrice, "Buyer not enough funds erc-20 to buy");
+        require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, _temp.buyer, tokenID, _amount, "0x");
+        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, _amount, "0x");
         console.log("safeTransferFrom erc-1155 tokenID %s from %s to buyer %s",
             tokenID,
             offerer,
-            _temp.buyer
+            _closeOfferingData.buyer
         );
 
         // logic for 
-        // profit of operator here
+        // benefit of operator here
         ParameterControl parameterController = ParameterControl(_parameterControl);
-        profit memory _profit = profit(0, 0, 0, 0, _temp.totalPrice);
-        _profit.profitPecentOperator = parameterController.getUInt256("MARKET_PROFIT");
-        if (_profit.profitPecentOperator > 0) {
-            _profit.profitOperator = _profit.originPrice.div(100).mul(_profit.profitPecentOperator);
-            _temp.totalPrice -= _profit.profitOperator;
-            console.log("market operator profit %s", _profit.profitOperator);
+        benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.totalPrice);
+        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPecentOperator > 0) {
+            _benefit.benefitOperator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentOperator);
+            _closeOfferingData.totalPrice -= _benefit.benefitOperator;
+            console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
-            _balances[_operator] += _profit.profitOperator;
+            _balances[_operator] += _benefit.benefitOperator;
         }
-        // profit of minter nfts here
-        _profit.profitPecentCreator = parameterController.getUInt256("CREATOR_PROFIT");
-        if (_profit.profitPecentCreator > 0) {
-            _profit.profitCreator = _profit.originPrice.div(100).mul(_profit.profitPecentCreator);
-            _temp.totalPrice -= _profit.profitCreator;
-            console.log("creator profit %s", _profit.profitCreator);
+        // benefit of minter nfts here
+        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
+        if (_benefit.benefitPecentCreator > 0) {
+            _benefit.benefitCreator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentCreator);
+            _closeOfferingData.totalPrice -= _benefit.benefitCreator;
+            console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
             address creator = hostContract.getCreator(tokenID);
-            _balances[creator] += _profit.profitCreator;
+            _balances[creator] += _benefit.benefitCreator;
         }
 
         // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _temp.buyer, address(this), _temp.totalPrice);
-        token.transferFrom(_temp.buyer, address(this), _temp.totalPrice);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
+        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
         offeringRegistry[_offeringId].amount -= _amount;
 
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", offerer, _temp.totalPrice);
-        _balances[offerer] += _temp.totalPrice;
+        console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.totalPrice);
+        _balances[offerer] += _closeOfferingData.totalPrice;
 
         // close offering
         uint remainAmount = offeringRegistry[_offeringId].amount;
         if (remainAmount == 0) {
             offeringRegistry[_offeringId].closed = true;
             console.log("close offering: ", toHex(_offeringId));
-            emit OfferingClosed(_offeringId, _temp.buyer);
+            emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
         } else {
             console.log("remain amount of offering %s:%s", toHex(_offeringId), remainAmount);
-            emit OfferingRemain(_offeringId, _temp.buyer, remainAmount);
+            emit OfferingRemain(_offeringId, _closeOfferingData.buyer, remainAmount);
         }
     }
 

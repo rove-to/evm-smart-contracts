@@ -24,7 +24,6 @@ contract RoveToken is ERC20PresetMinterPauser {
         _setupRole(MINTER_ROLE, admin);
         _setupRole(PAUSER_ROLE, admin);
         
-        // _setupDecimals(4);
         console.log("Total supply for admin address", _totalSupplyRove);
     }
 
