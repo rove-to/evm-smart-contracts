@@ -4,6 +4,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "hardhat/console.sol";
 
 /**
@@ -13,9 +14,9 @@ import "hardhat/console.sol";
  * Useful for simple vesting schedules like "advisors get all of their tokens
  * after 1 year".
  */
-contract RoveTokenTimelock {
+contract RoveTokenTimelock is ReentrancyGuard {
     using SafeERC20 for IERC20;
-    
+
     // ERC20 basic token contract being held
     IERC20 public immutable token;
 
