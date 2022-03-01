@@ -1,9 +1,9 @@
-import {EnvironmentNFT} from "./environmentNFT";
+import {ObjectNFT} from "./objectNFT";
 
 (async () => {
     try {
         console.log(process.argv);
-
+        
         // set init owner
         let initOwnerAddress: any;
         if (process.argv.length >= 2) {
@@ -32,8 +32,8 @@ import {EnvironmentNFT} from "./environmentNFT";
         }
         console.log("nftContract:", nftContract);
 
-        const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.mintEnvironmentNFT(initOwnerAddress, nftContract, initSupply, tokenURI, 500000);
+        const nft = new ObjectNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
+        const tx = await nft.mintObjectNFT(initOwnerAddress, nftContract, initSupply, tokenURI, 500000);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
