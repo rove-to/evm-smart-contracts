@@ -24,7 +24,6 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
     using Strings for string;
     using SafeMath for uint256;
 
-    address proxyRegistryAddress;
     mapping(uint256 => address) public creators;
     mapping(uint256 => uint256) public tokenSupply;
     mapping(uint256 => string) customUri;
@@ -52,12 +51,10 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory _uri,
-        address _proxyRegistryAddress
+        string memory _uri
     ) ERC1155(_uri) {
         name = _name;
         symbol = _symbol;
-        proxyRegistryAddress = _proxyRegistryAddress;
         _initializeEIP712(name);
     }
 
@@ -205,22 +202,6 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
             _setCreator(_to, id);
         }
     }
-
-    /**
-     * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-free listings.
-     */
-//    function isApprovedForAll(
-//        address _owner,
-//        address _operator
-//    ) override public view returns (bool isOperator) {
-//        // Whitelist OpenSea proxy contract for easy trading.
-//        ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
-//        if (address(proxyRegistry.proxies(_owner)) == _operator) {
-//            return true;
-//        }
-//
-//        return ERC1155.isApprovedForAll(_owner, _operator);
-//    }
 
     /**
       * @dev Change the creator address for given token

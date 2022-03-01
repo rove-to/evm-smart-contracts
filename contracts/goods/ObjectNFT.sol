@@ -21,8 +21,7 @@ contract ObjectNFT is ERC1155Tradable {
     ERC1155Tradable(
         "Rove Objects",
         "ROs",
-        "",
-        _proxyRegistryAddress
+        ""
     ) public {
     }
 

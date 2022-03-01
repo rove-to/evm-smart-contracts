@@ -21,8 +21,7 @@ contract RockNFT is ERC1155Tradable {
     ERC1155Tradable(
         "Rove Rocks",
         "RRs",
-        "",
-        _proxyRegistryAddress
+        ""
     ) public {
     }
 

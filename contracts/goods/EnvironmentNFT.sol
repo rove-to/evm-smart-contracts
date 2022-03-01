@@ -21,8 +21,7 @@ contract EnvironmentNFT is ERC1155Tradable {
     ERC1155Tradable(
         "Rove Environments",
         "REs",
-        "",
-        _proxyRegistryAddress
+        ""
     ) public {
     }
 
