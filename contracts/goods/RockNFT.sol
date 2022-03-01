@@ -27,7 +27,7 @@ contract RockNFT is ERC1155Tradable {
     }
 
     function mintNFT(address recipient, string memory tokenURI)
-    public onlyOwner
+    public 
     returns (uint256)
     {
         _tokenIds.increment();
