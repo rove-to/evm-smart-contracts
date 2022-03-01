@@ -28,11 +28,11 @@ contract RoveMarketPlace {
 
     mapping(address => uint) private _balances;
 
-    struct profit {
-        uint256 profitPecentCreator;
-        uint256 profitCreator;
-        uint256 profitPecentOperator;
-        uint256 profitOperator;
+    struct benefit {
+        uint256 benefitPecentCreator;
+        uint256 benefitCreator;
+        uint256 benefitPecentOperator;
+        uint256 benefitOperator;
         uint256 originPrice;
     }
 
@@ -160,26 +160,26 @@ contract RoveMarketPlace {
         );
 
         // logic for 
-        // profit of operator here
+        // benefit of operator here
         ParameterControl parameterController = ParameterControl(_parameterControl);
-        profit memory _profit = profit(0, 0, 0, 0, price);
-        _profit.profitPecentOperator = parameterController.getUInt256("MARKET_PROFIT");
-        if (_profit.profitPecentOperator > 0) {
-            _profit.profitOperator = _profit.originPrice.div(100).mul(_profit.profitPecentOperator);
-            price -= _profit.profitOperator;
-            console.log("market operator profit %s", _profit.profitOperator);
+        benefit memory _benefit = benefit(0, 0, 0, 0, price);
+        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPecentOperator > 0) {
+            _benefit.benefitOperator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentOperator);
+            price -= _benefit.benefitOperator;
+            console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
-            _balances[_operator] += _profit.profitOperator;
+            _balances[_operator] += _benefit.benefitOperator;
         }
-        // profit of minter nfts here
-        _profit.profitPecentCreator = parameterController.getUInt256("CREATOR_PROFIT");
-        if (_profit.profitPecentCreator > 0) {
-            _profit.profitCreator = _profit.originPrice.div(100).mul(_profit.profitPecentCreator);
-            price -= _profit.profitCreator;
-            console.log("creator profit %s", _profit.profitCreator);
+        // benefit of minter nfts here
+        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
+        if (_benefit.benefitPecentCreator > 0) {
+            _benefit.benefitCreator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentCreator);
+            price -= _benefit.benefitCreator;
+            console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
             address creator = hostContract.getCreator(tokenID);
-            _balances[creator] += _profit.profitCreator;
+            _balances[creator] += _benefit.benefitCreator;
         }
 
         // tranfer erc-20 token to this market contract
