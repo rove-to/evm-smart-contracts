@@ -17,17 +17,17 @@ contract RoveTokenTimelock {
     using SafeERC20 for IERC20;
     
     // ERC20 basic token contract being held
-    IERC20 private immutable _token;
+    IERC20 public immutable token;
 
     // beneficiary of tokens after they are released by bellow ordering
     // community multi sig address
     // team multi sig address
     // sales multi sig address
     // exchange liquidity multi sig address
-    address[4] private _beneficiary;
+    address[4] public beneficiary;
 
     // timestamp when token release is enabled
-    uint256 private immutable _releaseTime;
+    uint256 private immutable releaseTime;
 
     /**
      * @dev Deploys a timelock instance that is able to hold the token specified, and will only release it to
@@ -40,36 +40,18 @@ contract RoveTokenTimelock {
         uint256 releaseTime_
     ) {
         require(releaseTime_ > block.timestamp, "TokenTimelock: release time is before current time");
-        _token = token_;
-        _beneficiary = beneficiary_;
-        _releaseTime = releaseTime_;
-    }
-
-    function beneficiary() public view virtual returns (address[4] memory) {
-        return _beneficiary;
-    }
-
-    /**
-     * @dev Returns the token being held.
-     */
-    function token() public view virtual returns (IERC20) {
-        return _token;
+        token = token_;
+        beneficiary = beneficiary_;
+        releaseTime = releaseTime_;
     }
 
     /**
      * @dev Returns the beneficiary that will receive the tokens.
      */
     function beneficiary(uint128 index) public view virtual returns (address) {
-        return _beneficiary[index];
+        return beneficiary[index];
     }
 
-    /**
-     * @dev Returns the time when the tokens are released in seconds since Unix epoch (i.e. Unix timestamp).
-     */
-    function releaseTime() public view virtual returns (uint256) {
-        return _releaseTime;
-    }
-    
     function current_balance() public view returns (uint256) {
         address temp = address(this);
         uint256 balance = token().balanceOf(temp);
