@@ -8,7 +8,7 @@ const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
 const {createAlchemyWeb3} = require("@alch/alchemy-web3");
 
-describe("** NFTs erc-1155 contract", function () {
+describe.only("** NFTs erc-1155 contract", function () {
     let objectNFT;
     let objectNFTAddress;
     let nft_owner_contract_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
@@ -17,12 +17,6 @@ describe("** NFTs erc-1155 contract", function () {
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork)
-        let proxyRegistryAddress = "";
-        if (hardhatConfig.defaultNetwork === 'rinkeby') {
-            proxyRegistryAddress = "0xf57b2c51ded3a29e6891aba85459d600256cf317";
-        } else {
-            proxyRegistryAddress = "0xa5409ec958c83c3f309868babaca7c86dcb077c1";
-        }
 
         if (hardhatConfig.defaultNetwork !== 'local') {
             nft_owner_contract_address = `${process.env.PUBLIC_KEY}`;
@@ -30,7 +24,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_contract_address);
 
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy(proxyRegistryAddress);
+        objectNFT = await ObjectNFTContract.deploy();
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
 

@@ -5,7 +5,7 @@ import * as path from "path";
 const {ethers} = require("hardhat");
 const config = require("../../config");
 
-class ObjectNFT {
+class EnvironmentNFT {
     network: string;
     senderPublicKey: string;
     senderPrivateKey: string;
@@ -17,13 +17,13 @@ class ObjectNFT {
     }
 
     async deploy() {
-        const ObjectNFT = await ethers.getContractFactory("ObjectNFT");
-        const ObjectNFTDeploy = await ObjectNFT.deploy();
+        const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
+        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy();
 
-        console.log("Rove ObjectNFT deployed:", ObjectNFTDeploy.address);
-        return ObjectNFTDeploy.address;
+        console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
+        return EnvironmentNFTDeploy.address;
     }
-    
+
     async transfer(ownerAddress: any, receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
         let API_URL: any;
         if (this.network === 'mumbai') {
@@ -32,9 +32,9 @@ class ObjectNFT {
             console.log("Not is mumbai");
             return;
         }
-        
+
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
+        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
 
@@ -76,7 +76,7 @@ class ObjectNFT {
             })
     }
 
-    async mintObjectNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+    async mintEnvironmentNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
         let API_URL: any;
         if (this.network === 'mumbai') {
             API_URL = process.env.POLYGON_MUMBAI_API_URL;
@@ -86,7 +86,7 @@ class ObjectNFT {
         }
 
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
+        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
 
@@ -130,4 +130,4 @@ class ObjectNFT {
 }
 
 
-export {ObjectNFT};
+export {EnvironmentNFT};
