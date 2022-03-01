@@ -24,10 +24,10 @@ contract RoveTokenTimelock {
     // team multi sig address
     // sales multi sig address
     // exchange liquidity multi sig address
-    address[4] public beneficiary;
+    address[4] private _beneficiary;
 
     // timestamp when token release is enabled
-    uint256 private immutable releaseTime;
+    uint256 public immutable releaseTime;
 
     /**
      * @dev Deploys a timelock instance that is able to hold the token specified, and will only release it to
@@ -41,20 +41,24 @@ contract RoveTokenTimelock {
     ) {
         require(releaseTime_ > block.timestamp, "TokenTimelock: release time is before current time");
         token = token_;
-        beneficiary = beneficiary_;
+        _beneficiary = beneficiary_;
         releaseTime = releaseTime_;
+    }
+
+    function beneficiary() public view virtual returns (address[4] memory) {
+        return _beneficiary;
     }
 
     /**
      * @dev Returns the beneficiary that will receive the tokens.
      */
     function beneficiary(uint128 index) public view virtual returns (address) {
-        return beneficiary[index];
+        return _beneficiary[index];
     }
 
     function current_balance() public view returns (uint256) {
         address temp = address(this);
-        uint256 balance = token().balanceOf(temp);
+        uint256 balance = token.balanceOf(temp);
         console.log("token lock time address %s has balance %s", address(this), balance);
         return balance;
     }
@@ -64,10 +68,10 @@ contract RoveTokenTimelock {
      * time.
      */
     function release() public virtual {
-        console.log("call release for token lock time address %s, block timestamp %s, release Time %s", address(this), block.timestamp, releaseTime());
-        require(block.timestamp >= releaseTime(), "TokenTimelock: current time is before release time");
+        console.log("call release for token lock time address %s, block timestamp %s, release Time %s", address(this), block.timestamp, releaseTime);
+        require(block.timestamp >= releaseTime, "TokenTimelock: current time is before release time");
 
-        uint256 amount = token().balanceOf(address(this));
+        uint256 amount = token.balanceOf(address(this));
         require(amount > 0, "TokenTimelock: no tokens to release");
 
         // split amount
@@ -90,9 +94,9 @@ contract RoveTokenTimelock {
         temp = temp + liquidity;
         require(temp == amount, "TokenTimelock: no tokens to release");
 
-        token().safeTransfer(beneficiary(0), community);
-        token().safeTransfer(beneficiary(1), team);
-        token().safeTransfer(beneficiary(2), sales);
-        token().safeTransfer(beneficiary(3), liquidity);
+        token.safeTransfer(_beneficiary[0], community);
+        token.safeTransfer(_beneficiary[1], team);
+        token.safeTransfer(_beneficiary[2], sales);
+        token.safeTransfer(_beneficiary[3], liquidity);
     }
 }
