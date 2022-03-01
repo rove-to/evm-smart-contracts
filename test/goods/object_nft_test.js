@@ -5,7 +5,9 @@ const {ethers} = require("hardhat");
 const expect = chai.expect;
 const {addresses} = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
-let nft_owner_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
+const path = require("path");
+const {createAlchemyWeb3} = require("@alch/alchemy-web3");
+
 function sleep(second) {
     return new Promise((resolve) => {
         setTimeout(resolve, second * 1000);
@@ -14,6 +16,10 @@ function sleep(second) {
 
 describe("** NFTs erc-1155 contract", function () {
     let objectNFT;
+    let objectNFTAddress;
+    let nft_owner_contract_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
+    const nft_creator = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'; // default for local
+    const nft_creator_privatekey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork)
@@ -25,19 +31,20 @@ describe("** NFTs erc-1155 contract", function () {
         }
 
         if (hardhatConfig.defaultNetwork !== 'local') {
-            nft_owner_address = `${process.env.PUBLIC_KEY}`;
+            nft_owner_contract_address = `${process.env.PUBLIC_KEY}`;
         }
-        console.log("nft_owner_address", nft_owner_address);
+        console.log("nft_owner_address", nft_owner_contract_address);
 
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
         objectNFT = await ObjectNFTContract.deploy(proxyRegistryAddress);
-        console.log("ObjectNFTDeploy address", objectNFT.address);
+        objectNFTAddress = objectNFT.address;
+        console.log("ObjectNFTDeploy address", objectNFTAddress);
 
 
     });
     describe("* Mint NFT erc-1155", function () {
-        it("- Check total supply of minted NFT token", async function () {
-            let recipient = nft_owner_address;
+        it("- Check total supply of minted NFT token: owner of contract", async function () {
+            let recipient = nft_owner_contract_address;
             let initSupply = 10;
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
@@ -57,10 +64,49 @@ describe("** NFTs erc-1155 contract", function () {
             console.log("totalSupply init:", totalSupply);
             expect(totalSupply).to.equal(initSupply);
         });
+
+        it("- Check total supply of minted NFT token: any creator", async function () {
+
+            let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
+            const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
+            const objectNFT1 = new web3.eth.Contract(contract.abi, objectNFTAddress);
+
+            let recipient = nft_owner_contract_address;
+            let initSupply = 10;
+            let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+
+            // check token init
+            let newItemId = await objectNFT.newItemId()
+            console.log("newItemId", newItemId);
+            expect(newItemId).to.equal(0);
+
+            // check token id increase after mint
+            nonce = await web3.eth.getTransactionCount(nft_creator, "latest") //get latest nonce
+            tx = {
+                from: nft_creator,
+                to: objectNFTAddress,
+                nonce: nonce,
+                gas: 500000,
+                data: objectNFT1.methods.mintNFT(recipient, initSupply, tokenURI).encodeABI(),
+            }
+            signedTx = await web3.eth.accounts.signTransaction(tx, nft_creator_privatekey);
+            if (signedTx.rawTransaction != null) {
+                await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+            }
+            
+            let tokenID = await objectNFT.newItemId()
+            console.log("tokenID", tokenID);
+            expect(tokenID).to.equal(newItemId + 1);
+
+            // check total supply of token id
+            let totalSupply = await objectNFT.totalSupply(tokenID);
+            console.log("totalSupply init:", totalSupply);
+            expect(totalSupply).to.equal(initSupply);
+        });
     });
     describe("* Transactions", function () {
         it("- Should transfer erc-1155 between accounts", async function () {
-            let nftOwner = nft_owner_address;
+            let nftOwner = nft_owner_contract_address;
             let receiver = addresses[0];
             let initSupply = 100;
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
@@ -73,25 +119,25 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
-            await sleep(10);
+            let tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            await tx.wait();
             let tokenID = await objectNFT.newItemId()
             expect(tokenID).to.equal(1);
             console.log("tokenID:", tokenID);
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
-            await sleep(10);
+            tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            await tx.wait();
             tokenID = await objectNFT.newItemId();
             expect(tokenID).to.equal(2);
             console.log("tokenID:", tokenID);
 
             // transfer and check balance
             console.log("+ transfer and check balance")
-            let tx = await objectNFT.safeTransferFrom(nftOwner, receiver, tokenID, 5, "0x");
-            console.log("Transfer tx:", tx);
-            await sleep(10);
+            tx = await objectNFT.safeTransferFrom(nftOwner, receiver, tokenID, 5, "0x");
+            console.log("Transfer tx:", tx.hash);
+            await tx.wait();
             let balance_erc1155_receiver = await objectNFT.balanceOf(receiver, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
             await sleep(10);

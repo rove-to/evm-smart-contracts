@@ -46,8 +46,8 @@ describe("** NFTs erc-1155 contract", function () {
             expect(newItemId).to.equal(0);
 
             // check token id increase after mint
-            await rockNFT.mintNFT(recipient, tokenURI);
-            await sleep(10);
+            let tx = await rockNFT.mintNFT(recipient, tokenURI);
+            await tx.wait();
             let tokenID = await rockNFT.newItemId()
             console.log("tokenID", tokenID);
             expect(tokenID).to.equal(newItemId + 1);
@@ -72,25 +72,25 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            await rockNFT.mintNFT(nftOwner, tokenURI);
-            await sleep(10);
+            let tx = await rockNFT.mintNFT(nftOwner, tokenURI);
+            await tx.wait();
             let tokenID = await rockNFT.newItemId()
             expect(tokenID).to.equal(1);
             console.log("tokenID:", tokenID);
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            await rockNFT.mintNFT(nftOwner, tokenURI);
-            await sleep(10);
+            tx = await rockNFT.mintNFT(nftOwner, tokenURI);
+            await tx.wait();
             tokenID = await rockNFT.newItemId();
             expect(tokenID).to.equal(2);
             console.log("tokenID:", tokenID);
 
             // transfer and check balance
             console.log("+ transfer and check balance")
-            let tx = await rockNFT.safeTransferFrom(nftOwner, receiver, tokenID, 1, "0x");
-            console.log("Transfer tx:", tx);
-            await sleep(10);
+            tx = await rockNFT.safeTransferFrom(nftOwner, receiver, tokenID, 1, "0x");
+            console.log("Transfer tx:", tx.hash);
+            await tx.wait();
             let balance_erc1155_receiver = await rockNFT.balanceOf(receiver, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
             await sleep(10);

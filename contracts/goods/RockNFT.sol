@@ -13,38 +13,34 @@ import "hardhat/console.sol";
  */
 
 contract RockNFT is ERC1155Tradable {
-        using Counters for Counters.Counter;
-        Counters.Counter private _tokenIds;
-        uint256 private _newItemId;
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+    uint256 public newItemId;
 
-        constructor(address _proxyRegistryAddress)
-        ERC1155Tradable(
-                "Rove Rocks",
-                "RRs",
-                "",
-                _proxyRegistryAddress
-        ) public {
-        }
+    constructor(address _proxyRegistryAddress)
+    ERC1155Tradable(
+        "Rove Rocks",
+        "RRs",
+        "",
+        _proxyRegistryAddress
+    ) public {
+    }
 
-        function newItemId() public view returns (uint256) {
-                return _newItemId;
-        }
+    function mintNFT(address recipient, string memory tokenURI)
+    public 
+    returns (uint256)
+    {
+        _tokenIds.increment();
 
-        function mintNFT(address recipient, string memory tokenURI)
-        public onlyOwner
-        returns (uint256)
-        {
-                _tokenIds.increment();
+        newItemId = _tokenIds.current();
+        create(recipient, newItemId, 1, tokenURI, "0x");
 
-                _newItemId = _tokenIds.current();
-                create(recipient, _newItemId, 1, tokenURI, "0x");
-
-                console.log(
-                        "mintNFT erc-1155 %s, owner %s, only 1",
-                        address(this),
-                        recipient
-                );
-                console.log("tokenid: ", _newItemId);
-                return _newItemId;
-        }
+        console.log(
+            "mintNFT erc-1155 %s, owner %s, only 1",
+            address(this),
+            recipient
+        );
+        console.log("tokenid: ", newItemId);
+        return newItemId;
+    }
 }
