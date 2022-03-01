@@ -44,6 +44,13 @@ contract RoveMarketPlace {
         bool closed;
     }
 
+    struct closeOfferingData {
+        address buyer;
+        uint price;
+        uint256 balanceBuyer;
+        uint256 approvalToken;
+    }
+
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
@@ -127,14 +134,18 @@ contract RoveMarketPlace {
 
     function closeOffering(bytes32 _offeringId) external payable {
         // buyer is sender
-        address buyer = msg.sender;
-
         ERC20 token = ERC20(_roveToken);
-        uint price = offeringRegistry[_offeringId].price;
-        console.log("get price of offering: %s", price);
-        uint256 balance = token.balanceOf(buyer);
-        console.log("get balance erc-20 token of buyer %s: %s", buyer, balance);
-        uint256 approvalToken = token.allowance(buyer, address(this));
+        
+        closeOfferingData memory _closeOfferingData = closeOfferingData(
+            msg.sender,
+            offeringRegistry[_offeringId].price,
+            token.balanceOf(msg.sender),
+            token.allowance(msg.sender, address(this))
+        );
+
+        console.log("get price of offering: %s", _closeOfferingData.price);
+        console.log("get balance erc-20 token of buyer %s: %s", _closeOfferingData.buyer, _closeOfferingData.balanceBuyer);
+        uint256 approvalToken = token.allowance(_closeOfferingData.buyer, address(this));
 
         // get offer
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
@@ -143,15 +154,15 @@ contract RoveMarketPlace {
         address offerer = offeringRegistry[_offeringId].offerer;
 
         // check require
-        require(approvalToken == price, "this contract address is not approved for spending erc-20");
+        require(approvalToken == _closeOfferingData.price, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= 1, "Not enough token erc-1155 to sell");
-        require(balance >= price, "Not enough funds erc-20 to buy");
+        require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, buyer, tokenID, 1, "0x");
+        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, 1, "0x");
         console.log("safeTransferFrom erc-1155 %s, tokenID %s from %s to buyer %s",
             hostContractOffering,
             tokenID,
@@ -162,11 +173,11 @@ contract RoveMarketPlace {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(_parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0, price);
+        benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.price);
         _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPecentOperator > 0) {
             _benefit.benefitOperator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentOperator);
-            price -= _benefit.benefitOperator;
+            _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[_operator] += _benefit.benefitOperator;
@@ -175,7 +186,7 @@ contract RoveMarketPlace {
         _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPecentCreator > 0) {
             _benefit.benefitCreator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentCreator);
-            price -= _benefit.benefitCreator;
+            _closeOfferingData.price -= _benefit.benefitCreator;
             console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
             address creator = hostContract.getCreator(tokenID);
@@ -183,18 +194,18 @@ contract RoveMarketPlace {
         }
 
         // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", buyer, address(this), price);
-        token.transferFrom(buyer, address(this), price);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.price);
+        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.price);
 
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", offerer, price);
-        _balances[offerer] += price;
+        console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.price);
+        _balances[offerer] += _closeOfferingData.price;
 
         // close offering
         offeringRegistry[_offeringId].closed = true;
         console.log("close offering: ", toHex(_offeringId));
 
-        emit OfferingClosed(_offeringId, buyer);
+        emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
     }
 
     function withdrawBalance() external {
