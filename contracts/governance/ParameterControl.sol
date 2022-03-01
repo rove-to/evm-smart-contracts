@@ -9,13 +9,12 @@ import "hardhat/console.sol";
  *
  * [x] Add (key, value)
  * [x] Add access control 
- * [x] Use string instead of uint256. Add a string to uint parser.
  *
  */
 
 contract ParameterControl is AccessControl {
 
-    address private _admin;
+    address private admin;
     mapping(string => string) private _params;
     mapping(string => int) private _paramsInt;
     mapping(string => uint256) private _paramsUInt256;
@@ -23,12 +22,8 @@ contract ParameterControl is AccessControl {
     constructor(
         address admin_
     ) {
-        _admin = admin_;
-        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
-    }
-
-    function admin() external view returns (address) {
-        return _admin;
+        admin = admin_;
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     function get(string memory key) public view returns (string memory) {
@@ -45,26 +40,29 @@ contract ParameterControl is AccessControl {
 
     function set(string memory key, string memory value) external {
         console.log("msg.sender %s", msg.sender);
-        require(msg.sender == _admin);
+        require(msg.sender == admin, "Sender is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         _params[key] = value;
     }
 
     function setInt(string memory key, int value) external {
         console.log("msg.sender %s", msg.sender);
-        require(msg.sender == _admin);
+        require(msg.sender == admin, "Sender is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         _paramsInt[key] = value;
     }
 
     function setUInt256(string memory key, uint256 value) external {
         console.log("msg.sender %s", msg.sender);
-        require(msg.sender == _admin);
+        require(msg.sender == admin, "Sender is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         _paramsUInt256[key] = value;
     }
 
     function updateAdmin(address admin_) external {
-        require(msg.sender == _admin);
+        require(msg.sender == admin);
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
-        console.log("set new admin %s -> %s", _admin, admin_);
-        _admin = admin_;
+        console.log("set new admin %s -> %s", admin, admin_);
+        admin = admin_;
     }
 }
