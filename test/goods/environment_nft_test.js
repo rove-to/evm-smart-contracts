@@ -72,25 +72,25 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
-            await sleep(10);
+            let tx = await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            await tx.wait();
             let tokenID = await environmentNFT.newItemId()
             expect(tokenID).to.equal(1);
             console.log("tokenID:", tokenID);
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
-            await sleep(10);
+            tx = await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            await tx.wait();
             tokenID = await environmentNFT.newItemId();
             expect(tokenID).to.equal(2);
             console.log("tokenID:", tokenID);
 
             // transfer and check balance
             console.log("+ transfer and check balance")
-            let tx = await environmentNFT.safeTransferFrom(nftOwner, receiver, tokenID, 5, "0x");
+            tx = await environmentNFT.safeTransferFrom(nftOwner, receiver, tokenID, 5, "0x");
             console.log("Transfer tx:", tx);
-            await sleep(10);
+            await tx.wait();
             let balance_erc1155_receiver = await environmentNFT.balanceOf(receiver, tokenID);
             console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
             await sleep(10);

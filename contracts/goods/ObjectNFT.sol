@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 contract ObjectNFT is ERC1155Tradable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    uint256 private _newItemId;
+    uint256 public newItemId;
 
     constructor(address _proxyRegistryAddress)
     ERC1155Tradable(
@@ -26,18 +26,14 @@ contract ObjectNFT is ERC1155Tradable {
     ) public {
     }
 
-    function newItemId() public view returns (uint256) {
-        return _newItemId;
-    }
-
     function mintNFT(address recipient, uint256 initialSupply, string memory tokenURI)
-    public onlyOwner
+    public
     returns (uint256)
     {
         _tokenIds.increment();
 
-        _newItemId = _tokenIds.current();
-        create(recipient, _newItemId, initialSupply, tokenURI, "0x");
+        newItemId = _tokenIds.current();
+        create(recipient, newItemId, initialSupply, tokenURI, "0x");
 
         console.log(
             "mintNFT erc-1155 %s, owner %s, total %s",
@@ -45,7 +41,7 @@ contract ObjectNFT is ERC1155Tradable {
             recipient,
             initialSupply
         );
-        console.log("tokenid: ", _newItemId);
-        return _newItemId;
+        console.log("tokenid: ", newItemId);
+        return newItemId;
     }
 }
