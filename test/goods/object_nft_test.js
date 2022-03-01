@@ -3,7 +3,7 @@ var chai = require('chai');
 chai.use(solidity);
 const {ethers} = require("hardhat");
 const expect = chai.expect;
-const {addresses} = require("../constants");
+const {addresses, private_keys} = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
 const {createAlchemyWeb3} = require("@alch/alchemy-web3");
@@ -107,7 +107,9 @@ describe("** NFTs erc-1155 contract", function () {
     describe("* Transactions", function () {
         it("- Should transfer erc-1155 between accounts", async function () {
             let nftOwner = nft_owner_contract_address;
-            let receiver = addresses[0];
+            let receiver1 = addresses[1];
+            let receiver_privatekey1 = private_keys[1];
+            let receiver2 = addresses[2];
             let initSupply = 100;
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
@@ -135,16 +137,44 @@ describe("** NFTs erc-1155 contract", function () {
 
             // transfer and check balance
             console.log("+ transfer and check balance")
-            tx = await objectNFT.safeTransferFrom(nftOwner, receiver, tokenID, 5, "0x");
+            const amount = 5;
+            tx = await objectNFT.safeTransferFrom(nftOwner, receiver1, tokenID, amount, "0x");
             console.log("Transfer tx:", tx.hash);
             await tx.wait();
-            let balance_erc1155_receiver = await objectNFT.balanceOf(receiver, tokenID);
-            console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
+            let balance_erc1155_receiver = await objectNFT.balanceOf(receiver1, tokenID);
+            console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
             await sleep(10);
             let balance_erc1155_owner = await objectNFT.balanceOf(nftOwner, tokenID);
             console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
             await sleep(10);
             expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(initSupply);
+
+            
+            // continue transfer
+            let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
+            const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
+            const objectNFT1 = new web3.eth.Contract(contract.abi, objectNFTAddress);
+            // check token id increase after mint
+            nonce = await web3.eth.getTransactionCount(receiver1, "latest") //get latest nonce
+            tx = {
+                from: receiver1,
+                to: objectNFTAddress,
+                nonce: nonce,
+                gas: 500000,
+                data: objectNFT1.methods.safeTransferFrom(receiver1, receiver2, tokenID, amount - 2, "0x").encodeABI(),
+            }
+            signedTx = await web3.eth.accounts.signTransaction(tx, receiver_privatekey1);
+            if (signedTx.rawTransaction != null) {
+                await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+            }
+            balance_erc1155_receiver = await objectNFT.balanceOf(receiver2, tokenID);
+            console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
+            await sleep(10);
+            balance_erc1155_owner = await objectNFT.balanceOf(receiver1, tokenID);
+            console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
+            await sleep(10);
+            expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(amount);
+            
         });
     });
 });
