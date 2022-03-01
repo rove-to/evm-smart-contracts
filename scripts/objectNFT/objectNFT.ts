@@ -3,7 +3,6 @@ import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
 
 const {ethers} = require("hardhat");
-const config = require("../../config");
 
 class ObjectNFT {
     network: string;

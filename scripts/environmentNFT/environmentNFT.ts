@@ -1,10 +1,8 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
-
-const hardhatConfig = require("../../hardhat.config");
-
 const {ethers} = require("hardhat");
+const hardhatConfig = require("../../hardhat.config");
 
 class EnvironmentNFT {
     network: string;
