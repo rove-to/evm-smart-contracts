@@ -28,7 +28,7 @@ class ObjectNFT {
         return ObjectNFTDeploy.address;
     }
     
-    async transfer(ownerAddress: any, receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
+    async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
         let API_URL: any;
         if (this.network === 'mumbai') {
             API_URL = process.env.POLYGON_MUMBAI_API_URL;
@@ -50,7 +50,7 @@ class ObjectNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.safeTransferFrom(ownerAddress, receiver, tokenID, amount, "0x").encodeABI(),
+            data: nftContract.methods.safeTransferFrom(this.senderPublicKey, receiver, tokenID, amount, "0x").encodeABI(),
         }
 
         const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
