@@ -12,12 +12,6 @@ describe("** NFTs erc-1155 contract", function () {
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork)
-        let proxyRegistryAddress = "";
-        if (hardhatConfig.defaultNetwork === 'rinkeby') {
-            proxyRegistryAddress = "0xf57b2c51ded3a29e6891aba85459d600256cf317";
-        } else {
-            proxyRegistryAddress = "0xa5409ec958c83c3f309868babaca7c86dcb077c1";
-        }
 
         if (hardhatConfig.defaultNetwork !== 'local') {
             nft_owner_address = `${process.env.PUBLIC_KEY}`;
@@ -25,7 +19,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_address);
 
         let RockNFTContract = await ethers.getContractFactory("RockNFT");
-        rockNFT = await RockNFTContract.deploy(proxyRegistryAddress);
+        rockNFT = await RockNFTContract.deploy();
         console.log("RockNFTDeploy address", rockNFT.address);
 
 
