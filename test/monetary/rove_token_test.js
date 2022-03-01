@@ -48,7 +48,7 @@ describe("Token contract", function () {
     let roveTokenlockTimeAddressArrays = [];
     let roveTokenlockTimeArrays = [];
 
-    const releaseDeltaSeconds = 90;
+    const releaseDeltaSeconds = 120;
 
     /*`beforeEach` will run before each test, re-deploying the contract every
     time. It receives a callback, which can be async.*/

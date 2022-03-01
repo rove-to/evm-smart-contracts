@@ -4,7 +4,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "hardhat/console.sol";
 
 /**
@@ -16,7 +15,6 @@ import "hardhat/console.sol";
  */
 contract RoveTokenTimelock {
     using SafeERC20 for IERC20;
-    using SafeMath for uint;
     
     // ERC20 basic token contract being held
     IERC20 private immutable _token;
@@ -92,20 +90,17 @@ contract RoveTokenTimelock {
 
         // split amount
         // 65% for community members
-        uint256 community = amount.div(20);
-        community = community.mul(13);
+        uint256 community = amount / 20;
+        community = community * 13;
         console.log("community: ", community);
         // 20% for Team
-        uint256 team = amount.div(5);
-        team = team.mul(1);
+        uint256 team = amount / 5;
         console.log("team: ", team);
         // 10% reserved for Token Sales 
-        uint256 sales = amount.div(10);
-        sales = sales.mul(1);
+        uint256 sales = amount / 10;
         console.log("sales: ", sales);
         // 5% reserved for Exchange Liquidity
-        uint256 liquidity = amount.div(20);
-        liquidity = liquidity.mul(1);
+        uint256 liquidity = amount / 20;
         console.log("liquidity: ", liquidity);
 
         uint256 temp = community + team;
