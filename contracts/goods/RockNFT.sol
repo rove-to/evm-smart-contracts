@@ -17,7 +17,7 @@ contract RockNFT is ERC1155Tradable {
     Counters.Counter private _tokenIds;
     uint256 public newItemId;
 
-    constructor(address _proxyRegistryAddress)
+    constructor()
     ERC1155Tradable(
         "Rove Rocks",
         "RRs",
