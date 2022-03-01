@@ -134,7 +134,9 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         uint256 _initialSupply,
         string memory _uri,
         bytes memory _data
-    ) public onlyOwner returns (uint256) {
+    ) public 
+    //onlyOwner 
+    returns (uint256) {
         require(!_exists(_id), "token _id already exists");
         creators[_id] = _msgSender();
 
