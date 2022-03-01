@@ -3,15 +3,14 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
 import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
 
-contract RoveMarketPlace {
-    using SafeMath for uint;
+contract RoveMarketPlace is ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
@@ -164,7 +163,7 @@ contract RoveMarketPlace {
         benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.price);
         _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentOperator);
+            _benefit.benefitOperator = _benefit.originPrice / 100 * _benefit.benefitPecentOperator;
             _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
@@ -173,7 +172,7 @@ contract RoveMarketPlace {
         // benefit of minter nfts here
         _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPecentCreator > 0) {
-            _benefit.benefitCreator = _benefit.originPrice.div(100).mul(_benefit.benefitPecentCreator);
+            _benefit.benefitCreator = _benefit.originPrice / 100 * _benefit.benefitPecentCreator;
             _closeOfferingData.price -= _benefit.benefitCreator;
             console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
