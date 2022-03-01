@@ -2,6 +2,8 @@
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
 
+const hardhatConfig = require("../../hardhat.config");
+
 const {ethers} = require("hardhat");
 
 class EnvironmentNFT {
@@ -16,6 +18,7 @@ class EnvironmentNFT {
     }
 
     async deploy() {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
             return;
@@ -28,13 +31,13 @@ class EnvironmentNFT {
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
-        let API_URL: any;
-        if (this.network === 'mumbai') {
-            API_URL = process.env.POLYGON_MUMBAI_API_URL;
-        } else {
-            console.log("Not is mumbai");
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
             return;
         }
+        let API_URL: any;
+        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
         let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
@@ -80,13 +83,14 @@ class EnvironmentNFT {
     }
 
     async mintEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
-        let API_URL: any;
-        if (this.network === 'mumbai') {
-            API_URL = process.env.POLYGON_MUMBAI_API_URL;
-        } else {
-            console.log("Not is mumbai");
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
             return;
         }
+
+        let API_URL: any;
+        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
         let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
