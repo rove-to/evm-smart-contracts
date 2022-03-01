@@ -15,12 +15,15 @@ contract RoveToken is ERC20PresetMinterPauser {
         console.log("Mint to admin address", admin);
 
         uint256 _totalSupplyRove = 1000000000;
+
+        // mint RVE for admin account
+        admin = _admin;
+        mint(admin, _totalSupplyRove * (10 ** uint256(decimals())));
+        // set role to admin
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
         _setupRole(MINTER_ROLE, admin);
         _setupRole(PAUSER_ROLE, admin);
-
-        // mint RVE for admin account
-        mint(admin, _totalSupplyRove * (10 ** uint256(decimals())));
+        
         // _setupDecimals(4);
         console.log("Total supply for admin address", _totalSupplyRove);
     }
