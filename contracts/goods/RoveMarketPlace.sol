@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
@@ -56,6 +57,7 @@ contract RoveMarketPlace is ReentrancyGuard {
     constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
         operator = operator_;
+        _setupRole(DEFAULT_ADMIN_ROLE, operator);
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
@@ -223,8 +225,10 @@ contract RoveMarketPlace is ReentrancyGuard {
 
     function changeOperator(address _newOperator) external {
         require(msg.sender == operator, "only the operator can change the current operator");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         address previousOperator = operator;
         operator = _newOperator;
+        _setupRole(DEFAULT_ADMIN_ROLE, operator);
         emit OperatorChanged(previousOperator, operator);
     }
 
@@ -245,6 +249,7 @@ contract RoveMarketPlace is ReentrancyGuard {
 
     function operatorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == operator, "Only operator dApp can close offerings");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }

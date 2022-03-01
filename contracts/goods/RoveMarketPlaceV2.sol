@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
 import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
 
-contract RoveMarketPlaceV2 is ReentrancyGuard {
+contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
@@ -58,6 +59,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard {
     constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
         operator = operator_;
+        _setupRole(DEFAULT_ADMIN_ROLE, operator);
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
@@ -234,8 +236,10 @@ contract RoveMarketPlaceV2 is ReentrancyGuard {
 
     function changeOperator(address _newOperator) external {
         require(msg.sender == operator, "only the operator can change the current operator");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         address previousOperator = operator;
         operator = _newOperator;
+        _setupRole(DEFAULT_ADMIN_ROLE, operator);
         emit OperatorChanged(previousOperator, operator);
     }
 
@@ -254,7 +258,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard {
 
     function operatorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == operator, "Only operator dApp can close offerings");
-
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
         ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
