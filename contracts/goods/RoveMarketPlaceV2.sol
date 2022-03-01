@@ -22,9 +22,9 @@ contract RoveMarketPlaceV2 {
     event OperatorChanged (address previousOperator, address newOperator);
     event ApprovalForAll(address owner, address operator, bool approved);
 
-    address private _operator;
-    address private _roveToken; // require using this erc-20 token in this market
-    address private _parameterControl;
+    address public operator;
+    address public roveToken; // require using this erc-20 token in this market
+    address public parameterControl;
 
     mapping(address => uint) private _balances;
 
@@ -58,17 +58,9 @@ contract RoveMarketPlaceV2 {
 
     constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
-        _operator = operator_;
-        _roveToken = roveToken_;
-        _parameterControl = parameterControl_;
-    }
-
-    function operator() public view returns (address) {
-        return _operator;
-    }
-
-    function roveToken() public view returns (address) {
-        return _roveToken;
+        operator = operator_;
+        roveToken = roveToken_;
+        parameterControl = parameterControl_;
     }
 
     function arrayOffering() public view returns (bytes32[] memory) {
@@ -135,7 +127,7 @@ contract RoveMarketPlaceV2 {
 
     function closeOffering(bytes32 _offeringId, uint _amount) external payable {
         // buyer is sender
-        ERC20 token = ERC20(_roveToken);
+        ERC20 token = ERC20(roveToken);
 
         closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
@@ -173,7 +165,7 @@ contract RoveMarketPlaceV2 {
 
         // logic for 
         // benefit of operator here
-        ParameterControl parameterController = ParameterControl(_parameterControl);
+        ParameterControl parameterController = ParameterControl(parameterControl);
         benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.totalPrice);
         _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPecentOperator > 0) {
@@ -181,7 +173,7 @@ contract RoveMarketPlaceV2 {
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
-            _balances[_operator] += _benefit.benefitOperator;
+            _balances[operator] += _benefit.benefitOperator;
         }
         // benefit of minter nfts here
         _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
@@ -221,7 +213,7 @@ contract RoveMarketPlaceV2 {
         console.log("balance of sender: ", _balances[withdrawer]);
         require(_balances[withdrawer] > 0, "You don't have any balance to withdraw");
 
-        ERC20 token = ERC20(_roveToken);
+        ERC20 token = ERC20(roveToken);
         uint256 balance = token.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
@@ -231,7 +223,7 @@ contract RoveMarketPlaceV2 {
         // tranfer erc-20 token from this market contract to sender
         uint amount = _balances[withdrawer];
         //payable(withdrawer).transfer(amount);
-        console.log("tranfer erc-20 %s from this market contract %s to sender %s", _roveToken, address(this), withdrawer);
+        console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
         token.transfer(withdrawer, amount);
 
         // reset balance
@@ -242,10 +234,10 @@ contract RoveMarketPlaceV2 {
     }
 
     function changeOperator(address _newOperator) external {
-        require(msg.sender == _operator, "only the operator can change the current operator");
-        address previousOperator = _operator;
-        _operator = _newOperator;
-        emit OperatorChanged(previousOperator, _operator);
+        require(msg.sender == operator, "only the operator can change the current operator");
+        address previousOperator = operator;
+        operator = _newOperator;
+        emit OperatorChanged(previousOperator, operator);
     }
 
     function viewOfferingNFT(bytes32 _offeringId) external view returns (address, uint, uint, bool, uint){
@@ -261,8 +253,8 @@ contract RoveMarketPlaceV2 {
         return (_balances[_address]);
     }
 
-    function closeOfferingNFT(bytes32 _offeringId) external {
-        require(msg.sender == _operator, "Only operator dApp can close offerings");
+    function operatorCloseOffering(bytes32 _offeringId) external {
+        require(msg.sender == operator, "Only operator dApp can close offerings");
 
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
         ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
