@@ -45,6 +45,14 @@ contract RoveMarketPlaceV2 {
         bool closed;
     }
 
+    struct closeOfferingData {
+        address buyer;
+        uint price;
+        uint totalPrice;
+        uint256 balanceBuyer;
+        uint256 approvalToken;
+    }
+
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
@@ -125,18 +133,10 @@ contract RoveMarketPlaceV2 {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
-    struct closeOfferingData {
-        address buyer;
-        uint price;
-        uint totalPrice;
-        uint256 balanceBuyer;
-        uint256 approvalToken;
-    }
-
     function closeOffering(bytes32 _offeringId, uint _amount) external payable {
         // buyer is sender
         ERC20 token = ERC20(_roveToken);
-        
+
         closeOfferingData memory _temp = closeOfferingData(
             msg.sender,
             offeringRegistry[_offeringId].price,
@@ -144,7 +144,7 @@ contract RoveMarketPlaceV2 {
             token.balanceOf(msg.sender),
             token.allowance(msg.sender, address(this))
         );
-        
+
         console.log("get price of offering: %s", _temp.price);
         console.log("get total price of offering: %s", _temp.totalPrice);
         console.log("get balance erc-20 token of buyer %s: %s", _temp.buyer, _temp.balanceBuyer);
