@@ -3,7 +3,6 @@ import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
 
 const {ethers} = require("hardhat");
-const config = require("../../config");
 
 class ObjectNFT {
     network: string;
@@ -17,6 +16,11 @@ class ObjectNFT {
     }
 
     async deploy() {
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+        
         const ObjectNFT = await ethers.getContractFactory("ObjectNFT");
         const ObjectNFTDeploy = await ObjectNFT.deploy();
 

@@ -1,9 +1,8 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
-
 const {ethers} = require("hardhat");
-const config = require("../../config");
+const hardhatConfig = require("../../hardhat.config");
 
 class EnvironmentNFT {
     network: string;
@@ -17,6 +16,11 @@ class EnvironmentNFT {
     }
 
     async deploy() {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
         const EnvironmentNFTDeploy = await EnvironmentNFT.deploy();
 
@@ -24,14 +28,14 @@ class EnvironmentNFT {
         return EnvironmentNFTDeploy.address;
     }
 
-    async transfer(ownerAddress: any, receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
-        let API_URL: any;
-        if (this.network === 'mumbai') {
-            API_URL = process.env.POLYGON_MUMBAI_API_URL;
-        } else {
-            console.log("Not is mumbai");
+    async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
             return;
         }
+        let API_URL: any;
+        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
         let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
@@ -46,7 +50,7 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.safeTransferFrom(ownerAddress, receiver, tokenID, amount, "0x").encodeABI(),
+            data: nftContract.methods.safeTransferFrom(this.senderPublicKey, receiver, tokenID, amount, "0x").encodeABI(),
         }
 
         const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
@@ -76,14 +80,15 @@ class EnvironmentNFT {
             })
     }
 
-    async mintEnvironmentNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
-        let API_URL: any;
-        if (this.network === 'mumbai') {
-            API_URL = process.env.POLYGON_MUMBAI_API_URL;
-        } else {
-            console.log("Not is mumbai");
+    async mintEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
             return;
         }
+
+        let API_URL: any;
+        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
         let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
@@ -98,7 +103,7 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.mintNFT(ownerAddress, initSupply, tokenURI).encodeABI(),
+            data: nftContract.methods.mintNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
         }
 
         const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)

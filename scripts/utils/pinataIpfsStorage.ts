@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv';
+
 var mime = require('mime-types')
 dotenv.config();
 import * as path from "path";
@@ -6,6 +7,34 @@ import {Buffer} from "buffer";
 
 var fs = require('fs');
 const axios = require('axios').default;
+
+class PinataData {
+    image2DPath: string;
+    model3DPath: string;
+    assetBundlePath: string;
+    assetAddressablePath: string;
+    nftJsonTemplatePath: string;
+    name: string;
+    description: string;
+    attributes: any;
+
+    constructor(image2DPath: string, model3DPath: string,
+                assetBundlePath: string,
+                assetAddressablePath: string,
+                nftJsonTemplatePath: string,
+                name: string,
+                description: string,
+                attributes: any) {
+        this.image2DPath = image2DPath;
+        this.model3DPath = model3DPath;
+        this.assetBundlePath = assetBundlePath;
+        this.assetAddressablePath = assetAddressablePath;
+        this.nftJsonTemplatePath = nftJsonTemplatePath;
+        this.name = name;
+        this.description = description;
+        this.attributes = attributes;
+    }
+}
 
 class PinataIpfsStorage {
     accessToken: string;
@@ -110,39 +139,83 @@ class PinataIpfsStorage {
         return pinataHash;
     }
 
-    async uploadObjectNFT(image2DPath: string, model3DPath: string, objectNFTJsonTemplatePath: string) {
+    async uploadObjectNFT(pinnataData: PinataData) {
         let fileFullPath;
 
         // upload 2D image file
-        console.log("--- Upload 2D image ---");
-        fileFullPath = path.resolve(image2DPath);// 
-        let pinataUrl2DThumbnail = await this.uploadFilePinata(fileFullPath);
-        pinataUrl2DThumbnail = this.pinataGatewateHash(pinataUrl2DThumbnail);
-        console.log("2d image: ", pinataUrl2DThumbnail);
+        let pinataUrl2DThumbnail: string = '';
+        if (pinnataData.image2DPath.length > 0) {
+            console.log("--- Upload 2D image ---");
+            fileFullPath = path.resolve(pinnataData.image2DPath);// 
+            pinataUrl2DThumbnail = await this.uploadFilePinata(fileFullPath);
+            pinataUrl2DThumbnail = this.pinataGatewateHash(pinataUrl2DThumbnail);
+            console.log("2d image: ", pinataUrl2DThumbnail);
+        }
 
-        // upload 3D model file
-        console.log("--- Upload 3D model ---");
-        fileFullPath = path.resolve(model3DPath); //"./metadatajson/corgi.arc"
-        let pinataUrl3DModel = await this.uploadFilePinata(fileFullPath);
-        pinataUrl3DModel = this.pinataGatewateHash(pinataUrl3DModel);
-        console.log("3d model: ", pinataUrl3DModel);
+        // upload 3D model file glb/gltf
+        let pinataUrl3DModel: string = '';
+        if (pinnataData.model3DPath.length > 0) {
+            console.log("--- Upload 3D model glb/gltf ---");
+            fileFullPath = path.resolve(pinnataData.model3DPath); //"./metadatajson/corgi.glb"
+            pinataUrl3DModel = await this.uploadFilePinata(fileFullPath);
+            pinataUrl3DModel = this.pinataGatewateHash(pinataUrl3DModel);
+            console.log("3d model: ", pinataUrl3DModel);
+        }
+
+        // upload asset bundle
+        let pinataUrlAssetBundle: string = '';
+        if (pinnataData.assetBundlePath.length) {
+            console.log("--- Upload asset bundle ---");
+            fileFullPath = path.resolve(pinnataData.assetBundlePath); //"./metadatajson/corgi.glb"
+            pinataUrlAssetBundle = await this.uploadFilePinata(fileFullPath);
+            pinataUrlAssetBundle = this.pinataGatewateHash(pinataUrlAssetBundle);
+            console.log("asset bundle: ", pinataUrlAssetBundle);
+        }
+
+        // upload asset addressable
+        let pinataUrlAssetAddressable: string = '';
+        if (pinnataData.assetAddressablePath.length > 0) {
+            console.log("--- Upload asset addressable ---");
+            fileFullPath = path.resolve(pinnataData.assetAddressablePath); //"./metadatajson/corgi.glb"
+            pinataUrlAssetAddressable = await this.uploadFilePinata(fileFullPath);
+            pinataUrlAssetAddressable = this.pinataGatewateHash(pinataUrlAssetAddressable);
+            console.log("Asset Addressable: ", pinataUrlAssetAddressable);
+        }
 
         // pin json metadata
         console.log("--- Pin json metadata ---");
-        fileFullPath = path.resolve(objectNFTJsonTemplatePath);//'./metadatajson/object_nft.json'
+        fileFullPath = path.resolve(pinnataData.nftJsonTemplatePath);//'./metadatajson/object_nft.json'
         const rawdata = await fs.promises.readFile(fileFullPath).catch((err: unknown) => console.error('Failed to read file', err));
         let objecNFTMetadataJson = JSON.parse(rawdata);
+        if (pinnataData.name.length > 0) {
+            objecNFTMetadataJson.name = pinnataData.name;
+        }
+        if (pinnataData.description.length > 0) {
+            objecNFTMetadataJson.description = pinnataData.description;
+        }
+        try {
+            pinnataData.attributes = JSON.parse(pinnataData.attributes);
+            if (pinnataData.attributes.length > 0) {
+                for (let i = 0; i < pinnataData.attributes.length; i++) {
+                    objecNFTMetadataJson.attributes.push(pinnataData.attributes[i]);
+                }
+            }
+        } catch {
+            console.log("can not parse attributes")
+        }
         objecNFTMetadataJson.image = pinataUrl2DThumbnail;
+        objecNFTMetadataJson.animation_url = pinataUrl3DModel
         objecNFTMetadataJson.attributes.forEach(function (item: any) {
             if (item.trait_type == "rove-asset-bundle") {
-                item.value = pinataUrl3DModel;
+                item.value = pinataUrlAssetBundle;
+            }
+            if (item.trait_type == "rove-asset-addressable") {
+                item.value = pinataUrlAssetAddressable;
             }
         });
         let jsonDataStr = JSON.stringify(objecNFTMetadataJson);
-        // console.log("json metadata:", jsonDataStr);
         let pinataJsonMetadata = await this.pinJson(jsonDataStr);
         pinataJsonMetadata = this.pinataGatewateHash(pinataJsonMetadata);
-        // console.log(pinataJsonMetadata);
 
         return pinataJsonMetadata;
     }
@@ -152,7 +225,7 @@ class PinataIpfsStorage {
     }
 }
 
-export {PinataIpfsStorage};
+export {PinataIpfsStorage, PinataData};
 
 /*(async () => {
     try {
