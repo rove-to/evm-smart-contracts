@@ -13,7 +13,7 @@ import "hardhat/console.sol";
  */
 
 contract ParameterControl is AccessControl {
-
+    event AdminChanged (address previousAdmin, address newAdmin);
     address public admin;
     mapping(string => string) private _params;
     mapping(string => int) private _paramsInt;
@@ -63,7 +63,10 @@ contract ParameterControl is AccessControl {
         require(msg.sender == admin);
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         console.log("set new admin %s -> %s", admin, admin_);
+        address previousAdmin = admin;
         admin = admin_;
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
+        emit AdminChanged(previousAdmin, admin);
     }
 }

@@ -36,10 +36,11 @@ contract RoveToken is ERC20PresetMinterPauser {
     function changeAdmin(address _newAdmin) external {
         require(msg.sender == admin, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
-        address previousOperator = admin;
+        address previousAdmin = admin;
         admin = _newAdmin;
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
-        emit AdminChanged(previousOperator, admin);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
+        emit AdminChanged(previousAdmin, admin);
     }
 
     // TODO: remove this func

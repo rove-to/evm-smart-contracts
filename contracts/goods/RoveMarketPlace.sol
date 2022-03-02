@@ -229,6 +229,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousOperator);
         emit OperatorChanged(previousOperator, operator);
     }
 
