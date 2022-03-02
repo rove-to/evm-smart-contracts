@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 contract ParameterControl is AccessControl {
     event AdminChanged (address previousAdmin, address newAdmin);
     event SetEvent (string key, string value);
-    address public admin;
+    address public admin; // is a mutil sig address when deploy
     mapping(string => string) private _params;
     mapping(string => int) private _paramsInt;
     mapping(string => uint256) private _paramsUInt256;

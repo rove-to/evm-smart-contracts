@@ -8,7 +8,7 @@ contract RoveToken is ERC20PresetMinterPauser {
     event AdminChanged (address previousAdmin, address newAdmin);
     event MintToken(address to, uint256 amount);
     
-    address public admin; // a multi sig address;
+    address public admin; // a multi sig address after doing minting schedule is executed
     address[4] public roveTokenTimelockContract;
 
     // Create a new role identifier for the minter role
@@ -50,7 +50,6 @@ contract RoveToken is ERC20PresetMinterPauser {
         emit AdminChanged(previousAdmin, admin);
     }
 
-    // TODO: remove this func
     function mint(address to, uint256 amount) public override {
         // to is a multi sig address
         require(msg.sender == admin, "Caller is not a admin");
