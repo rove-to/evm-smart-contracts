@@ -48,7 +48,7 @@ describe("** NFTs erc-1155 contract", function () {
         });
     });
     describe("* Transactions", function () {
-        it.only("- Should transfer erc-1155 between accounts", async function () {
+        it("- Should transfer erc-1155 between accounts", async function () {
             let nftOwner = nft_owner_address;
             let receiver = addresses[1];
             let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";

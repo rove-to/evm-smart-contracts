@@ -5,6 +5,8 @@ import "hardhat/console.sol";
 
 
 contract RoveToken is ERC20PresetMinterPauser {
+    event AdminChanged (address previousAdmin, address newAdmin);
+    
     address public admin;
     address[4] public roveTokenTimelockContract;
 
@@ -31,6 +33,15 @@ contract RoveToken is ERC20PresetMinterPauser {
         return 4;
     }
 
+    function changeAdmin(address _newAdmin) external {
+        require(msg.sender == admin, "only the operator can change the current operator");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        address previousOperator = admin;
+        admin = _newAdmin;
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        emit AdminChanged(previousOperator, admin);
+    }
+
     // TODO: remove this func
     /*function mint(address to, uint256 amount) public {
         // Check that the calling account has the minter role
@@ -39,7 +50,8 @@ contract RoveToken is ERC20PresetMinterPauser {
     }*/
 
     function schedule_minting(address[4] memory timeLockContracts) public returns (uint256) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not admin");
+        require(msg.sender == admin, "Caller is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not admin role");
 
         roveTokenTimelockContract = timeLockContracts;
         uint256 total = totalSupply();

@@ -14,7 +14,7 @@ import "hardhat/console.sol";
 
 contract ParameterControl is AccessControl {
 
-    address private admin;
+    address public admin;
     mapping(string => string) private _params;
     mapping(string => int) private _paramsInt;
     mapping(string => uint256) private _paramsUInt256;
@@ -64,5 +64,6 @@ contract ParameterControl is AccessControl {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         console.log("set new admin %s -> %s", admin, admin_);
         admin = admin_;
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 }
