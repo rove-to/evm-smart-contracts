@@ -17,18 +17,19 @@ function sleep(second) {
 describe.only("** NFTs erc-1155 contract", function () {
     let parameterControl;
     let parameterControlAddress;
-    let admin_contract = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
+    let admin_contract = addresses[0];// default for local
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork);
         let ParameterControlContract = await ethers.getContractFactory("ParameterControl");
         parameterControl = await ParameterControlContract.deploy(admin_contract);
+        // parameterControl = await ParameterControlContract.deploy('0x4Add2445E9C643Dd7C8044cC44B3a7a3479AE4D9'); // test multi sig rinkeby
         parameterControlAddress = parameterControl.address;
         console.log("ParameterControl deploy address", parameterControlAddress);
     });
 
     describe("* Check admin ", function () {
-        it("- Check admin", async function () {
+        it.only("- Check admin", async function () {
             let admin = await parameterControl.admin();
             console.log("expect admin: ", admin_contract);
             console.log("contract admin: ", admin);
@@ -37,6 +38,16 @@ describe.only("** NFTs erc-1155 contract", function () {
 
         it("- Change admin", async function () {
             const changedAdmin = process.env.PUBLIC_KEY;
+            let tx = await parameterControl.updateAdmin(changedAdmin);
+            await tx.wait();
+            console.log("expect admin: ", changedAdmin);
+            let admin = await parameterControl.admin();
+            console.log("contract admin: ", admin);
+            expect(admin).to.equal(changedAdmin);
+        });
+
+        it("- Change multi sig admin", async function () {
+            const changedAdmin = '0x4Add2445E9C643Dd7C8044cC44B3a7a3479AE4D9';
             let tx = await parameterControl.updateAdmin(changedAdmin);
             await tx.wait();
             console.log("expect admin: ", changedAdmin);
