@@ -22,7 +22,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     event ParameterControlChanged (address previousOperator, address newOperator);
     event ApprovalForAll(address owner, address operator, bool approved);
 
-    address public operator;
+    address public operator; // is a mutil sig address when deploy
     address public roveToken; // require using this erc-20 token in this market
     address public parameterControl;
 
