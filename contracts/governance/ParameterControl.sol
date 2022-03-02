@@ -14,6 +14,7 @@ import "hardhat/console.sol";
 
 contract ParameterControl is AccessControl {
     event AdminChanged (address previousAdmin, address newAdmin);
+    event SetEvent (string key, string value);
     address public admin;
     mapping(string => string) private _params;
     mapping(string => int) private _paramsInt;
@@ -43,6 +44,7 @@ contract ParameterControl is AccessControl {
         require(msg.sender == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
         _params[key] = value;
+        emit SetEvent (key, value);
     }
 
     function setInt(string memory key, int value) external {
