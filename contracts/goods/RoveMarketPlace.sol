@@ -11,7 +11,7 @@ import "hardhat/console.sol";
 import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
 
-contract RoveMarketPlace is ReentrancyGuard {
+contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
@@ -229,6 +229,7 @@ contract RoveMarketPlace is ReentrancyGuard {
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousOperator);
         emit OperatorChanged(previousOperator, operator);
     }
 
