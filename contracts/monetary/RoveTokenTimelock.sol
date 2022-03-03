@@ -68,11 +68,12 @@ contract RoveTokenTimelock is ReentrancyGuard {
      * @dev Transfers tokens held by the timelock to the beneficiary. Will only succeed if invoked after the release
      * time.
      */
-    function release() public virtual {
+    function release() public nonReentrant virtual {
         console.log("call release for token lock time address %s, block timestamp %s, release Time %s", address(this), block.timestamp, releaseTime);
         require(block.timestamp >= releaseTime, "TokenTimelock: current time is before release time");
 
         uint256 amount = token.balanceOf(address(this));
+        amount = amount - amount % 20;
         require(amount > 0, "TokenTimelock: no tokens to release");
 
         // split amount
