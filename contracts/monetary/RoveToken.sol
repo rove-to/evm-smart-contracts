@@ -50,7 +50,7 @@ contract RoveToken is ERC20PresetMinterPauser {
         emit AdminChanged(previousAdmin, admin);
     }
 
-    function mint(address to, uint256 amount) public override {
+    function mint(address to, uint256 amount) public whenNotPaused override {
         // to is a multi sig address
         require(msg.sender == admin, "Caller is not a admin");
         // Check that the calling account has the minter role
