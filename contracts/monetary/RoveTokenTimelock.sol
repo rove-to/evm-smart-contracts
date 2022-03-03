@@ -73,6 +73,7 @@ contract RoveTokenTimelock is ReentrancyGuard {
         require(block.timestamp >= releaseTime, "TokenTimelock: current time is before release time");
 
         uint256 amount = token.balanceOf(address(this));
+        amount = amount - amount % 20;
         require(amount > 0, "TokenTimelock: no tokens to release");
 
         // split amount
