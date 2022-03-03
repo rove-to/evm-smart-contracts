@@ -88,7 +88,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, uint _price) external {
+    function placeOffering(address _hostContract, uint _tokenId, uint _price) public nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -121,7 +121,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
-    function closeOffering(bytes32 _offeringId) external payable {
+    function closeOffering(bytes32 _offeringId) public nonReentrant payable {
         // buyer is sender
         ERC20 token = ERC20(roveToken);
         
