@@ -14,7 +14,7 @@ function sleep(second) {
     });
 }
 
-describe("Marketplace contract", function () {
+describe.only("Marketplace contract", function () {
     let roveToken;
     let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
     let roveTokenContractAddress;
@@ -71,7 +71,8 @@ describe("Marketplace contract", function () {
 
     describe("** Deployment Rove Market place", function () {
         it("* Should set the right operator", async function () {
-            expect(await roveMarketplace.operator()).to.equal(operator_address);
+            let operator = await roveMarketplace.operator();
+            expect(operator).to.equal(operator_address);
         });
 
         it("* Should set the right rove token", async function () {

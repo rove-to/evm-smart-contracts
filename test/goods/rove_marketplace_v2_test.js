@@ -47,12 +47,12 @@ describe("Marketplace contract", function () {
 
         // deploy nft
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy(roveTokenAdmin, operator_address);
+        objectNFT = await ObjectNFTContract.deploy(roveTokenAdmin, roveTokenAdmin);
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
         // mint nft
         let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-        await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
         tokenID = await objectNFT.newItemId()
 
         // deploy param
