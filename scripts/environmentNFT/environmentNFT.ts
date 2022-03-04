@@ -103,7 +103,7 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.mintNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
+            data: nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
         }
 
         const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)

@@ -17,15 +17,15 @@ contract EnvironmentNFT is ERC1155Tradable {
     Counters.Counter private _tokenIds;
     uint256 public newItemId;
 
-    constructor()
+    constructor(address admin, address operator)
     ERC1155Tradable(
         "Rove Environments",
         "REs",
-        ""
+        "", admin, operator
     ) public {
     }
 
-    function mintNFT(address recipient, uint256 initialSupply, string memory tokenURI)
+    function createNFT(address recipient, uint256 initialSupply, string memory tokenURI)
     public
     returns (uint256)
     {
