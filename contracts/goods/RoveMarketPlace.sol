@@ -97,7 +97,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         ERC1155Tradable hostContract = ERC1155Tradable(_hostContract);
         uint256 nftBalance = hostContract.balanceOf(nftOwner, _tokenId);
         console.log("nftOwner balance: ", nftBalance);
-        require(nftBalance > 1, "NFT owner not enough balance");
+        require(nftBalance >= 1, "NFT owner not enough balance");
         // check approval of erc-1155 on this contract
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
         require(approval == true, "this contract address is not approved");
