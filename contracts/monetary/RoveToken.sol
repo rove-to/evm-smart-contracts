@@ -22,12 +22,17 @@ contract RoveToken is ERC20PresetMinterPauser {
         // mint RVE for admin account
         admin = _admin;
         mint(admin, _totalSupplyRove * (10 ** uint256(decimals())));
+        
         // set role to admin
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
-        _setupRole(MINTER_ROLE, admin);
-        _setupRole(PAUSER_ROLE, admin);
+        grantRole(DEFAULT_ADMIN_ROLE, admin);
+        grantRole(MINTER_ROLE, admin);
+        grantRole(PAUSER_ROLE, admin);
         
         console.log("Total supply for admin address", _totalSupplyRove);
+
+        revokeRole(MINTER_ROLE, _msgSender());
+        revokeRole(PAUSER_ROLE, _msgSender());
+        revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function decimals() public view override returns (uint8) {
@@ -44,9 +49,10 @@ contract RoveToken is ERC20PresetMinterPauser {
         grantRole(MINTER_ROLE, admin);
         grantRole(PAUSER_ROLE, admin);
         
-        revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
         revokeRole(MINTER_ROLE, previousAdmin);
         revokeRole(PAUSER_ROLE, previousAdmin);
+        revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
+        
         emit AdminChanged(previousAdmin, admin);
     }
 

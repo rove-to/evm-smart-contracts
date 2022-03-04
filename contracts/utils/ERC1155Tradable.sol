@@ -9,12 +9,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
 
-contract OwnableDelegateProxy {}
-
-contract ProxyRegistry {
-    mapping(address => OwnableDelegateProxy) public proxies;
-}
-
 /**
  * @title ERC1155Tradable
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
