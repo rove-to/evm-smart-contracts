@@ -29,7 +29,8 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
      * Read more about it here: https://shiny.mirror.xyz/OUampBbIz9ebEicfGnQf5At_ReMHlZy0tB4glb9xQ0E
      */
     Counters.Counter private _nextTokenId;
-
+    mapping(uint256 => string) customUri;
+    
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
     
@@ -65,8 +66,11 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
      * @dev Mints a token to an address with a tokenURI.
      * @param _to address of the future owner of the token
      */
-    function mintTo(address _to) public {
+    function mintTo(address _to, string memory _uri) public {
         uint256 currentTokenId = _nextTokenId.current();
+        if (bytes(_uri).length > 0) {
+            customUri[currentTokenId] = _uri;
+        }
         _nextTokenId.increment();
         _safeMint(_to, currentTokenId);
     }
@@ -84,7 +88,12 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
     }
 
     function tokenURI(uint256 _tokenId) override public view returns (string memory) {
-        return string(abi.encodePacked(baseTokenURI(), Strings.toString(_tokenId)));
+        bytes memory customUriBytes = bytes(customUri[_tokenId]);
+        if (customUriBytes.length > 0) {
+            return customUri[_tokenId];
+        } else {
+            return string(abi.encodePacked(baseTokenURI(), Strings.toString(_tokenId)));
+        }
     }
 
     /**
