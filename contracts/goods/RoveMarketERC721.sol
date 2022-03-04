@@ -11,7 +11,7 @@ import "hardhat/console.sol";
 
 import "../governance/ParameterControl.sol";
 
-contract RoveMarketPlace is ReentrancyGuard, AccessControl {
+contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
