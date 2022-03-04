@@ -93,12 +93,12 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
 
-        // get hostContract of erc-1155
+        // get hostContract of erc-721
         ERC721 hostContract = ERC721(_hostContract);
         uint256 nftBalance = hostContract.balanceOf(nftOwner);
         console.log("nftOwner balance: ", nftBalance);
         require(nftBalance == 1, "NFT owner not enough balance");
-        // check approval of erc-1155 on this contract
+        // check approval of erc-721 on this contract
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
         require(approval == true, "this contract address is not approved");
 
@@ -144,15 +144,15 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
         // check require
         require(approvalToken == _closeOfferingData.price, "this contract address is not approved for spending erc-20");
-        require(hostContract.balanceOf(offerer) == 1, "Not enough token erc-1155 to sell");
+        require(hostContract.balanceOf(offerer) == 1, "Not enough token erc-721 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
 
-        // transfer erc-1155
+        // transfer erc-721
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
         hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, "0x");
-        console.log("safeTransferFrom erc-1155 %s, tokenID %s from %s to buyer %s",
+        console.log("safeTransferFrom erc-721 %s, tokenID %s from %s to buyer %s",
             hostContractOffering,
             tokenID,
             offerer
@@ -170,16 +170,6 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[operator] += _benefit.benefitOperator;
-        }
-        // benefit of minter nfts here
-        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
-        if (_benefit.benefitPecentCreator > 0) {
-            _benefit.benefitCreator = _benefit.originPrice / 100 * _benefit.benefitPecentCreator;
-            _closeOfferingData.price -= _benefit.benefitCreator;
-            console.log("creator profit %s", _benefit.benefitCreator);
-            // update balance(on market) of creator erc-1155
-            //            address creator = hostContract.getCreator(tokenID);
-            //            _balances[creator] += _benefit.benefitCreator;
         }
 
         // tranfer erc-20 token to this market contract
