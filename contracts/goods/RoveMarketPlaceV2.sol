@@ -147,7 +147,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
-        address remainAmount = offeringRegistry[_offeringId].amount;
+        uint remainAmount = offeringRegistry[_offeringId].amount;
 
         // check require
         require(remainAmount >= _amount, "Amount > offering amount");
