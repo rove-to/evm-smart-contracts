@@ -62,6 +62,12 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         _;
     }
 
+    modifier adminOnly() {
+        require(_msgSender() == admin, "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        _;
+    }
+
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
@@ -93,7 +99,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         grantRole(MINTER_ROLE, operator);
     }
 
-    function changeOperator(address _newOperator) external {
+    function changeOperator(address _newOperator) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
 
@@ -111,7 +117,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         emit OperatorChanged(_previousOperator, operator);
     }
 
-    function changeAdmin(address _newAdmin) external {
+    function changeAdmin(address _newAdmin) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
 
