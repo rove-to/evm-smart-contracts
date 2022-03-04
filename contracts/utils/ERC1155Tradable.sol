@@ -63,8 +63,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     }
 
     modifier adminOnly() {
-        require(_msgSender() == admin, "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        require(_msgSender() == admin, "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED");
         _;
     }
 
@@ -82,27 +82,35 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         symbol = _symbol;
         _initializeEIP712(name);
 
-        
+
         admin = _admin;
         // set role for admin address
         // DEFAULT_ADMIN_ROLE
         // CREATOR_ROLE
         // MINTER_ROLE
         grantRole(DEFAULT_ADMIN_ROLE, admin);
-        grantRole(CREATOR_ROLE, admin);
-        grantRole(MINTER_ROLE, admin);
+        //        grantRole(CREATOR_ROLE, admin);
+        //        grantRole(MINTER_ROLE, admin);
+        //        grantRole(PAUSER_ROLE, operator);
 
         operator = _operator;
         // set role for operator address   
         // OPERATOR_ROLE
         // CREATOR_ROLE
         // MINTER_ROLE
+        // PAUSER_ROLE
         grantRole(OPERATOR_ROLE, operator);
         grantRole(CREATOR_ROLE, operator);
         grantRole(MINTER_ROLE, operator);
-    }
-    
+        grantRole(PAUSER_ROLE, operator);
 
+        // revoke role for sender
+        revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        revokeRole(MINTER_ROLE, _msgSender());
+        revokeRole(PAUSER_ROLE, _msgSender());
+    }
+
+    // changeOperator: update operator by admin
     function changeOperator(address _newOperator) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
@@ -117,10 +125,12 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         revokeRole(OPERATOR_ROLE, operator);
         revokeRole(CREATOR_ROLE, operator);
         revokeRole(MINTER_ROLE, operator);
+        revokeRole(PAUSER_ROLE, operator);
 
         emit OperatorChanged(_previousOperator, operator);
     }
 
+    // changeOperator: update operator by old admin
     function changeAdmin(address _newAdmin) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
@@ -129,12 +139,14 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         admin = _newAdmin;
 
         grantRole(DEFAULT_ADMIN_ROLE, admin);
-        grantRole(CREATOR_ROLE, admin);
-        grantRole(MINTER_ROLE, admin);
+        //        grantRole(CREATOR_ROLE, admin);
+        //        grantRole(MINTER_ROLE, admin);
+        //        grantRole(PAUSER_ROLE, admin);
 
         revokeRole(DEFAULT_ADMIN_ROLE, admin);
-        revokeRole(CREATOR_ROLE, admin);
-        revokeRole(MINTER_ROLE, admin);
+        //        revokeRole(CREATOR_ROLE, admin);
+        //        revokeRole(MINTER_ROLE, admin);
+        //        revokeRole(PAUSER_ROLE, admin);
 
         emit AdminChanged(_previousAdmin, admin);
     }
