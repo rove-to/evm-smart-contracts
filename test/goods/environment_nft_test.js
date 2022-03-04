@@ -7,7 +7,7 @@ const {addresses} = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 let nft_owner_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
 
-describe("** NFTs erc-1155 contract", function () {
+describe.only("** NFTs erc-1155 contract", function () {
     let environmentNFT;
 
     beforeEach(async function () {
@@ -21,8 +21,6 @@ describe("** NFTs erc-1155 contract", function () {
         let EnvironmentNFTContract = await ethers.getContractFactory("EnvironmentNFT");
         environmentNFT = await EnvironmentNFTContract.deploy(nft_owner_address, nft_owner_address);
         console.log("EnvironmentNFTDeploy address", environmentNFT.address);
-
-
     });
     describe("* Mint NFT erc-1155", function () {
         it("- Check total supply of minted NFT token", async function () {
