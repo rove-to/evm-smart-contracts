@@ -151,7 +151,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         // transfer erc-721
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, "0x");
+        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID);
         console.log("safeTransferFrom erc-721 %s, tokenID %s from %s to buyer %s",
             hostContractOffering,
             tokenID,

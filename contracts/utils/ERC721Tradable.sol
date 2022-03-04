@@ -128,11 +128,11 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
      * @param _to address of the future owner of the token
      */
     function mintTo(address _to, string memory _uri) public operatorOnly {
+        _nextTokenId.increment();
         uint256 currentTokenId = _nextTokenId.current();
         if (bytes(_uri).length > 0) {
             customUri[currentTokenId] = _uri;
         }
-        _nextTokenId.increment();
         _safeMint(_to, currentTokenId);
     }
 
