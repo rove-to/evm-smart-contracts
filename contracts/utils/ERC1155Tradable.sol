@@ -82,6 +82,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         symbol = _symbol;
         _initializeEIP712(name);
 
+        
+        admin = _admin;
         // set role for admin address
         // DEFAULT_ADMIN_ROLE
         // CREATOR_ROLE
@@ -90,6 +92,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         grantRole(CREATOR_ROLE, admin);
         grantRole(MINTER_ROLE, admin);
 
+        operator = _operator;
         // set role for operator address   
         // OPERATOR_ROLE
         // CREATOR_ROLE
