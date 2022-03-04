@@ -24,7 +24,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_contract_address);
 
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy();
+        objectNFT = await ObjectNFTContract.deploy(nft_owner_contract_address, nft_creator);
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
 
@@ -109,7 +109,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            let tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             let tokenID = await objectNFT.newItemId()
             expect(tokenID).to.equal(1);
@@ -117,7 +117,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             tokenID = await objectNFT.newItemId();
             expect(tokenID).to.equal(2);

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -20,9 +20,17 @@ contract ProxyRegistry {
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownable {
+contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction {
+    event OperatorChanged (address previous, address new_);
+    event AdminChanged (address previous, address new_);
+
     using Strings for string;
     using SafeMath for uint256;
+
+    // super admin
+    address public admin;// multi sig address
+    // operator
+    address public operator;
 
     mapping(uint256 => address) public creators;
     mapping(uint256 => uint256) public tokenSupply;
@@ -48,16 +56,79 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         _;
     }
 
+    modifier operatorOnly() {
+        require(_msgSender() == operator, "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        require(hasRole(OPERATOR_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        _;
+    }
+
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory _uri
-    ) ERC1155(_uri) {
+        string memory _uri,
+        address _admin,
+        address _operator
+    ) ERC1155PresetMinterPauser(_uri) {
         name = _name;
         symbol = _symbol;
         _initializeEIP712(name);
+
+        // set role for admin address
+        // DEFAULT_ADMIN_ROLE
+        // CREATOR_ROLE
+        // MINTER_ROLE
+        grantRole(DEFAULT_ADMIN_ROLE, admin);
+        grantRole(CREATOR_ROLE, admin);
+        grantRole(MINTER_ROLE, admin);
+
+        // set role for operator address   
+        // OPERATOR_ROLE
+        // CREATOR_ROLE
+        // MINTER_ROLE
+        grantRole(OPERATOR_ROLE, operator);
+        grantRole(CREATOR_ROLE, operator);
+        grantRole(MINTER_ROLE, operator);
     }
 
+    function changeOperator(address _newOperator) external {
+        require(_msgSender() == admin, "Sender is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
+
+        address _previousOperator = operator;
+        operator = _newOperator;
+
+        grantRole(OPERATOR_ROLE, operator);
+        grantRole(CREATOR_ROLE, operator);
+        grantRole(MINTER_ROLE, operator);
+
+        revokeRole(OPERATOR_ROLE, operator);
+        revokeRole(CREATOR_ROLE, operator);
+        revokeRole(MINTER_ROLE, operator);
+
+        emit OperatorChanged(_previousOperator, operator);
+    }
+
+    function changeAdmin(address _newAdmin) external {
+        require(_msgSender() == admin, "Sender is not admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
+
+        address _previousAdmin = admin;
+        admin = _newAdmin;
+
+        grantRole(DEFAULT_ADMIN_ROLE, admin);
+        grantRole(CREATOR_ROLE, admin);
+        grantRole(MINTER_ROLE, admin);
+
+        revokeRole(DEFAULT_ADMIN_ROLE, admin);
+        revokeRole(CREATOR_ROLE, admin);
+        revokeRole(MINTER_ROLE, admin);
+
+        emit AdminChanged(_previousAdmin, admin);
+    }
+    
     function uri(
         uint256 _id
     ) override public view returns (string memory) {
@@ -90,7 +161,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
    */
     function setURI(
         string memory _newURI
-    ) public onlyOwner {
+    ) public operatorOnly {
         _setURI(_newURI);
     }
 
@@ -109,8 +180,6 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
 
     /**
       * @dev Creates a new token type and assigns _initialSupply to an address
-    * NOTE: remove onlyOwner if you want third parties to create new tokens on
-    *       your contract (which may change your IDs)
     * NOTE: The token id must be passed. This allows lazy creation of tokens or
     *       creating NFTs by setting the id's high bits with the method
     *       described in ERC1155 or to use ids representing values other than
@@ -131,9 +200,9 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         uint256 _initialSupply,
         string memory _uri,
         bytes memory _data
-    ) public 
-    //onlyOwner 
+    ) public operatorOnly
     returns (uint256) {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
         require(!_exists(_id), "token _id already exists");
         creators[_id] = _msgSender();
 
@@ -160,7 +229,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         uint256 _id,
         uint256 _quantity,
         bytes memory _data
-    ) virtual public creatorOnly(_id) {
+    ) virtual public override creatorOnly(_id) {
+        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
     }
@@ -177,7 +247,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
         uint256[] memory _ids,
         uint256[] memory _quantities,
         bytes memory _data
-    ) public {
+    ) public operatorOnly {
+        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
         for (uint256 i = 0; i < _ids.length; i++) {
             uint256 _id = _ids[i];
             require(creators[_id] == _msgSender(), "ERC1155Tradable#batchMint: ONLY_CREATOR_ALLOWED");
@@ -195,7 +266,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155, NativeMetaTransaction, Ownabl
     function setCreator(
         address _to,
         uint256[] memory _ids
-    ) public {
+    ) public operatorOnly {
         require(_to != address(0), "ERC1155Tradable#setCreator: INVALID_ADDRESS.");
         for (uint256 i = 0; i < _ids.length; i++) {
             uint256 id = _ids[i];

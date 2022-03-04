@@ -19,7 +19,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_address);
 
         let EnvironmentNFTContract = await ethers.getContractFactory("EnvironmentNFT");
-        environmentNFT = await EnvironmentNFTContract.deploy();
+        environmentNFT = await EnvironmentNFTContract.deploy(nft_owner_address, nft_owner_address);
         console.log("EnvironmentNFTDeploy address", environmentNFT.address);
 
 
@@ -36,7 +36,7 @@ describe("** NFTs erc-1155 contract", function () {
             expect(newItemId).to.equal(0);
 
             // check token id increase after mint
-            await environmentNFT.mintNFT(recipient, initSupply, tokenURI);
+            await environmentNFT.createNFT(recipient, initSupply, tokenURI);
             let tokenID = await environmentNFT.newItemId()
             console.log("tokenID", tokenID);
             expect(tokenID).to.equal(newItemId + 1);
@@ -62,7 +62,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            let tx = await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            let tx = await environmentNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             let tokenID = await environmentNFT.newItemId()
             expect(tokenID).to.equal(1);
@@ -70,7 +70,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            tx = await environmentNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            tx = await environmentNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             tokenID = await environmentNFT.newItemId();
             expect(tokenID).to.equal(2);

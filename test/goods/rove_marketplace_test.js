@@ -46,14 +46,8 @@ describe("Marketplace contract", function () {
         roveToken.transfer(buyer, buyerBalance * decimals);// transfer all 1 bil token to buyer
 
         // deploy nft
-        let proxyRegistryAddress = "";
-        if (hardhatConfig.defaultNetwork === 'rinkeby') {
-            proxyRegistryAddress = "0xf57b2c51ded3a29e6891aba85459d600256cf317";
-        } else {
-            proxyRegistryAddress = "0xa5409ec958c83c3f309868babaca7c86dcb077c1";
-        }
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy(proxyRegistryAddress);
+        objectNFT = await ObjectNFTContract.deploy(roveTokenAdmin, operator_address);
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
         // mint nft
