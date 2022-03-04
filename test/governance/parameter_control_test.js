@@ -14,7 +14,7 @@ function sleep(second) {
     });
 }
 
-describe.only("** NFTs erc-1155 contract", function () {
+describe("** NFTs erc-1155 contract", function () {
     let parameterControl;
     let parameterControlAddress;
     let admin_contract = addresses[0];// default for local
@@ -29,7 +29,7 @@ describe.only("** NFTs erc-1155 contract", function () {
     });
 
     describe("* Check admin ", function () {
-        it.only("- Check admin", async function () {
+        it("- Check admin", async function () {
             let admin = await parameterControl.admin();
             console.log("expect admin: ", admin_contract);
             console.log("contract admin: ", admin);
