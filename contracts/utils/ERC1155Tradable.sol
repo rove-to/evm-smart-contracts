@@ -98,6 +98,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         grantRole(CREATOR_ROLE, operator);
         grantRole(MINTER_ROLE, operator);
     }
+    
 
     function changeOperator(address _newOperator) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
@@ -134,7 +135,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
 
         emit AdminChanged(_previousAdmin, admin);
     }
-    
+
     function uri(
         uint256 _id
     ) override public view returns (string memory) {
