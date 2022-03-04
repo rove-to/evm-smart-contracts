@@ -17,16 +17,17 @@ contract RockNFT is ERC1155Tradable {
     Counters.Counter private _tokenIds;
     uint256 public newItemId;
 
-    constructor()
+    constructor(address admin, address operator)
     ERC1155Tradable(
         "Rove Rocks",
         "RRs",
-        ""
+        "",
+        admin, operator
     ) public {
     }
 
-    function mintNFT(address recipient, string memory tokenURI)
-    public 
+    function createNFT(address recipient, string memory tokenURI)
+    public
     returns (uint256)
     {
         _tokenIds.increment();

@@ -24,7 +24,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_contract_address);
 
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy();
+        objectNFT = await ObjectNFTContract.deploy(nft_owner_contract_address, nft_owner_contract_address);
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
 
@@ -42,7 +42,7 @@ describe("** NFTs erc-1155 contract", function () {
             expect(newItemId).to.equal(0);
 
             // check token id increase after mint
-            await objectNFT.mintNFT(recipient, initSupply, tokenURI);
+            await objectNFT.createNFT(recipient, initSupply, tokenURI);
             let tokenID = await objectNFT.newItemId()
             console.log("tokenID", tokenID);
             expect(tokenID).to.equal(newItemId + 1);
@@ -53,7 +53,7 @@ describe("** NFTs erc-1155 contract", function () {
             expect(totalSupply).to.equal(initSupply);
         });
 
-        it("- Check total supply of minted NFT token: any creator", async function () {
+        /*it("- Check total supply of minted NFT token: any creator", async function () {
 
             let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
             const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
@@ -75,7 +75,7 @@ describe("** NFTs erc-1155 contract", function () {
                 to: objectNFTAddress,
                 nonce: nonce,
                 gas: 500000,
-                data: objectNFT1.methods.mintNFT(recipient, initSupply, tokenURI).encodeABI(),
+                data: objectNFT1.methods.createNFT(recipient, initSupply, tokenURI).encodeABI(),
             }
             signedTx = await web3.eth.accounts.signTransaction(tx, nft_creator_privatekey);
             if (signedTx.rawTransaction != null) {
@@ -90,7 +90,7 @@ describe("** NFTs erc-1155 contract", function () {
             let totalSupply = await objectNFT.totalSupply(tokenID);
             console.log("totalSupply init:", totalSupply);
             expect(totalSupply).to.equal(initSupply);
-        });
+        });*/
     });
     describe("* Transactions", function () {
         it("- Should transfer erc-1155 between accounts", async function () {
@@ -109,7 +109,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 1st
             console.log("+ check token id minted 1st");
-            let tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             let tokenID = await objectNFT.newItemId()
             expect(tokenID).to.equal(1);
@@ -117,7 +117,7 @@ describe("** NFTs erc-1155 contract", function () {
 
             // check token id minted 2nd
             console.log("+ check token id minted 2nd");
-            tx = await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+            tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
             await tx.wait();
             tokenID = await objectNFT.newItemId();
             expect(tokenID).to.equal(2);

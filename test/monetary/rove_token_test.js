@@ -5,7 +5,7 @@ const {ethers} = require("hardhat");
 const expect = chai.expect;
 const {addresses} = require("../constants");
 
-const admin_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+const admin_address = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
 function addSeconds(date, seconds) {
     return new Date(date.getTime() + seconds * 1000);
@@ -98,7 +98,8 @@ describe("Token contract", function () {
 
             // This test expects the admin variable stored in the contract to be equal
             // to our admin address.
-            expect(await roveToken.admin()).to.equal(admin_address);
+            const _admin = await roveToken.admin();
+            expect(_admin.toUpperCase()).to.equal(admin_address.toUpperCase());
         });
 
         it("* Should assign the total supply of tokens to the admin", async function () {

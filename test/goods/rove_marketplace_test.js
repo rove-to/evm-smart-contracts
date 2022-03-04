@@ -14,7 +14,7 @@ function sleep(second) {
     });
 }
 
-describe("Marketplace contract", function () {
+describe.only("Marketplace contract", function () {
     let roveToken;
     let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
     let roveTokenContractAddress;
@@ -46,19 +46,14 @@ describe("Marketplace contract", function () {
         roveToken.transfer(buyer, buyerBalance * decimals);// transfer all 1 bil token to buyer
 
         // deploy nft
-        let proxyRegistryAddress = "";
-        if (hardhatConfig.defaultNetwork === 'rinkeby') {
-            proxyRegistryAddress = "0xf57b2c51ded3a29e6891aba85459d600256cf317";
-        } else {
-            proxyRegistryAddress = "0xa5409ec958c83c3f309868babaca7c86dcb077c1";
-        }
         let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy(proxyRegistryAddress);
+        objectNFT = await ObjectNFTContract.deploy(roveTokenAdmin, roveTokenAdmin);
         objectNFTAddress = objectNFT.address;
         console.log("ObjectNFTDeploy address", objectNFTAddress);
+        
         // mint nft
         let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-        await objectNFT.mintNFT(nftOwner, initSupply, tokenURI);
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
         tokenID = await objectNFT.newItemId()
 
         // deploy param
@@ -76,7 +71,8 @@ describe("Marketplace contract", function () {
 
     describe("** Deployment Rove Market place", function () {
         it("* Should set the right operator", async function () {
-            expect(await roveMarketplace.operator()).to.equal(operator_address);
+            let operator = await roveMarketplace.operator();
+            expect(operator).to.equal(operator_address);
         });
 
         it("* Should set the right rove token", async function () {

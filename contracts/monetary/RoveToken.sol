@@ -5,7 +5,7 @@ import "hardhat/console.sol";
 
 
 contract RoveToken is ERC20PresetMinterPauser {
-    event AdminChanged (address previousAdmin, address newAdmin);
+    event AdminChanged (address previous, address new_);
     event MintToken(address to, uint256 amount);
     
     address public admin; // a multi sig address after doing minting schedule is executed
@@ -40,13 +40,13 @@ contract RoveToken is ERC20PresetMinterPauser {
         address previousAdmin = admin;
         admin = _newAdmin;
         
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
-        _setupRole(MINTER_ROLE, admin);
-        _setupRole(PAUSER_ROLE, admin);
+        grantRole(DEFAULT_ADMIN_ROLE, admin);
+        grantRole(MINTER_ROLE, admin);
+        grantRole(PAUSER_ROLE, admin);
         
-        _revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
-        _revokeRole(MINTER_ROLE, previousAdmin);
-        _revokeRole(PAUSER_ROLE, previousAdmin);
+        revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
+        revokeRole(MINTER_ROLE, previousAdmin);
+        revokeRole(PAUSER_ROLE, previousAdmin);
         emit AdminChanged(previousAdmin, admin);
     }
 
