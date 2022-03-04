@@ -8,7 +8,7 @@ const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
 const {createAlchemyWeb3} = require("@alch/alchemy-web3");
 
-describe.only("** NFTs erc-1155 contract", function () {
+describe("** NFTs erc-1155 contract", function () {
     let objectNFT;
     let objectNFTAddress;
     let nft_owner_contract_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local

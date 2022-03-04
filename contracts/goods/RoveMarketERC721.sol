@@ -3,12 +3,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
-import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
 
 contract RoveMarketPlace is ReentrancyGuard, AccessControl {
@@ -94,10 +94,10 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
 
         // get hostContract of erc-1155
-        ERC1155Tradable hostContract = ERC1155Tradable(_hostContract);
-        uint256 nftBalance = hostContract.balanceOf(nftOwner, _tokenId);
+        ERC721 hostContract = ERC721(_hostContract);
+        uint256 nftBalance = hostContract.balanceOf(nftOwner);
         console.log("nftOwner balance: ", nftBalance);
-        require(nftBalance >= 1, "NFT owner not enough balance");
+        require(nftBalance == 1, "NFT owner not enough balance");
         // check approval of erc-1155 on this contract
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
         require(approval == true, "this contract address is not approved");
@@ -116,7 +116,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].price = _price;
         console.log("init offeringId: %s", toHex(offeringId));
 
-        string memory uri = hostContract.uri(_tokenId);
+        string memory uri = hostContract.tokenURI(_tokenId);
         _arrayOffering.push(offeringId);
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
@@ -124,7 +124,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     function closeOffering(bytes32 _offeringId) public nonReentrant payable {
         // buyer is sender
         ERC20 token = ERC20(roveToken);
-        
+
         closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
             offeringRegistry[_offeringId].price,
@@ -138,20 +138,20 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
         // get offer
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
-        ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
+        ERC721 hostContract = ERC721(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
 
         // check require
         require(approvalToken == _closeOfferingData.price, "this contract address is not approved for spending erc-20");
-        require(hostContract.balanceOf(offerer, tokenID) >= 1, "Not enough token erc-1155 to sell");
+        require(hostContract.balanceOf(offerer) == 1, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, 1, "0x");
+        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, "0x");
         console.log("safeTransferFrom erc-1155 %s, tokenID %s from %s to buyer %s",
             hostContractOffering,
             tokenID,
@@ -178,8 +178,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
             _closeOfferingData.price -= _benefit.benefitCreator;
             console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
-            address creator = hostContract.getCreator(tokenID);
-            _balances[creator] += _benefit.benefitCreator;
+            //            address creator = hostContract.getCreator(tokenID);
+            //            _balances[creator] += _benefit.benefitCreator;
         }
 
         // tranfer erc-20 token to this market contract

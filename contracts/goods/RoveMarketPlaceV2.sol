@@ -147,8 +147,10 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
+        uint remainAmount = offeringRegistry[_offeringId].amount;
 
         // check require
+        require(remainAmount >= _amount, "Amount > offering amount");
         require(_closeOfferingData.approvalToken == _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer not enough funds erc-20 to buy");
@@ -197,7 +199,6 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         _balances[offerer] += _closeOfferingData.totalPrice;
 
         // close offering
-        uint remainAmount = offeringRegistry[_offeringId].amount;
         if (remainAmount == 0) {
             offeringRegistry[_offeringId].closed = true;
             console.log("close offering: ", toHex(_offeringId));
