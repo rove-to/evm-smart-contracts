@@ -9,7 +9,7 @@ const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const path = require("path");
 
 function sleep(second) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(resolve, second * 1000);
   });
 }
@@ -218,7 +218,7 @@ describe("** NFTs erc-1155 contract", function () {
           value: ethers.utils.parseEther("0"),
         },
       ];
-      datas.forEach((data) => {
+      datas.forEach(data => {
         it("Test vsetInt/getInt with valid value", async () => {
           await parameterControl.setInt(data.key, data.value);
           await sleep(3);
