@@ -15,7 +15,7 @@ import "./common/meta-transactions/NativeMetaTransaction.sol";
 contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeMetaTransaction {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
-    
+
     using SafeMath for uint256;
     using Counters for Counters.Counter;
 
@@ -30,6 +30,11 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
      * Read more about it here: https://shiny.mirror.xyz/OUampBbIz9ebEicfGnQf5At_ReMHlZy0tB4glb9xQ0E
      */
     Counters.Counter private _nextTokenId;
+
+    function nextTokenId() public view returns (uint256) {
+        return _nextTokenId.current();
+    }
+
     mapping(uint256 => string) customUri;
 
 
@@ -117,17 +122,17 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
 
         emit AdminChanged(_previousAdmin, admin);
     }
-    
+
     /**
      * @dev Mints a token to an address with a tokenURI.
      * @param _to address of the future owner of the token
      */
     function mintTo(address _to, string memory _uri) public operatorOnly {
+        _nextTokenId.increment();
         uint256 currentTokenId = _nextTokenId.current();
         if (bytes(_uri).length > 0) {
             customUri[currentTokenId] = _uri;
         }
-        _nextTokenId.increment();
         _safeMint(_to, currentTokenId);
     }
 

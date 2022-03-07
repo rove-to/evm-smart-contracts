@@ -7,7 +7,7 @@ import "hardhat/console.sol";
 contract RoveToken is ERC20PresetMinterPauser {
     event AdminChanged (address previous, address new_);
     event MintToken(address to, uint256 amount);
-    
+
     address public admin; // a multi sig address after doing minting schedule is executed
     address[4] public roveTokenTimelockContract;
 
@@ -17,17 +17,18 @@ contract RoveToken is ERC20PresetMinterPauser {
         console.log("Deploy Rove token", "RVE");
         console.log("Mint to admin address", admin);
 
-        uint256 _totalSupplyRove = 1000000000;
+        // decimals: 4
+        uint256 _totalSupplyRove = 10000000000000;
 
         // mint RVE for admin account
         admin = _admin;
-        mint(admin, _totalSupplyRove * (10 ** uint256(decimals())));
-        
+        mint(admin, _totalSupplyRove);
+
         // set role to admin
         grantRole(DEFAULT_ADMIN_ROLE, admin);
         grantRole(MINTER_ROLE, admin);
         grantRole(PAUSER_ROLE, admin);
-        
+
         console.log("Total supply for admin address", _totalSupplyRove);
 
         revokeRole(MINTER_ROLE, _msgSender());
@@ -44,15 +45,15 @@ contract RoveToken is ERC20PresetMinterPauser {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         address previousAdmin = admin;
         admin = _newAdmin;
-        
+
         grantRole(DEFAULT_ADMIN_ROLE, admin);
         grantRole(MINTER_ROLE, admin);
         grantRole(PAUSER_ROLE, admin);
-        
+
         revokeRole(MINTER_ROLE, previousAdmin);
         revokeRole(PAUSER_ROLE, previousAdmin);
         revokeRole(DEFAULT_ADMIN_ROLE, previousAdmin);
-        
+
         emit AdminChanged(previousAdmin, admin);
     }
 
