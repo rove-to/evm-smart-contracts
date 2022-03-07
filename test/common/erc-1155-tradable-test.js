@@ -14,6 +14,39 @@ function sleep(second) {
   });
 }
 
+async function signAnotherContractThenExcuteFunction(
+  jsonFile,
+  parameterControlAddress,
+  contractToChange,
+  executeFunc,
+  data,
+  contractToChangePrivateKey
+) {
+  let contract = require(path.resolve(jsonFile));
+  const web3 = createAlchemyWeb3(
+    hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+  );
+  const parameterControl1 = new web3.eth.Contract(
+    contract.abi,
+    parameterControlAddress
+  );
+  const nonce = await web3.eth.getTransactionCount(contractToChange, "latest"); //get latest nonce
+  const tx = {
+    from: contractToChange,
+    to: parameterControlAddress,
+    nonce: nonce,
+    gas: 500000,
+    data: parameterControl1.methods[executeFunc](data).encodeABI(),
+  };
+  const signedTx = await web3.eth.accounts.signTransaction(
+    tx,
+    contractToChangePrivateKey
+  );
+  if (signedTx.rawTransaction != null) {
+    await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+  }
+}
+
 describe("** NFTs ERC-1155 tradable", () => {
   let parameterControl;
   let parameterControlAddress;
@@ -21,6 +54,8 @@ describe("** NFTs ERC-1155 tradable", () => {
   let operatorContract = addresses[1];
   let newOperatorContract = addresses[2];
   let newAdmin = addresses[3];
+  const jsonFile =
+    "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
 
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
@@ -52,39 +87,45 @@ describe("** NFTs ERC-1155 tradable", () => {
     });
 
     it("- Test non admin can't change operator", async () => {
-      const changedAdminPrivateKey = private_keys[1];
-      let contract = require(path.resolve(
-        "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json"
-      ));
-      const web3 = createAlchemyWeb3(
-        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-      );
-      const parameterControl1 = new web3.eth.Contract(
-        contract.abi,
-        parameterControlAddress
-      );
-      const nonce = await web3.eth.getTransactionCount(
-        operatorContract,
-        "latest"
-      ); //get latest nonce
-      const tx = {
-        from: operatorContract,
-        to: parameterControlAddress,
-        nonce: nonce,
-        gas: 500000,
-        data: parameterControl1.methods
-          .changeOperator(newOperatorContract)
-          .encodeABI(),
-      };
-
-      const signedTx = await web3.eth.accounts.signTransaction(
-        tx,
-        changedAdminPrivateKey
-      );
+      const nonAdminPrivateKey = private_keys[1];
+      const executeFunc = "changeOperator";
+      // Sign contract with account is not admin then change operator
       try {
-        if (signedTx.rawTransaction != null) {
-          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        }
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          parameterControlAddress,
+          operatorContract,
+          executeFunc,
+          newOperatorContract,
+          nonAdminPrivateKey
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
+        );
+      }
+    });
+  });
+  context("* Change admin function", () => {
+    it("- Test change admin", async () => {
+      await parameterControl.changeAdmin(newAdmin);
+      const newAdminChanged = await parameterControl.admin();
+      expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
+    });
+
+    it("- Test non admin can't change admin", async () => {
+      const nonAdminPrivateKey = private_keys[1];
+      const executeFunc = "changeAdmin";
+      // Sign contracty with account is not admin then change admin
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          parameterControlAddress,
+          operatorContract,
+          executeFunc,
+          newAdmin,
+          nonAdminPrivateKey
+        );
       } catch (error) {
         expect(error.toString()).to.include(
           "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
@@ -92,90 +133,28 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    context("* Change admin function", () => {
-      it("- Test change admin", async () => {
-        await parameterControl.changeAdmin(newAdmin);
-        const newAdminChanged = await parameterControl.admin();
-        expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
-      });
-
-      it("- Test non admin can't change admin", async () => {
-        const changedAdminPrivateKey = private_keys[1];
-        let contract = require(path.resolve(
-          "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json"
-        ));
-        const web3 = createAlchemyWeb3(
-          hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-        );
-        const parameterControl1 = new web3.eth.Contract(
-          contract.abi,
-          parameterControlAddress
-        );
-        const nonce = await web3.eth.getTransactionCount(
-          operatorContract,
-          "latest"
-        ); //get latest nonce
-        const tx = {
-          from: operatorContract,
-          to: parameterControlAddress,
-          nonce: nonce,
-          gas: 500000,
-          data: parameterControl1.methods.changeAdmin(newAdmin).encodeABI(),
-        };
-        const signedTx = await web3.eth.accounts.signTransaction(
-          tx,
-          changedAdminPrivateKey
-        );
-        try {
-          if (signedTx.rawTransaction != null) {
-            await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-          }
-        } catch (error) {
-          expect(error.toString()).to.include(
-            "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
-          );
-        }
-      });
-
-      it.only("- Test new admin can change operator", async () => {
-        const changedAdminPrivateKey = private_keys[3];
-
-        await parameterControl.changeAdmin(newAdmin);
-        const newAdminChanged = await parameterControl.admin();
-        expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
-
-        let contract = require(path.resolve(
-          "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json"
-        ));
-        const web3 = createAlchemyWeb3(
-          hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-        );
-        const parameterControl1 = new web3.eth.Contract(
-          contract.abi,
-          parameterControlAddress
-        );
-        const nonce = await web3.eth.getTransactionCount(newAdmin, "latest"); //get latest nonce
-        const tx = {
-          from: newAdmin,
-          to: parameterControlAddress,
-          nonce: nonce,
-          gas: 500000,
-          data: parameterControl1.methods
-            .changeOperator(newOperatorContract)
-            .encodeABI(),
-        };
-        const signedTx = await web3.eth.accounts.signTransaction(
-          tx,
-          changedAdminPrivateKey
-        );
-        if (signedTx.rawTransaction != null) {
-          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        }
-        const newOperator = await parameterControl.operator();
-        expect(newOperator.toLowerCase()).to.equal(
-          newOperatorContract.toLowerCase()
-        );
-      });
+    it("- Test new admin can change operator", async () => {
+      const changedAdminPrivateKey = private_keys[3];
+      const executeFunc = "changeOperator";
+      // Change to new admin
+      await parameterControl.changeAdmin(newAdmin);
+      const newAdminChanged = await parameterControl.admin();
+      expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
+      // New admin sign contract then change operator
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        parameterControlAddress,
+        newAdmin,
+        executeFunc,
+        newOperatorContract,
+        changedAdminPrivateKey
+      );
+      await sleep(3);
+      // Check new operator is changed success
+      const newOperator = await parameterControl.operator();
+      expect(newOperator.toLowerCase()).to.equal(
+        newOperatorContract.toLowerCase()
+      );
     });
   });
 });
