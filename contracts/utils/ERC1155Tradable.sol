@@ -98,10 +98,12 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         grantRole(MINTER_ROLE, operator);
         grantRole(PAUSER_ROLE, operator);
 
-        // revoke role for sender
-        revokeRole(MINTER_ROLE, _msgSender());
-        revokeRole(PAUSER_ROLE, _msgSender());
-        revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        if (admin != _msgSender()) {
+            // revoke role for sender
+            revokeRole(MINTER_ROLE, _msgSender());
+            revokeRole(PAUSER_ROLE, _msgSender());
+            revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
     }
 
     // changeOperator: update operator by admin

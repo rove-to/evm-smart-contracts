@@ -31,9 +31,11 @@ contract RoveToken is ERC20PresetMinterPauser {
 
         console.log("Total supply for admin address", _totalSupplyRove);
 
-        revokeRole(MINTER_ROLE, _msgSender());
-        revokeRole(PAUSER_ROLE, _msgSender());
-        revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        if (admin != _msgSender()) {
+            revokeRole(MINTER_ROLE, _msgSender());
+            revokeRole(PAUSER_ROLE, _msgSender());
+            revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
     }
 
     function decimals() public view override returns (uint8) {
