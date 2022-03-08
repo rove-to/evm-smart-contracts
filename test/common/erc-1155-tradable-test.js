@@ -19,7 +19,7 @@ async function signAnotherContractThenExcuteFunction(
   erc1155TradbleAddress,
   contractToChange,
   executeFunc,
-  data,
+  data, // argument of excuteFunc type array[]
   contractToChangePrivateKey
 ) {
   let contract = require(path.resolve(jsonFile));
@@ -163,6 +163,11 @@ describe("** NFTs ERC-1155 tradable", () => {
       "115792089237316195423570985008687907853269984665640564039457584007913129639935";
     let tokenURI =
       "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+
+    it("- Test token is not exists", async () => {
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(false);
+    });
     it("- Test admin can't create token", async () => {
       try {
         await erc1155Tradable.create(
@@ -181,7 +186,7 @@ describe("** NFTs ERC-1155 tradable", () => {
 
     it("- Test operator can create token", async () => {
       const executeFunc = "create";
-      const numberTokenCreate = ethers.utils.parseEther("9876543210");
+      const numberTokenCreate = 9876543210;
       const data = [
         adminContract,
         tokenId,
@@ -199,12 +204,31 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[1]
       );
       // Verify token is create success and creator is the right address
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
       const creator = await erc1155Tradable.getCreator(tokenId);
       console.log("Token supply: ", tokenSupply);
       console.log("Token creator: ", creator);
+      expect(isTokenExists).to.equal(true);
       expect(tokenSupply).to.equal(numberTokenCreate);
       expect(creator).to.equal(operatorContract);
+
+      // Change new creator for given token
+      const executeFunc1 = "setCreator";
+      const data1 = [newOperatorContract, [tokenId]];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc1,
+        data1,
+        private_keys[1]
+      );
+      const newCreator = await erc1155Tradable.getCreator(tokenId);
+      console.log("New creator: ", newCreator);
+      expect(newCreator.toLowerCase()).to.equal(
+        newOperatorContract.toLowerCase()
+      );
     });
   });
 });
