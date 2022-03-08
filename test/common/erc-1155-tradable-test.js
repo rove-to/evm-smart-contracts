@@ -19,7 +19,7 @@ async function signAnotherContractThenExcuteFunction(
   erc1155TradbleAddress,
   contractToChange,
   executeFunc,
-  data, // argument of excuteFunc type array[]
+  data, // argument of excuteFunc type: array[]
   contractToChangePrivateKey
 ) {
   let contract = require(path.resolve(jsonFile));
@@ -159,21 +159,51 @@ describe("** NFTs ERC-1155 tradable", () => {
   });
   context("** Create token", () => {
     // Tests create token type only created by operator
-    let tokenId =
+    const tokenId =
       "115792089237316195423570985008687907853269984665640564039457584007913129639935";
-    let tokenURI =
+    const tokenURI =
       "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+    // data to create token
+    const numberTokenCreate = 9876543210;
+    const dataCreateToken = [
+      adminContract,
+      tokenId,
+      numberTokenCreate,
+      tokenURI,
+      operatorContract,
+    ];
+    it("- Test get Creator", async () => {
+      const expectedResult = "0x0000000000000000000000000000000000000000";
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      expect(creator).to.equal(expectedResult);
+    });
+
+    it("- Test get total supply", async () => {
+      const totalSupply = await erc1155Tradable.totalSupply(tokenId);
+      expect(totalSupply).to.equal(0);
+    });
 
     it("- Test token is not exists", async () => {
       const isTokenExists = await erc1155Tradable.exists(tokenId);
       expect(isTokenExists).to.equal(false);
     });
+
+    it("- Test get non existed token URI", async () => {
+      try {
+        await erc1155Tradable.uri(tokenId);
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#uri: NONEXISTENT_TOKEN"
+        );
+      }
+    });
+
     it("- Test admin can't create token", async () => {
       try {
         await erc1155Tradable.create(
           adminContract,
           tokenId,
-          95678,
+          numberTokenCreate,
           tokenURI,
           operatorContract
         );
@@ -186,21 +216,13 @@ describe("** NFTs ERC-1155 tradable", () => {
 
     it("- Test operator can create token", async () => {
       const executeFunc = "create";
-      const numberTokenCreate = 9876543210;
-      const data = [
-        adminContract,
-        tokenId,
-        numberTokenCreate,
-        tokenURI,
-        operatorContract,
-      ];
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
         operatorContract,
         executeFunc,
-        data,
+        dataCreateToken,
         private_keys[1]
       );
       // Verify token is create success and creator is the right address
@@ -224,11 +246,141 @@ describe("** NFTs ERC-1155 tradable", () => {
         data1,
         private_keys[1]
       );
+      // Check after change creator for given token
       const newCreator = await erc1155Tradable.getCreator(tokenId);
       console.log("New creator: ", newCreator);
       expect(newCreator.toLowerCase()).to.equal(
         newOperatorContract.toLowerCase()
       );
+      // Check token URI after create token
+      const uri = await erc1155Tradable.uri(tokenId);
+      expect(uri).to.equal(tokenURI);
+    });
+
+    it("- Test new operator create token", async () => {
+      const executeFunc = "create";
+      // Change new creator
+      await erc1155Tradable.changeOperator(newOperatorContract);
+      const newOperator = await erc1155Tradable.operator();
+      expect(newOperator.toLowerCase()).to.equal(
+        newOperatorContract.toLowerCase()
+      );
+      // Create token with new creator
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        newOperatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[2]
+      );
+      // Verify token is create success and creator is the right address
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      expect(isTokenExists).to.equal(true);
+      expect(tokenSupply).to.equal(numberTokenCreate);
+      expect(creator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
+    });
+
+    it("- Test setCreator for invalid address", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
+      // Set New Create for given token with invalid address
+      const executeFunc1 = "setCreator";
+      const data1 = ["0x0000000000000000000000000000000000000000", [tokenId]];
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          data1,
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#setCreator: INVALID_ADDRESS"
+        );
+      }
+      // Verify creator is operator 1
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      expect(creator).to.equal(operatorContract);
+    });
+
+    it("- Test set custom URI by creator", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
+      // Set custom URI by creator
+      const executeFunc1 = "setCustomURI";
+      const newTokenURI =
+        "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
+      const dataSetCustomURI = [tokenId, newTokenURI];
+
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc1,
+        dataSetCustomURI,
+        private_keys[1]
+      );
+      const tokenURIChanged = await erc1155Tradable.uri(tokenId);
+      expect(tokenURIChanged).to.equal(newTokenURI);
+    });
+
+    it("- Test set custom URI by non creator", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
+      // Set custom URI by creator
+      const executeFunc1 = "setCustomURI";
+      const newTokenURI =
+        "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
+      const dataSetCustomURI = [tokenId, newTokenURI];
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          newOperatorContract,
+          executeFunc1,
+          dataSetCustomURI,
+          private_keys[2]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
+        );
+      }
     });
   });
 });
