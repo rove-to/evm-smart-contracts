@@ -16,7 +16,7 @@ function sleep(second) {
 
 async function signAnotherContractThenExcuteFunction(
   jsonFile,
-  parameterControlAddress,
+  erc1155TradbleAddress,
   contractToChange,
   executeFunc,
   data,
@@ -26,17 +26,14 @@ async function signAnotherContractThenExcuteFunction(
   const web3 = createAlchemyWeb3(
     hardhatConfig.networks[hardhatConfig.defaultNetwork].url
   );
-  const parameterControl1 = new web3.eth.Contract(
-    contract.abi,
-    parameterControlAddress
-  );
+  const erc1155_1 = new web3.eth.Contract(contract.abi, erc1155TradbleAddress);
   const nonce = await web3.eth.getTransactionCount(contractToChange, "latest"); //get latest nonce
   const tx = {
     from: contractToChange,
-    to: parameterControlAddress,
+    to: erc1155TradbleAddress,
     nonce: nonce,
     gas: 500000,
-    data: parameterControl1.methods[executeFunc](data).encodeABI(),
+    data: erc1155_1.methods[executeFunc](...data).encodeABI(),
   };
   const signedTx = await web3.eth.accounts.signTransaction(
     tx,
@@ -48,8 +45,8 @@ async function signAnotherContractThenExcuteFunction(
 }
 
 describe("** NFTs ERC-1155 tradable", () => {
-  let parameterControl;
-  let parameterControlAddress;
+  let erc1155Tradable;
+  let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
   let operatorContract = addresses[1];
   let newOperatorContract = addresses[2];
@@ -59,28 +56,28 @@ describe("** NFTs ERC-1155 tradable", () => {
 
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
-    let ParameterControlContract = await ethers.getContractFactory(
+    let Erc1155TradableContract = await ethers.getContractFactory(
       "ERC1155Tradable"
     );
-    parameterControl = await ParameterControlContract.deploy(
+    erc1155Tradable = await Erc1155TradableContract.deploy(
       "test",
       "test",
       { a: "b" },
       adminContract,
       operatorContract
     );
-    parameterControlAddress = parameterControl.address;
-    console.log("ParameterControl deploy address", parameterControlAddress);
-    const admin = await parameterControl.admin();
-    const operator = await parameterControl.operator();
+    erc1155TradbleAddress = erc1155Tradable.address;
+    console.log("erc1155Tradable deploy address", erc1155TradbleAddress);
+    const admin = await erc1155Tradable.admin();
+    const operator = await erc1155Tradable.operator();
     console.log("Admin: ", admin);
     console.log("Operator: ", operator);
   });
 
   context("* Change operator function", () => {
     it("- Test admin can change operator", async () => {
-      await parameterControl.changeOperator(newOperatorContract);
-      const newOperator = await parameterControl.operator();
+      await erc1155Tradable.changeOperator(newOperatorContract);
+      const newOperator = await erc1155Tradable.operator();
       expect(newOperator.toLowerCase()).to.equal(
         newOperatorContract.toLowerCase()
       );
@@ -93,7 +90,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await signAnotherContractThenExcuteFunction(
           jsonFile,
-          parameterControlAddress,
+          erc1155TradbleAddress,
           operatorContract,
           executeFunc,
           newOperatorContract,
@@ -108,8 +105,8 @@ describe("** NFTs ERC-1155 tradable", () => {
   });
   context("* Change admin function", () => {
     it("- Test change admin", async () => {
-      await parameterControl.changeAdmin(newAdmin);
-      const newAdminChanged = await parameterControl.admin();
+      await erc1155Tradable.changeAdmin(newAdmin);
+      const newAdminChanged = await erc1155Tradable.admin();
       expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
     });
 
@@ -120,7 +117,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await signAnotherContractThenExcuteFunction(
           jsonFile,
-          parameterControlAddress,
+          erc1155TradbleAddress,
           operatorContract,
           executeFunc,
           newAdmin,
@@ -137,13 +134,13 @@ describe("** NFTs ERC-1155 tradable", () => {
       const changedAdminPrivateKey = private_keys[3];
       const executeFunc = "changeOperator";
       // Change to new admin
-      await parameterControl.changeAdmin(newAdmin);
-      const newAdminChanged = await parameterControl.admin();
+      await erc1155Tradable.changeAdmin(newAdmin);
+      const newAdminChanged = await erc1155Tradable.admin();
       expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
       // New admin sign contract then change operator
       await signAnotherContractThenExcuteFunction(
         jsonFile,
-        parameterControlAddress,
+        erc1155TradbleAddress,
         newAdmin,
         executeFunc,
         newOperatorContract,
@@ -151,10 +148,58 @@ describe("** NFTs ERC-1155 tradable", () => {
       );
       await sleep(3);
       // Check new operator is changed success
-      const newOperator = await parameterControl.operator();
+      const newOperator = await erc1155Tradable.operator();
       expect(newOperator.toLowerCase()).to.equal(
         newOperatorContract.toLowerCase()
       );
+    });
+  });
+  context("** Create token", () => {
+    // Tests create token type only created by operator
+    let tokenId =
+      "115792089237316195423570985008687907853269984665640564039457584007913129639935";
+    let tokenURI =
+      "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+    it("- Test admin can't create token", async () => {
+      try {
+        await erc1155Tradable.create(
+          adminContract,
+          tokenId,
+          95678,
+          tokenURI,
+          operatorContract
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
+    });
+
+    it.only("- Test operator can create token", async () => {
+      const executeFunc = "create";
+      const numberTokenCreate = ethers.utils.parseEther("9876543210");
+      const data = [
+        adminContract,
+        tokenId,
+        numberTokenCreate,
+        tokenURI,
+        operatorContract,
+      ];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        data,
+        private_keys[1]
+      );
+      const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      console.log("Token supply: ", tokenSupply);
+      console.log("Token creator: ", creator);
+      expect(tokenSupply).to.equal(numberTokenCreate);
+      expect(creator).to.equal(operatorContract);
     });
   });
 });
