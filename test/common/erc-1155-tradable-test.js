@@ -86,6 +86,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     it("- Test non admin can't change operator", async () => {
       const nonAdminPrivateKey = private_keys[1];
       const executeFunc = "changeOperator";
+      const data = [newOperatorContract];
       // Sign contract with account is not admin then change operator
       try {
         await signAnotherContractThenExcuteFunction(
@@ -93,7 +94,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           erc1155TradbleAddress,
           operatorContract,
           executeFunc,
-          newOperatorContract,
+          data,
           nonAdminPrivateKey
         );
       } catch (error) {
@@ -113,6 +114,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     it("- Test non admin can't change admin", async () => {
       const nonAdminPrivateKey = private_keys[1];
       const executeFunc = "changeAdmin";
+      const data = [newAdmin];
       // Sign contracty with account is not admin then change admin
       try {
         await signAnotherContractThenExcuteFunction(
@@ -120,7 +122,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           erc1155TradbleAddress,
           operatorContract,
           executeFunc,
-          newAdmin,
+          data,
           nonAdminPrivateKey
         );
       } catch (error) {
@@ -133,6 +135,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     it("- Test new admin can change operator", async () => {
       const changedAdminPrivateKey = private_keys[3];
       const executeFunc = "changeOperator";
+      const data = [newOperatorContract];
       // Change to new admin
       await erc1155Tradable.changeAdmin(newAdmin);
       const newAdminChanged = await erc1155Tradable.admin();
@@ -143,7 +146,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         erc1155TradbleAddress,
         newAdmin,
         executeFunc,
-        newOperatorContract,
+        data,
         changedAdminPrivateKey
       );
       await sleep(3);
@@ -176,7 +179,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it.only("- Test operator can create token", async () => {
+    it("- Test operator can create token", async () => {
       const executeFunc = "create";
       const numberTokenCreate = ethers.utils.parseEther("9876543210");
       const data = [
@@ -186,6 +189,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         tokenURI,
         operatorContract,
       ];
+      // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
@@ -194,6 +198,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         data,
         private_keys[1]
       );
+      // Verify token is create success and creator is the right address
       const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
       const creator = await erc1155Tradable.getCreator(tokenId);
       console.log("Token supply: ", tokenSupply);
