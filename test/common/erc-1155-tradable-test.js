@@ -491,7 +491,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it.only("- Test mint after set new creator", async () => {
+    it("- Test mint after set new creator", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
