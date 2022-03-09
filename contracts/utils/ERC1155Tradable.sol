@@ -286,7 +286,6 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         address _to,
         uint256[] memory _ids
     ) public operatorOnly {
-        require(hasRole(OPERATOR_ROLE, _msgSender()), "ERC1155Tradable#setCreator: Sender has not operator role.");
         require(_to != address(0), "ERC1155Tradable#setCreator: INVALID_ADDRESS.");
         
         grantRole(CREATOR_ROLE, _to);
