@@ -8,6 +8,31 @@ const hardhatConfig = require("../../hardhat.config");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const path = require("path");
 
+/*
+  -TESTCASES:
+    1. Test admin can change operator
+    2. Test non admin can't change operator
+    3. Test change admin
+    4. Test non admin can't change admin
+    5. Test new admin can change operator
+    6. Test get Creator
+    7. Test get total supply
+    8. Test token is not exists
+    9. Test get non existed token URI
+    10. Test admin can't create token
+    11. Test operator can create token
+    12. Test new operator create token
+    13. Test setCreator for invalid address
+    14. Test setCreator without existed token
+    15. Test setCreator by admin
+    16. Test set custom URI by creator
+    17. Test set custom URI by non creator
+    18. Test set URI by operator
+    19. Test mint by creator
+    20. Test non creator can't mint
+    21. Test mint after set new creator
+*/
+
 function sleep(second) {
   return new Promise(resolve => {
     setTimeout(resolve, second * 1000);
@@ -44,7 +69,7 @@ async function signAnotherContractThenExcuteFunction(
   }
 }
 
-describe("** NFTs ERC-1155 tradable", () => {
+describe.only("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -318,6 +343,60 @@ describe("** NFTs ERC-1155 tradable", () => {
       // Verify creator is operator 1
       const creator = await erc1155Tradable.getCreator(tokenId);
       expect(creator).to.equal(operatorContract);
+    });
+
+    it("- Test setCreator without existed token", async () => {
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(false);
+      // Set New Create for given token with invalid address
+      const executeFunc1 = "setCreator";
+      const data1 = [newOperatorContract, [tokenId]];
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          data1,
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
+        );
+      }
+    });
+
+    it("- Test setCreator by admin", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
+      // Set New Create for given token with invalid address
+      const executeFunc1 = "setCreator";
+      const data1 = [newOperatorContract, [tokenId]];
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          adminContract,
+          executeFunc1,
+          data1,
+          private_keys[0]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
     });
 
     it("- Test set custom URI by creator", async () => {
