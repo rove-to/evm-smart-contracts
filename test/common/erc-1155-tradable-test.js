@@ -33,6 +33,7 @@ const path = require("path");
     - Test mint by creator
     - Test non creator can't mint
     - Test mint after set new creator
+    - Test batchMint by creator
 */
 
 function sleep(second) {
