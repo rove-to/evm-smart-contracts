@@ -131,7 +131,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
-    function closeOffering(bytes32 _offeringId, uint _amount) public nonReentrant payable {
+    function closeOffering(bytes32 _offeringId, uint _amount) public nonReentrant {
         // buyer is sender
         ERC20 token = ERC20(roveToken);
 
