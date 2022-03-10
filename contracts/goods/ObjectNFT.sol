@@ -23,6 +23,7 @@ contract ObjectNFT is ERC1155Tradable {
         "ROs",
         "", admin, operator
     ) public {
+        console.log("Deploy ObjectNFT");
     }
 
     function createNFT(address recipient, uint256 initialSupply, string memory tokenURI)

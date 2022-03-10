@@ -39,7 +39,7 @@ contract RoveToken is ERC20PresetMinterPauser {
         }
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 4;
     }
 

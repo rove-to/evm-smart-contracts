@@ -24,6 +24,7 @@ contract RockNFT is ERC1155Tradable {
         "",
         admin, operator
     ) public {
+        console.log("Deploy ObjectNFT");
     }
 
     function createNFT(address recipient, string memory tokenURI)

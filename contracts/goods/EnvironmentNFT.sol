@@ -23,6 +23,7 @@ contract EnvironmentNFT is ERC1155Tradable {
         "REs",
         "", admin, operator
     ) public {
+        console.log("Deploy ObjectNFT");
     }
 
     function createNFT(address recipient, uint256 initialSupply, string memory tokenURI)
