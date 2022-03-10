@@ -26,7 +26,7 @@ contract EnvironmentNFT is ERC1155Tradable {
     }
 
     function createNFT(address recipient, uint256 initialSupply, string memory tokenURI)
-    public
+    external
     returns (uint256)
     {
         _tokenIds.increment();
