@@ -69,7 +69,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         parameterControl = parameterControl_;
     }
 
-    function arrayOffering() public view returns (bytes32[] memory) {
+    function arrayOffering() external view returns (bytes32[] memory) {
         return _arrayOffering;
     }
 

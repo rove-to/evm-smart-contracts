@@ -46,18 +46,18 @@ contract RoveTokenTimelock is ReentrancyGuard {
         releaseTime = releaseTime_;
     }
 
-    function beneficiary() public view virtual returns (address[4] memory) {
+    function beneficiary() external view virtual returns (address[4] memory) {
         return _beneficiary;
     }
 
     /**
      * @dev Returns the beneficiary that will receive the tokens.
      */
-    function beneficiary(uint128 index) public view virtual returns (address) {
+    function beneficiary(uint128 index) external view virtual returns (address) {
         return _beneficiary[index];
     }
 
-    function current_balance() public view returns (uint256) {
+    function current_balance() external view returns (uint256) {
         address temp = address(this);
         uint256 balance = token.balanceOf(temp);
         console.log("token lock time address %s has balance %s", address(this), balance);
@@ -68,7 +68,7 @@ contract RoveTokenTimelock is ReentrancyGuard {
      * @dev Transfers tokens held by the timelock to the beneficiary. Will only succeed if invoked after the release
      * time.
      */
-    function release() public nonReentrant virtual {
+    function release() external nonReentrant virtual {
         console.log("call release for token lock time address %s, block timestamp %s, release Time %s", address(this), block.timestamp, releaseTime);
         require(block.timestamp >= releaseTime, "TokenTimelock: current time is before release time");
 

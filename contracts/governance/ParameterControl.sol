@@ -30,15 +30,15 @@ contract ParameterControl is AccessControl, IParameterControl {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    function get(string memory key) public view override returns (string memory) {
+    function get(string memory key) external view override returns (string memory) {
         return _params[key];
     }
 
-    function getInt(string memory key) public view override returns (int) {
+    function getInt(string memory key) external view override returns (int) {
         return _paramsInt[key];
     }
 
-    function getUInt256(string memory key) public view override returns (uint256) {
+    function getUInt256(string memory key) external view override returns (uint256) {
         return _paramsUInt256[key];
     }
 

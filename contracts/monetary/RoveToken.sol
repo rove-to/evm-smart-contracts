@@ -72,7 +72,7 @@ contract RoveToken is ERC20PresetMinterPauser {
         emit MintToken(to, amount);
     }
 
-    function schedule_minting(address[4] memory timeLockContracts) public returns (uint256) {
+    function schedule_minting(address[4] memory timeLockContracts) external returns (uint256) {
         require(msg.sender == admin, "Caller is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not admin role");
 
