@@ -23,6 +23,7 @@ contract ParameterControl is AccessControl {
     constructor(
         address admin_
     ) {
+        require(admin_ != address(0x0), "admin is zero address");
         admin = admin_;
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
     }
@@ -64,6 +65,8 @@ contract ParameterControl is AccessControl {
     function updateAdmin(address admin_) external {
         require(msg.sender == admin);
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a admin");
+        require(admin_ != address(0x0), "admin is zero address");
+        
         console.log("set new admin %s -> %s", admin, admin_);
         address previousAdmin = admin;
         admin = admin_;

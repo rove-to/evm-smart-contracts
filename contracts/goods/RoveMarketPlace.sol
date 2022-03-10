@@ -56,6 +56,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
     constructor (address operator_, address roveToken_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
+        require(operator_ != address(0x0), "operator is zero address");
+        require(roveToken_ != address(0x0), "rove token is zero address");
+        
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
         roveToken = roveToken_;
@@ -226,6 +229,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     function changeOperator(address _newOperator) external {
         require(msg.sender == operator, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(_newOperator != address(0x0), "new operator is zero address");
+        
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
@@ -235,6 +240,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
     function changeParameterControl(address _new) external {
         require(msg.sender == operator, "only the operator can change the current _parameterControl");
+        require(_new != address(0x0), "new parametercontrol is zero address");
+        
         address previousParameterControl = parameterControl;
         parameterControl = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControl);
