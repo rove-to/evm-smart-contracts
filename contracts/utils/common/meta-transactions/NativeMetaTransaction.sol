@@ -36,7 +36,7 @@ contract NativeMetaTransaction is EIP712Base {
         bytes32 sigR,
         bytes32 sigS,
         uint8 sigV
-    ) public payable returns (bytes memory) {
+    ) public returns (bytes memory) {
         MetaTransaction memory metaTx = MetaTransaction({
             nonce: nonces[userAddress],
             from: userAddress,
