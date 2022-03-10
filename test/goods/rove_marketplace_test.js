@@ -14,7 +14,7 @@ function sleep(second) {
     });
 }
 
-describe.only("Marketplace contract", function () {
+describe("Marketplace contract", function () {
     let roveToken;
     let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
     let roveTokenContractAddress;

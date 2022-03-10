@@ -127,7 +127,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         emit OperatorChanged(_previousOperator, operator);
     }
 
-    // changeOperator: update operator by old admin
+    // changeOperator: update admin by old admin
     function changeAdmin(address _newAdmin) public adminOnly {
         require(_msgSender() == admin, "Sender is not admin");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
@@ -287,6 +287,9 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256[] memory _ids
     ) public operatorOnly {
         require(_to != address(0), "ERC1155Tradable#setCreator: INVALID_ADDRESS.");
+
+        _grantRole(CREATOR_ROLE, _to);
+        _grantRole(MINTER_ROLE, _to);
         for (uint256 i = 0; i < _ids.length; i++) {
             uint256 id = _ids[i];
             _setCreator(_to, id);

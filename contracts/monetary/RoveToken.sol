@@ -16,7 +16,8 @@ contract RoveToken is ERC20PresetMinterPauser {
     constructor(address _admin) ERC20PresetMinterPauser("ROVE", "RVE") {
         console.log("Deploy Rove token", "RVE");
         console.log("Mint to admin address", admin);
-
+        require(_admin != address(0x0), "admin is zero address");
+        
         // decimals: 4
         uint256 _totalSupplyRove = 10000000000000;
 
@@ -45,6 +46,8 @@ contract RoveToken is ERC20PresetMinterPauser {
     function changeAdmin(address _newAdmin) external {
         require(msg.sender == admin, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(_newAdmin != address(0x0), "New admin is zero address");
+        
         address previousAdmin = admin;
         admin = _newAdmin;
 
