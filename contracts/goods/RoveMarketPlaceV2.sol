@@ -196,7 +196,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         // tranfer erc-20 token to this market contract
         console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
-        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
+        bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
+        require(success == true, "transfer erc-20 failure");
         offeringRegistry[_offeringId].amount -= _amount;
 
         // update balance(on market) of offerer
@@ -231,7 +232,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint amount = _balances[withdrawer];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
-        token.transfer(withdrawer, amount);
+        bool success = token.transfer(withdrawer, amount);
+        require(success == true, "transfer erc-20 failure");
 
         // reset balance
         _balances[withdrawer] = 0;
