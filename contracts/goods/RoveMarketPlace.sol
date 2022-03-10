@@ -143,7 +143,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         address offerer = offeringRegistry[_offeringId].offerer;
 
         // check require
-        require(approvalToken == _closeOfferingData.price, "this contract address is not approved for spending erc-20");
+        require(approvalToken >= _closeOfferingData.price, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= 1, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");

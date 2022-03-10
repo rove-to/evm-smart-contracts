@@ -151,7 +151,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         // check require
         require(remainAmount >= _amount, "Amount > offering amount");
-        require(_closeOfferingData.approvalToken == _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
+        require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer not enough funds erc-20 to buy");
         require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
