@@ -6,7 +6,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 
 module.exports = {
-  solidity: "0.8.1",
+  solidity: "0.8.12",
   defaultNetwork: process.env.NETWORK,
   networks: {
     hardhat: {
