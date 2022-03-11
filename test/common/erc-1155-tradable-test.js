@@ -71,7 +71,7 @@ async function signAnotherContractThenExcuteFunction(
   }
 }
 
-describe.only("** NFTs ERC-1155 tradable", () => {
+describe("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -661,6 +661,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       );
     });
   });
+
   context("* BatchMint", () => {
     const executeFuncBatchMint = "batchMint";
     const numberTokenMint = 1;
