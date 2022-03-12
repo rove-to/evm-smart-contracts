@@ -308,5 +308,37 @@ describe("** NFTs erc-1155 contract", function () {
         );
       }
     });
+
+    it("- Test create NFT with supply is underflow", async () => {
+      const initSupply = 100.9;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      try {
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      } catch (error) {
+        expect(error.toString()).to.include("underflow");
+      }
+    });
+
+    it.only("- Test create NFT with supply is overflow", async () => {
+      const initSupply = 999999999999999999999999999999999;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      try {
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      } catch (error) {
+        expect(error.toString()).to.include("overflow");
+      }
+    });
   });
 });
