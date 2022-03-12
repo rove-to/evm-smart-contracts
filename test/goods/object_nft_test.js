@@ -100,7 +100,7 @@ describe("** NFTs erc-1155 contract", function () {
     let receiver1 = addresses[1];
     let receiver_privatekey1 = private_keys[1];
     let receiver2 = addresses[2];
-    let initSupply = 300;
+    let initSupply = 10;
     let tokenURI =
       "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
     it("- Should transfer erc-1155 between accounts", async function () {
@@ -204,7 +204,9 @@ describe("** NFTs erc-1155 contract", function () {
       );
     });
 
-    it("Test owner can transfer to many receiver", async () => {
+    it("- Test owner can transfer to many receiver", async () => {
+      const initSupply = 300;
+      const amount = 100;
       // check token init
       console.log("+ check token init");
       let newItemId = await objectNFT.newItemId();
@@ -216,12 +218,12 @@ describe("** NFTs erc-1155 contract", function () {
       let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
       await tx.wait();
       let tokenID = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
       expect(tokenID).to.equal(1);
       console.log("tokenID:", tokenID);
 
       // transfer and check balance
       console.log("+ owner transfer to reciver1, reciver2 and check balance");
-      const amount = 100;
       tx = await objectNFT.safeTransferFrom(
         nftOwner,
         receiver1,
@@ -275,6 +277,36 @@ describe("** NFTs erc-1155 contract", function () {
           .add(balance_erc1155_receiver2)
           .add(balance_erc1155_owner)
       ).to.equal(initSupply);
+    });
+
+    it("- Test transfer with amount greater than init supply", async () => {
+      const initSupply = 100;
+      const transferAmount = 200;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      await tx.wait();
+      let tokenID = await objectNFT.newItemId();
+      expect(tokenID).to.equal(1);
+      // check insufficient balance for transfer
+      try {
+        await objectNFT.safeTransferFrom(
+          nftOwner,
+          receiver1,
+          tokenID,
+          transferAmount,
+          "0x"
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155: insufficient balance for transfer"
+        );
+      }
     });
   });
 });
