@@ -5,8 +5,10 @@ const { ethers } = require("hardhat");
 const expect = chai.expect;
 const { addresses, private_keys } = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
-const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
-const path = require("path");
+const {
+  sleep,
+  signAnotherContractThenExcuteFunction,
+} = require("../common_libs");
 
 /*
   -TESTCASES:
@@ -36,43 +38,7 @@ const path = require("path");
     - Test batchMint by creator
 */
 
-function sleep(second) {
-  return new Promise(resolve => {
-    setTimeout(resolve, second * 1000);
-  });
-}
-
-async function signAnotherContractThenExcuteFunction(
-  jsonFile,
-  erc1155TradbleAddress,
-  contractToChange,
-  executeFunc,
-  data, // argument of excuteFunc type: array[]
-  contractToChangePrivateKey
-) {
-  let contract = require(path.resolve(jsonFile));
-  const web3 = createAlchemyWeb3(
-    hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-  );
-  const erc1155_1 = new web3.eth.Contract(contract.abi, erc1155TradbleAddress);
-  const nonce = await web3.eth.getTransactionCount(contractToChange, "latest"); //get latest nonce
-  const tx = {
-    from: contractToChange,
-    to: erc1155TradbleAddress,
-    nonce: nonce,
-    gas: 500000,
-    data: erc1155_1.methods[executeFunc](...data).encodeABI(),
-  };
-  const signedTx = await web3.eth.accounts.signTransaction(
-    tx,
-    contractToChangePrivateKey
-  );
-  if (signedTx.rawTransaction != null) {
-    await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-  }
-}
-
-describe.only("** NFTs ERC-1155 tradable", () => {
+describe("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -662,6 +628,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       );
     });
   });
+
   context("* BatchMint", () => {
     const executeFuncBatchMint = "batchMint";
     const numberTokenMint = 1;
