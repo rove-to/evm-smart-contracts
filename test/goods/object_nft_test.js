@@ -325,7 +325,7 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it.only("- Test create NFT with supply is overflow", async () => {
+    it("- Test create NFT with supply is overflow", async () => {
       const initSupply = 999999999999999999999999999999999;
       // check token init
       console.log("+ check token init");
