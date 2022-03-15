@@ -34,7 +34,7 @@ contract RockNFT is ERC1155Tradable {
         _tokenIds.increment();
 
         newItemId = _tokenIds.current();
-        create(recipient, newItemId, 1, tokenURI);
+        create(recipient, newItemId, 1, tokenURI, "0x");
 
         console.log(
             "mintNFT erc-1155 %s, owner %s, only 1",
