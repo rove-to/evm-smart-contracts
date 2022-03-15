@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.sol";
 
 import "./common/meta-transactions/NativeMetaTransaction.sol";
@@ -30,23 +29,15 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     string public symbol;
 
     function creatorOnly(uint256 _id) private returns (bool) {
-        if (creators[_id] == _msgSender())
-        {return true;}
-        return false;
+        return (creators[_id] == _msgSender());
     }
 
     function operatorOnly() private returns (bool) {
-        if (_msgSender() == operator && hasRole(OPERATOR_ROLE, _msgSender())) {
-            return true;
-        }
-        return false;
+        return (_msgSender() == operator && hasRole(OPERATOR_ROLE, _msgSender()));
     }
 
     function adminOnly() private returns (bool) {
-        if (_msgSender() == admin && hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
-            return true;
-        }
-        return false;
+        return (_msgSender() == admin && hasRole(DEFAULT_ADMIN_ROLE, _msgSender()));
     }
 
     bytes32 constant CREATOR_ROLE = keccak256("CRE_R");
