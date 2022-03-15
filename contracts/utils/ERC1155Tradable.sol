@@ -39,7 +39,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
      * @dev Require _msgSender() to be the creator of the token id
    */
     modifier creatorOnly(uint256 _id) {
-        require(creators[_id] == _msgSender(), "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED");
+        require(creators[_id] == _msgSender(), "OCA");
         _;
     }
 
@@ -47,19 +47,19 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
      * @dev Require _msgSender() to own more than 0 of the token id
    */
     modifier ownersOnly(uint256 _id) {
-        require(balanceOf(_msgSender(), _id) > 0, "ERC1155Tradable#ownersOnly: ONLY_OWNERS_ALLOWED");
+        require(balanceOf(_msgSender(), _id) > 0, "OOA");
         _;
     }
 
     modifier operatorOnly() {
-        require(_msgSender() == operator, "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
-        require(hasRole(OPERATOR_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
+        require(_msgSender() == operator, "OOA");
+        require(hasRole(OPERATOR_ROLE, _msgSender()), "OOA");
         _;
     }
 
     modifier adminOnly() {
-        require(_msgSender() == admin, "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED");
+        require(_msgSender() == admin, "OAA");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "OAA");
         _;
     }
 
@@ -109,8 +109,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
 
     // changeOperator: update operator by admin
     function changeOperator(address _newOperator) public adminOnly {
-        require(_msgSender() == admin, "Sender is not admin");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
+        require(_msgSender() == admin, "SNA");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "SNAR");
 
         address _previousOperator = operator;
         operator = _newOperator;
@@ -130,8 +130,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
 
     // changeOperator: update admin by old admin
     function changeAdmin(address _newAdmin) public adminOnly {
-        require(_msgSender() == admin, "Sender is not admin");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "Sender has not admin role");
+        require(_msgSender() == admin, "SNA");
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "SNAR");
 
         address _previousAdmin = admin;
         admin = _newAdmin;
@@ -152,7 +152,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     function uri(
         uint256 _id
     ) override public view returns (string memory) {
-        require(_exists(_id), "ERC1155Tradable#uri: NONEXISTENT_TOKEN");
+        require(_exists(_id), "NONEXISTENT_TOKEN");
         // We have to convert string to bytes to check for existence
         bytes memory customUriBytes = bytes(customUri[_id]);
         if (customUriBytes.length > 0) {
@@ -222,8 +222,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         bytes memory _data
     ) public operatorOnly
     returns (uint256) {
-        require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
-        require(!_exists(_id), "token _id already exists");
+        require(hasRole(CREATOR_ROLE, _msgSender()), "SNC");
+        require(!_exists(_id), "EXISTENT_TOKENID");
         creators[_id] = _msgSender();
 
         if (bytes(_uri).length > 0) {
@@ -250,7 +250,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _quantity,
         bytes memory _data
     ) virtual public override creatorOnly(_id) {
-        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
+        require(hasRole(MINTER_ROLE, _msgSender()), "SNMR");
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
     }
@@ -268,10 +268,10 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256[] memory _quantities,
         bytes memory _data
     ) public operatorOnly {
-        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
+        require(hasRole(MINTER_ROLE, _msgSender()), "SNMR");
         for (uint256 i = 0; i < _ids.length; i++) {
             uint256 _id = _ids[i];
-            require(creators[_id] == _msgSender(), "ERC1155Tradable#batchMint: ONLY_CREATOR_ALLOWED");
+            require(creators[_id] == _msgSender(), "ONLY_CREATOR_ALLOWED");
             uint256 quantity = _quantities[i];
             tokenSupply[_id] = tokenSupply[_id].add(quantity);
         }
@@ -287,7 +287,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         address _to,
         uint256[] memory _ids
     ) public operatorOnly {
-        require(_to != address(0), "ERC1155Tradable#setCreator: INVALID_ADDRESS.");
+        require(_to != address(0), "INVALID_ADDRESS");
 
         _grantRole(CREATOR_ROLE, _to);
         _grantRole(MINTER_ROLE, _to);
