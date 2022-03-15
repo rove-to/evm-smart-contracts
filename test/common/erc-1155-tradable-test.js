@@ -121,7 +121,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const nonAdminPrivateKey = private_keys[1];
       const executeFunc = "changeAdmin";
       const data = [newAdmin];
-      // Sign contracty with account is not admin then change admin
+      // Sign contract with account is not admin then change admin
       try {
         await signAnotherContractThenExcuteFunction(
             jsonFile,
