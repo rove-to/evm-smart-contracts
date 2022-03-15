@@ -155,7 +155,7 @@ describe("Marketplace contract erc-721", function () {
             expect(price).to.equal(priceOffer);
         });
 
-        it.only("* Stop offering", async function () {
+        it("* Stop offering", async function () {
             let contract = require(path.resolve(
                 "./artifacts/contracts/goods/RoveMarketPlace.sol/RoveMarketPlace.json"
             ));
