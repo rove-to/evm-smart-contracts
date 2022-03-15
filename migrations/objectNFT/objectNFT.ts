@@ -56,7 +56,7 @@ class ObjectNFT {
 
         const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
         if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
+            return (await web3.eth.sendSignedTransaction(
                 signedTx.rawTransaction,
                 function (err, hash) {
                     if (!err) {
@@ -72,8 +72,12 @@ class ObjectNFT {
                         )
                     }
                 }
-            )
+            ));
         }
+    }
+
+    async setCreator(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+
     }
 
     async mintObjectNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
@@ -103,7 +107,7 @@ class ObjectNFT {
 
         const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
         if (signedTx.rawTransaction != null) {
-            return web3.eth.sendSignedTransaction(
+            return (await web3.eth.sendSignedTransaction(
                 signedTx.rawTransaction,
                 function (err, hash) {
                     if (!err) {
@@ -119,7 +123,7 @@ class ObjectNFT {
                         )
                     }
                 }
-            )
+            ));
         }
     }
 }
