@@ -7,7 +7,15 @@ require("hardhat-gas-reporter");
 require('hardhat-contract-sizer');
 
 module.exports = {
-    solidity: "0.8.12",
+    solidity: {
+        version: "0.8.12",
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200
+            }
+        }
+    },
     defaultNetwork: process.env.NETWORK,
     networks: {
         hardhat: {

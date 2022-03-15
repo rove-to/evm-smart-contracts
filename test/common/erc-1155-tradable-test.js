@@ -47,29 +47,30 @@ describe.only("** NFTs ERC-1155 tradable", () => {
   let newAdmin = addresses[3];
   const overFlowNumber = 9999999999999999999999999999;
   const jsonFile =
-    "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
+      "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
   const tokenId = 1;
   const tokenURI =
-    "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+      "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
   const numberTokenCreate = 9876543210;
   const dataCreateToken = [
     adminContract,
     tokenId,
     numberTokenCreate,
     tokenURI,
+    operatorContract,
   ];
 
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
     let Erc1155TradableContract = await ethers.getContractFactory(
-      "ERC1155Tradable"
+        "ERC1155Tradable"
     );
     erc1155Tradable = await Erc1155TradableContract.deploy(
-      "test",
-      "test",
-      { a: "b" },
-      adminContract,
-      operatorContract
+        "test",
+        "test",
+        { a: "b" },
+        adminContract,
+        operatorContract
     );
     erc1155TradbleAddress = erc1155Tradable.address;
     console.log("erc1155Tradable deploy address", erc1155TradbleAddress);
@@ -84,7 +85,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       await erc1155Tradable.changeOperator(newOperatorContract);
       const newOperator = await erc1155Tradable.operator();
       expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
+          newOperatorContract.toLowerCase()
       );
     });
 
@@ -95,16 +96,16 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       // Sign contract with account is not admin then change operator
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc,
-          data,
-          nonAdminPrivateKey
+            jsonFile,
+            erc1155TradbleAddress,
+            operatorContract,
+            executeFunc,
+            data,
+            nonAdminPrivateKey
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "AOA"
+            "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
         );
       }
     });
@@ -123,16 +124,16 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       // Sign contracty with account is not admin then change admin
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc,
-          data,
-          nonAdminPrivateKey
+            jsonFile,
+            erc1155TradbleAddress,
+            operatorContract,
+            executeFunc,
+            data,
+            nonAdminPrivateKey
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "AOA"
+            "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
         );
       }
     });
@@ -147,25 +148,25 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       expect(newAdminChanged.toLowerCase()).to.equal(newAdmin.toLowerCase());
       // New admin sign contract then change operator
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        newAdmin,
-        executeFunc,
-        data,
-        changedAdminPrivateKey
+          jsonFile,
+          erc1155TradbleAddress,
+          newAdmin,
+          executeFunc,
+          data,
+          changedAdminPrivateKey
       );
       await sleep(3);
       // Check new operator is changed success
       const newOperator = await erc1155Tradable.operator();
       expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
+          newOperatorContract.toLowerCase()
       );
     });
   });
   context("** Create token", () => {
     // Tests create token type by operator
     const newTokenURI =
-      "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
+        "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
     // data to create token
     it("- Test get Creator", async () => {
       const expectedResult = "0x0000000000000000000000000000000000000000";
@@ -179,8 +180,8 @@ describe.only("** NFTs ERC-1155 tradable", () => {
     });
 
     it("- Test token is not exists", async () => {
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(false);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(false);
     });
 
     it("- Test get non existed token URI", async () => {
@@ -188,7 +189,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         await erc1155Tradable.uri(tokenId);
       } catch (error) {
         expect(error.toString()).to.include(
-          "NEXI_T"
+            "ERC1155Tradable#uri: NONEXISTENT_TOKEN"
         );
       }
     });
@@ -196,14 +197,15 @@ describe.only("** NFTs ERC-1155 tradable", () => {
     it("- Test admin can't create token", async () => {
       try {
         await erc1155Tradable.create(
-          adminContract,
-          tokenId,
-          numberTokenCreate,
-          tokenURI,
+            adminContract,
+            tokenId,
+            numberTokenCreate,
+            tokenURI,
+            operatorContract
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "OPO"
+            "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
         );
       }
     });
@@ -215,19 +217,20 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         tokenId,
         0,
         tokenURI,
+        operatorContract,
       ];
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateZeroToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateZeroToken,
+          private_keys[1]
       );
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
       expect(tokenSupply).to.equal(0);
     });
 
@@ -235,20 +238,20 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success and creator is the right address
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
       const creator = await erc1155Tradable.getCreator(tokenId);
       console.log("Token supply: ", tokenSupply);
       console.log("Token creator: ", creator);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
       expect(tokenSupply).to.equal(numberTokenCreate);
       expect(creator).to.equal(operatorContract);
 
@@ -256,41 +259,42 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc1 = "setCreator";
       const data1 = [newOperatorContract, [tokenId]];
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc1,
-        data1,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          data1,
+          private_keys[1]
       );
       // Check after change creator for given token
       const newCreator = await erc1155Tradable.getCreator(tokenId);
       console.log("New creator: ", newCreator);
       expect(newCreator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
+          newOperatorContract.toLowerCase()
       );
       // Check token URI after create token
       const uri = await erc1155Tradable.uri(tokenId);
       expect(uri).to.equal(tokenURI);
     });
 
-    it.only("- Test create token with overflow number", async () => {
+    it("- Test create token with overflow number", async () => {
       const executeFunc = "create";
       const dataCreateToken = [
         adminContract,
         tokenId,
         overFlowNumber,
         tokenURI,
+        operatorContract,
       ];
       // Operator sign contract then create token
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc,
-          dataCreateToken,
-          private_keys[1]
+            jsonFile,
+            erc1155TradbleAddress,
+            operatorContract,
+            executeFunc,
+            dataCreateToken,
+            private_keys[1]
         );
       } catch (error) {
         expect(error.toString()).to.include("overflow");
@@ -303,22 +307,22 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       await erc1155Tradable.changeOperator(newOperatorContract);
       const newOperator = await erc1155Tradable.operator();
       expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
+          newOperatorContract.toLowerCase()
       );
       // Create token with new creator
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        newOperatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[2]
+          jsonFile,
+          erc1155TradbleAddress,
+          newOperatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[2]
       );
       // Verify token is create success and creator is the right address
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
       const creator = await erc1155Tradable.getCreator(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
       expect(tokenSupply).to.equal(numberTokenCreate);
       expect(creator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
     });
@@ -327,30 +331,30 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // Set New Create for given token with invalid address
       const executeFunc1 = "setCreator";
       const data1 = ["0x0000000000000000000000000000000000000000", [tokenId]];
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc1,
-          data1,
-          private_keys[1]
+            jsonFile,
+            erc1155TradbleAddress,
+            operatorContract,
+            executeFunc1,
+            data1,
+            private_keys[1]
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "INV_ADD"
+            "ERC1155Tradable#setCreator: INVALID_ADDRESS"
         );
       }
       // Verify creator is operator 1
@@ -359,23 +363,23 @@ describe.only("** NFTs ERC-1155 tradable", () => {
     });
 
     it("- Test setCreator without existed token", async () => {
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(false);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(false);
       // Set New Create for given token with invalid address
       const executeFunc1 = "setCreator";
       const data1 = [newOperatorContract, [tokenId]];
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc1,
-          data1,
-          private_keys[1]
+            jsonFile,
+            erc1155TradbleAddress,
+            operatorContract,
+            executeFunc1,
+            data1,
+            private_keys[1]
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "CO"
+            "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
         );
       }
     });
@@ -384,30 +388,30 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // Set New Create for given token with invalid address
       const executeFunc1 = "setCreator";
       const data1 = [newOperatorContract, [tokenId]];
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          adminContract,
-          executeFunc1,
-          data1,
-          private_keys[0]
+            jsonFile,
+            erc1155TradbleAddress,
+            adminContract,
+            executeFunc1,
+            data1,
+            private_keys[0]
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "OPO"
+            "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
         );
       }
     });
@@ -416,26 +420,26 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // Set custom URI by creator
       const executeFunc1 = "setCustomURI";
       const dataSetCustomURI = [tokenId, newTokenURI];
 
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc1,
-        dataSetCustomURI,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          dataSetCustomURI,
+          private_keys[1]
       );
       const tokenURIChanged = await erc1155Tradable.uri(tokenId);
       expect(tokenURIChanged).to.equal(newTokenURI);
@@ -445,63 +449,63 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // Set custom URI by creator
       const executeFunc1 = "setCustomURI";
       const dataSetCustomURI = [tokenId, newTokenURI];
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          newOperatorContract,
-          executeFunc1,
-          dataSetCustomURI,
-          private_keys[2]
+            jsonFile,
+            erc1155TradbleAddress,
+            newOperatorContract,
+            executeFunc1,
+            dataSetCustomURI,
+            private_keys[2]
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "CO"
+            "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
         );
       }
     });
 
-    /*it("- Test set URI by operator", async () => {
+    it("- Test set URI by operator", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // set Uri by operator
       const executeFunc1 = "setURI";
       const dataSetURI = [newTokenURI];
 
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc1,
-        dataSetURI,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          dataSetURI,
+          private_keys[1]
       );
       const URIChanged = await erc1155Tradable.uri(tokenId);
       // expect(URIChanged).to.equal(newTokenURI);
-    });*/
+    });
   });
   context("* Mint", () => {
     const executeFuncMint = "mint";
@@ -512,31 +516,31 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
 
       // Mint by creator
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFuncMint,
-        dataMint,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFuncMint,
+          dataMint,
+          private_keys[1]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
       expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
+          tokenSupplyAfterMint
       );
     });
 
@@ -545,40 +549,40 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const changedAdminPrivateKey = private_keys[0];
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success and creator is the right address
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      expect(isTokenExists).to.equal(true);
       // Change new creator for given token
       const executeFunc1 = "changeOperator";
       const data = [newOperatorContract];
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        adminContract,
-        executeFunc1,
-        data,
-        changedAdminPrivateKey
+          jsonFile,
+          erc1155TradbleAddress,
+          adminContract,
+          executeFunc1,
+          data,
+          changedAdminPrivateKey
       );
       // Mint after set New creator
       try {
         await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          newOperatorContract,
-          executeFuncMint,
-          dataMint,
-          private_keys[2]
+            jsonFile,
+            erc1155TradbleAddress,
+            newOperatorContract,
+            executeFuncMint,
+            dataMint,
+            private_keys[2]
         );
       } catch (error) {
         expect(error.toString()).to.include(
-          "CO"
+            "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
         );
       }
     });
@@ -587,40 +591,40 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success and creator is the right address
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupplyBeforeMint = await erc1155Tradable.totalSupply(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
       // Change new creator for given token
       const executeFunc1 = "setCreator";
       const data1 = [newOperatorContract, [tokenId]];
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc1,
-        data1,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc1,
+          data1,
+          private_keys[1]
       );
       // Mint after set New creator
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        newOperatorContract,
-        executeFuncMint,
-        dataMint,
-        private_keys[2]
+          jsonFile,
+          erc1155TradbleAddress,
+          newOperatorContract,
+          executeFuncMint,
+          dataMint,
+          private_keys[2]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
       expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
+          tokenSupplyAfterMint
       );
     });
   });
@@ -634,36 +638,36 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       [numberTokenMint],
       private_keys[0],
     ];
-    /*it("- Test batchMint by creator", async () => {
+    it("- Test batchMint by creator", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFunc,
-        dataCreateToken,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
       );
       // Verify token is create success
-      // const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
       const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
-      // expect(isTokenExists).to.equal(true);
+      expect(isTokenExists).to.equal(true);
 
       // Mint by creator
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
-        jsonFile,
-        erc1155TradbleAddress,
-        operatorContract,
-        executeFuncBatchMint,
-        dataBatchMint,
-        private_keys[1]
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFuncBatchMint,
+          dataBatchMint,
+          private_keys[1]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
       expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
+          tokenSupplyAfterMint
       );
-    });*/
+    });
   });
 });
