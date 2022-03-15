@@ -22,7 +22,8 @@ class ObjectNFT {
         }
         
         const ObjectNFT = await ethers.getContractFactory("ObjectNFT");
-        const ObjectNFTDeploy = await ObjectNFT.deploy();
+        console.log("ObjectNFT.deploying ...")
+        const ObjectNFTDeploy = await ObjectNFT.deploy(this.senderPublicKey, this.senderPublicKey);
 
         console.log("Rove ObjectNFT deployed:", ObjectNFTDeploy.address);
         return ObjectNFTDeploy.address;
