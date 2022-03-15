@@ -3,7 +3,6 @@ pragma solidity 0.8.12;
 import "@openzeppelin/contracts/token/ERC721/presets/ERC721PresetMinterPauserAutoId.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
@@ -16,7 +15,6 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
 
-    using SafeMath for uint256;
     using Counters for Counters.Counter;
 
     // super admin

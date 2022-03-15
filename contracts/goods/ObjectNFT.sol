@@ -3,7 +3,7 @@ pragma solidity 0.8.12;
 
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /*
  * TODO:
@@ -23,7 +23,7 @@ contract ObjectNFT is ERC1155Tradable {
         "ROs",
         "", admin, operator
     ) public {
-        console.log("Deploy ObjectNFT");
+        //        console.log("Deploy ObjectNFT");
     }
 
     function createNFT(address recipient, uint256 initialSupply, string memory tokenURI)
@@ -33,15 +33,15 @@ contract ObjectNFT is ERC1155Tradable {
         _tokenIds.increment();
 
         newItemId = _tokenIds.current();
-        create(recipient, newItemId, initialSupply, tokenURI, "0x");
+        create(recipient, newItemId, initialSupply, tokenURI);
 
-        console.log(
-            "mintNFT erc-1155 %s, owner %s, total %s",
-            address(this),
-            recipient,
-            initialSupply
-        );
-        console.log("tokenid: ", newItemId);
+        //        console.log(
+        //            "mintNFT erc-1155 %s, owner %s, total %s",
+        //            address(this),
+        //            recipient,
+        //            initialSupply
+        //        );
+        //        console.log("tokenid: ", newItemId);
         return newItemId;
     }
 }

@@ -33,7 +33,7 @@ contract EnvironmentNFT is ERC1155Tradable {
         _tokenIds.increment();
 
         newItemId = _tokenIds.current();
-        create(recipient, newItemId, initialSupply, tokenURI, "0x");
+        create(recipient, newItemId, initialSupply, tokenURI);
 
         console.log(
             "mintNFT erc-1155 %s, owner %s, total %s",
