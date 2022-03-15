@@ -32,7 +32,7 @@ describe("Marketplace contract", function () {
     let paramControl;
     let paramControlAddress;
     const CREATOR_BENEFIT = 1;
-    const OPERATOR_BENEFIT = 2;
+    const MARKET_BENEFIT = 2;
     
     let roveMarketplace;
     let roveMarketplaceAddress;
@@ -127,7 +127,7 @@ describe("Marketplace contract", function () {
             expect(price).to.equal(priceOffer);
         });
 
-        it.only("* Stop offering", async function () {
+        it("* Stop offering", async function () {
             let contract = require(path.resolve("./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json"));
             let contractToken = require(path.resolve("./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json"));
             const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
