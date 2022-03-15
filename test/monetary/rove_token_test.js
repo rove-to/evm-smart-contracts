@@ -211,7 +211,7 @@ describe("Token contract", function () {
     expect(adminBalance1).to.equal(newAmount);
   });
 
-  it.only("-- Test team transfer to member after release first times", async () => {
+  it("-- Test team transfer to member after release first times", async () => {
     const menberContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
     const transferAmount = ethers.utils.parseEther("10");
     console.log(
