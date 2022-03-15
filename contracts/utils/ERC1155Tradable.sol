@@ -29,32 +29,24 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     // Contract symbol
     string public symbol;
 
-    /**
-     * @dev Require _msgSender() to be the creator of the token id
-   */
-    modifier creatorOnly(uint256 _id) {
-        require(creators[_id] == _msgSender(), "OCA");
-        _;
+    function creatorOnly(uint256 _id) private returns (bool) {
+        if (creators[_id] == _msgSender())
+        {return true;}
+        return false;
     }
 
-    /**
-     * @dev Require _msgSender() to own more than 0 of the token id
-   */
-    modifier ownersOnly(uint256 _id) {
-        require(balanceOf(_msgSender(), _id) > 0, "OOA");
-        _;
+    function operatorOnly() private returns (bool) {
+        if (_msgSender() == operator && hasRole(OPERATOR_ROLE, _msgSender())) {
+            return true;
+        }
+        return false;
     }
 
-    modifier operatorOnly() {
-        require(_msgSender() == operator, "OOA");
-        require(hasRole(OPERATOR_ROLE, _msgSender()), "OOA");
-        _;
-    }
-
-    modifier adminOnly() {
-        require(_msgSender() == admin, "OAA");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "OAA");
-        _;
+    function adminOnly() private returns (bool) {
+        if (_msgSender() == admin && hasRole(DEFAULT_ADMIN_ROLE, _msgSender())) {
+            return true;
+        }
+        return false;
     }
 
     bytes32 constant CREATOR_ROLE = keccak256("CRE_R");
@@ -88,7 +80,8 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     }
 
     // changeOperator: update operator by admin
-    function changeOperator(address _newOperator) public adminOnly {
+    function changeOperator(address _newOperator) public {
+        require(adminOnly(), "AOA");
         require(_msgSender() == admin, "SNA");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "SNAR");
 
@@ -109,7 +102,8 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     }
 
     // changeOperator: update admin by old admin
-    function changeAdmin(address _newAdmin) public adminOnly {
+    function changeAdmin(address _newAdmin) public {
+        require(adminOnly(), "AOA");
         require(_msgSender() == admin, "SNA");
         require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "SNAR");
 
@@ -155,18 +149,6 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     }
 
     /**
-     * @dev Sets a new URI for all token types, by relying on the token type ID
-    * substitution mechanism
-    * https://eips.ethereum.org/EIPS/eip-1155#metadata[defined in the EIP].
-   * @param _newURI New URI for all tokens
-   */
-    /*function setURI(
-        string memory _newURI
-    ) public operatorOnly {
-        _setURI(_newURI);
-    }*/
-
-    /**
      * @dev Will update the base URI for the token
    * @param _tokenId The token to update. _msgSender() must be its creator.
    * @param _newURI New URI for the token.
@@ -174,7 +156,8 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     function setCustomURI(
         uint256 _tokenId,
         string memory _newURI
-    ) public creatorOnly(_tokenId) {
+    ) public {
+        require(creatorOnly(_tokenId), "CO");
         customUri[_tokenId] = _newURI;
         emit URI(_newURI, _tokenId);
     }
@@ -199,8 +182,9 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
         uint256 _id,
         uint256 _initialSupply,
         string memory _uri
-    ) public operatorOnly
+    ) public
     returns (uint256) {
+        require(operatorOnly(), "OPO");
         require(hasRole(CREATOR_ROLE, _msgSender()), "SNC");
         require(!_exists(_id), "EXI_TID");
         creators[_id] = _msgSender();
@@ -228,7 +212,8 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
         uint256 _id,
         uint256 _quantity,
         bytes memory _data
-    ) virtual public override creatorOnly(_id) {
+    ) virtual public override {
+        require(creatorOnly(_id), "CO");
         require(hasRole(MINTER_ROLE, _msgSender()), "SNMR");
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id] + _quantity;
@@ -242,7 +227,8 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     function setCreator(
         address _to,
         uint256[] memory _ids
-    ) public operatorOnly {
+    ) public {
+        require(operatorOnly(), "OPO");
         require(_to != address(0), "INV_ADD");
 
         _grantRole(CREATOR_ROLE, _to);
@@ -258,8 +244,9 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
     * @param _to   Address of the new creator
     * @param _id  Token IDs to change creator of
     */
-    function _setCreator(address _to, uint256 _id) internal creatorOnly(_id)
+    function _setCreator(address _to, uint256 _id) internal
     {
+        require(creatorOnly(_id), "CO");
         creators[_id] = _to;
     }
 
@@ -272,12 +259,6 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
         uint256 _id
     ) internal view returns (bool) {
         return creators[_id] != address(0);
-    }
-
-    function exists(
-        uint256 _id
-    ) external view returns (bool) {
-        return _exists(_id);
     }
 
     function getCreator(uint256 id)
