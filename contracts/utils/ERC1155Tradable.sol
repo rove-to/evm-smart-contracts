@@ -102,13 +102,6 @@ contract ERC1155Tradable is ERC1155PresetMinterPauser, NativeMetaTransaction, IE
         admin = _newAdmin;
 
         grantRole(DEFAULT_ADMIN_ROLE, admin);
-        //        grantRole(CREATOR_ROLE, admin);
-        //        grantRole(MINTER_ROLE, admin);
-        //        grantRole(PAUSER_ROLE, admin);
-
-        //        revokeRole(CREATOR_ROLE, admin);
-        //        revokeRole(MINTER_ROLE, admin);
-        //        revokeRole(PAUSER_ROLE, admin);
         revokeRole(DEFAULT_ADMIN_ROLE, _previousAdmin);
 
         emit AdminChanged(_previousAdmin, admin);
