@@ -211,6 +211,43 @@ describe("Token contract", function () {
     expect(adminBalance1).to.equal(newAmount);
   });
 
+  it("-- Test mint to admin before schedule minting", async () => {
+    const newAmount = 50000000;
+    console.log("--- Minting new amount to admin");
+    await roveToken.mint(admin_address, newAmount);
+    const adminBalance1 = await roveToken.balanceOf(admin_address);
+    console.log("adminBalance befire schedule mint", adminBalance1);
+    // expect(adminBalance1).to.equal(newAmount);
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    try {
+      await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
+    } catch (error) {
+      expect(error.toString()).to.include(
+        "RoveToken: schedule minting first_year 400000000 is invalid"
+      );
+    }
+  });
+
+  it("-- Test mint without admin role", async () => {
+    const newAmount = 50000000;
+    console.log("--- Minting new amount to admin");
+    try {
+      await signAnotherContractThenExcuteFunction(
+        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+        roveToken.address,
+        addresses[1],
+        "mint",
+        [admin_address, newAmount],
+        private_keys[1]
+      );
+    } catch (error) {
+      expect(error.toString()).to.include("Caller is not a admin");
+    }
+  });
+
   it("-- Test community transfer direct to member after release first times", async () => {
     const menberContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
     const transferAmount = 1;
@@ -259,9 +296,7 @@ describe("Token contract", function () {
       "Community balance before transfer: ",
       communityBalanceBeforeTransfer
     );
-
-    let van = await roveToken.transfer(menberContract, transferAmount);
-    console.log("here: ", van);
+    await roveToken.transfer(menberContract, transferAmount);
     let memberBalance = await roveToken.balanceOf(menberContract);
     let communityBalanceAfterTransfer = await roveToken.balanceOf(addresses[0]);
     console.log("Member balance after transfer: ", memberBalance);
@@ -321,7 +356,7 @@ describe("Token contract", function () {
       "Community balance before transfer: ",
       teamBalanceBeforeTransfer
     );
-    let van = await signAnotherContractThenExcuteFunction(
+    await signAnotherContractThenExcuteFunction(
       "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
       roveToken.address,
       addresses[1],
