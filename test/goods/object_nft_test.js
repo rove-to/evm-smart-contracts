@@ -1,59 +1,62 @@
-var {solidity} = require("ethereum-waffle");
-var chai = require('chai');
+var { solidity } = require("ethereum-waffle");
+var chai = require("chai");
 chai.use(solidity);
-const {ethers} = require("hardhat");
+const { ethers } = require("hardhat");
 const expect = chai.expect;
-const {addresses, private_keys} = require("../constants");
+const { addresses, private_keys } = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
-const {createAlchemyWeb3} = require("@alch/alchemy-web3");
+const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 
 describe("** NFTs erc-1155 contract", function () {
-    let objectNFT;
-    let objectNFTAddress;
-    let nft_owner_contract_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
-    const nft_creator = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8'; // default for local
-    const nft_creator_privatekey = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d';
+  let objectNFT;
+  let objectNFTAddress;
+  let nft_owner_contract_address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; // default for local
+  const nft_creator = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"; // default for local
+  const nft_creator_privatekey =
+    "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
 
-    beforeEach(async function () {
-        console.log("Hardhat network", hardhatConfig.defaultNetwork)
+  beforeEach(async function () {
+    console.log("Hardhat network", hardhatConfig.defaultNetwork);
 
-        if (hardhatConfig.defaultNetwork !== 'local') {
-            nft_owner_contract_address = `${process.env.PUBLIC_KEY}`;
-        }
-        console.log("nft_owner_address", nft_owner_contract_address);
+    if (hardhatConfig.defaultNetwork !== "local") {
+      nft_owner_contract_address = `${process.env.PUBLIC_KEY}`;
+    }
+    console.log("nft_owner_address", nft_owner_contract_address);
 
-        let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
-        objectNFT = await ObjectNFTContract.deploy(nft_owner_contract_address, nft_owner_contract_address);
-        objectNFTAddress = objectNFT.address;
-        console.log("ObjectNFTDeploy address", objectNFTAddress);
+    let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
+    objectNFT = await ObjectNFTContract.deploy(
+      nft_owner_contract_address,
+      nft_owner_contract_address
+    );
+    objectNFTAddress = objectNFT.address;
+    console.log("ObjectNFTDeploy address", objectNFTAddress);
+  });
+  describe("* Mint NFT erc-1155", function () {
+    it("- Check total supply of minted NFT token: owner of contract", async function () {
+      let recipient = nft_owner_contract_address;
+      let initSupply = 10;
+      let tokenURI =
+        "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
+      // check token init
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId", newItemId);
+      expect(newItemId).to.equal(0);
 
+      // check token id increase after mint
+      await objectNFT.createNFT(recipient, initSupply, tokenURI);
+      let tokenID = await objectNFT.newItemId();
+      console.log("tokenID", tokenID);
+      expect(tokenID).to.equal(newItemId + 1);
+
+      // check total supply of token id
+      let totalSupply = await objectNFT.totalSupply(tokenID);
+      console.log("totalSupply init:", totalSupply);
+      expect(totalSupply).to.equal(initSupply);
     });
-    describe("* Mint NFT erc-1155", function () {
-        it("- Check total supply of minted NFT token: owner of contract", async function () {
-            let recipient = nft_owner_contract_address;
-            let initSupply = 10;
-            let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
-            // check token init
-            let newItemId = await objectNFT.newItemId()
-            console.log("newItemId", newItemId);
-            expect(newItemId).to.equal(0);
-
-            // check token id increase after mint
-            await objectNFT.createNFT(recipient, initSupply, tokenURI);
-            let tokenID = await objectNFT.newItemId()
-            console.log("tokenID", tokenID);
-            expect(tokenID).to.equal(newItemId + 1);
-
-            // check total supply of token id
-            let totalSupply = await objectNFT.totalSupply(tokenID);
-            console.log("totalSupply init:", totalSupply);
-            expect(totalSupply).to.equal(initSupply);
-        });
-
-        /*it("- Check total supply of minted NFT token: any creator", async function () {
+    /*it("- Check total supply of minted NFT token: any creator", async function () {
 
             let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
             const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
@@ -91,74 +94,251 @@ describe("** NFTs erc-1155 contract", function () {
             console.log("totalSupply init:", totalSupply);
             expect(totalSupply).to.equal(initSupply);
         });*/
+  });
+  describe("* Transactions", function () {
+    let nftOwner = nft_owner_contract_address;
+    let receiver1 = addresses[1];
+    let receiver_privatekey1 = private_keys[1];
+    let receiver2 = addresses[2];
+    let initSupply = 10;
+    let tokenURI =
+      "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+    it("- Should transfer erc-1155 between accounts", async function () {
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      await tx.wait();
+      let tokenID = await objectNFT.newItemId();
+      expect(tokenID).to.equal(1);
+      console.log("tokenID:", tokenID);
+
+      // check token id minted 2nd
+      console.log("+ check token id minted 2nd");
+      tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      await tx.wait();
+      tokenID = await objectNFT.newItemId();
+      expect(tokenID).to.equal(2);
+      console.log("tokenID:", tokenID);
+
+      // transfer and check balance
+      console.log("+ transfer and check balance");
+      const amount = 5;
+      tx = await objectNFT.safeTransferFrom(
+        nftOwner,
+        receiver1,
+        tokenID,
+        amount,
+        "0x"
+      );
+      console.log("Transfer tx:", tx.hash);
+      await tx.wait();
+      let balance_erc1155_receiver = await objectNFT.balanceOf(
+        receiver1,
+        tokenID
+      );
+      console.log(
+        "balance of receiver %s on token %s is %s",
+        receiver1,
+        tokenID,
+        balance_erc1155_receiver
+      );
+      let balance_erc1155_owner = await objectNFT.balanceOf(nftOwner, tokenID);
+      console.log(
+        "balance of nft owner %s on token %s is %s",
+        nftOwner,
+        tokenID,
+        balance_erc1155_owner
+      );
+      expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(
+        initSupply
+      );
+
+      // continue transfer
+      let contract = require(path.resolve(
+        "./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"
+      ));
+      const web3 = createAlchemyWeb3(
+        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+      );
+      const objectNFT1 = new web3.eth.Contract(contract.abi, objectNFTAddress);
+      // check token id increase after mint
+      nonce = await web3.eth.getTransactionCount(receiver1, "latest"); //get latest nonce
+      tx = {
+        from: receiver1,
+        to: objectNFTAddress,
+        nonce: nonce,
+        gas: 500000,
+        data: objectNFT1.methods
+          .safeTransferFrom(receiver1, receiver2, tokenID, amount - 2, "0x")
+          .encodeABI(),
+      };
+      signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        receiver_privatekey1
+      );
+      if (signedTx.rawTransaction != null) {
+        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      }
+      balance_erc1155_receiver = await objectNFT.balanceOf(receiver2, tokenID);
+      console.log(
+        "balance of receiver %s on token %s is %s",
+        receiver1,
+        tokenID,
+        balance_erc1155_receiver
+      );
+      balance_erc1155_owner = await objectNFT.balanceOf(receiver1, tokenID);
+      console.log(
+        "balance of nft owner %s on token %s is %s",
+        nftOwner,
+        tokenID,
+        balance_erc1155_owner
+      );
+      expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(
+        amount
+      );
     });
-    describe("* Transactions", function () {
-        it("- Should transfer erc-1155 between accounts", async function () {
-            let nftOwner = nft_owner_contract_address;
-            let receiver1 = addresses[1];
-            let receiver_privatekey1 = private_keys[1];
-            let receiver2 = addresses[2];
-            let initSupply = 100;
-            let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
-            // check token init
-            console.log("+ check token init");
-            let newItemId = await objectNFT.newItemId()
-            console.log("newItemId:", newItemId);
-            expect(newItemId).to.equal(0);
+    it("- Test owner can transfer to many receiver", async () => {
+      const initSupply = 300;
+      const amount = 100;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
 
-            // check token id minted 1st
-            console.log("+ check token id minted 1st");
-            let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
-            await tx.wait();
-            let tokenID = await objectNFT.newItemId()
-            expect(tokenID).to.equal(1);
-            console.log("tokenID:", tokenID);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      await tx.wait();
+      let tokenID = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(tokenID).to.equal(1);
+      console.log("tokenID:", tokenID);
 
-            // check token id minted 2nd
-            console.log("+ check token id minted 2nd");
-            tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
-            await tx.wait();
-            tokenID = await objectNFT.newItemId();
-            expect(tokenID).to.equal(2);
-            console.log("tokenID:", tokenID);
+      // transfer and check balance
+      console.log("+ owner transfer to reciver1, reciver2 and check balance");
+      tx = await objectNFT.safeTransferFrom(
+        nftOwner,
+        receiver1,
+        tokenID,
+        amount,
+        "0x"
+      );
+      tx1 = await objectNFT.safeTransferFrom(
+        nftOwner,
+        receiver2,
+        tokenID,
+        amount,
+        "0x"
+      );
+      console.log("Transfer tx:", tx.hash, tx1.hash);
+      await tx.wait();
+      let balance_erc1155_receiver1 = await objectNFT.balanceOf(
+        receiver1,
+        tokenID
+      );
+      let balance_erc1155_receiver2 = await objectNFT.balanceOf(
+        receiver2,
+        tokenID
+      );
+      console.log(
+        "balance of receiver1 %s on token %s is %s",
+        receiver1,
+        tokenID,
+        balance_erc1155_receiver1
+      );
+      console.log(
+        "balance of receiver2 %s on token %s is %s",
+        receiver2,
+        tokenID,
+        balance_erc1155_receiver2
+      );
 
-            // transfer and check balance
-            console.log("+ transfer and check balance")
-            const amount = 5;
-            tx = await objectNFT.safeTransferFrom(nftOwner, receiver1, tokenID, amount, "0x");
-            console.log("Transfer tx:", tx.hash);
-            await tx.wait();
-            let balance_erc1155_receiver = await objectNFT.balanceOf(receiver1, tokenID);
-            console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
-            let balance_erc1155_owner = await objectNFT.balanceOf(nftOwner, tokenID);
-            console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(initSupply);
-
-
-            // continue transfer
-            let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
-            const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
-            const objectNFT1 = new web3.eth.Contract(contract.abi, objectNFTAddress);
-            // check token id increase after mint
-            nonce = await web3.eth.getTransactionCount(receiver1, "latest") //get latest nonce
-            tx = {
-                from: receiver1,
-                to: objectNFTAddress,
-                nonce: nonce,
-                gas: 500000,
-                data: objectNFT1.methods.safeTransferFrom(receiver1, receiver2, tokenID, amount - 2, "0x").encodeABI(),
-            }
-            signedTx = await web3.eth.accounts.signTransaction(tx, receiver_privatekey1);
-            if (signedTx.rawTransaction != null) {
-                await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-            }
-            balance_erc1155_receiver = await objectNFT.balanceOf(receiver2, tokenID);
-            console.log("balance of receiver %s on token %s is %s", receiver1, tokenID, balance_erc1155_receiver);
-            balance_erc1155_owner = await objectNFT.balanceOf(receiver1, tokenID);
-            console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(amount);
-
-        });
+      let balance_erc1155_owner = await objectNFT.balanceOf(nftOwner, tokenID);
+      console.log(
+        "balance of nft owner %s on token %s is %s",
+        nftOwner,
+        tokenID,
+        balance_erc1155_owner
+      );
+      // check balance of reciver1, reciver2, owner
+      expect(balance_erc1155_receiver1)
+        .to.equal(balance_erc1155_receiver2)
+        .to.equal(balance_erc1155_owner);
+      expect(
+        balance_erc1155_receiver1
+          .add(balance_erc1155_receiver2)
+          .add(balance_erc1155_owner)
+      ).to.equal(initSupply);
     });
+
+    it("- Test transfer with amount greater than init supply", async () => {
+      const initSupply = 100;
+      const transferAmount = 200;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      let tx = await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      await tx.wait();
+      let tokenID = await objectNFT.newItemId();
+      expect(tokenID).to.equal(1);
+      // check insufficient balance for transfer
+      try {
+        await objectNFT.safeTransferFrom(
+          nftOwner,
+          receiver1,
+          tokenID,
+          transferAmount,
+          "0x"
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155: insufficient balance for transfer"
+        );
+      }
+    });
+
+    it("- Test create NFT with supply is underflow", async () => {
+      const initSupply = 100.9;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      try {
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      } catch (error) {
+        expect(error.toString()).to.include("underflow");
+      }
+    });
+
+    it("- Test create NFT with supply is overflow", async () => {
+      const initSupply = 999999999999999999999999999999999;
+      // check token init
+      console.log("+ check token init");
+      let newItemId = await objectNFT.newItemId();
+      console.log("newItemId:", newItemId);
+      expect(newItemId).to.equal(0);
+      // check token id minted 1st
+      console.log("+ check token id minted 1st");
+      try {
+        await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+      } catch (error) {
+        expect(error.toString()).to.include("overflow");
+      }
+    });
+  });
 });

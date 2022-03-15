@@ -3,13 +3,14 @@
 pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
-import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
+import "../utils/IERC1155Tradable.sol";
 
 contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
@@ -34,7 +35,6 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint256 benefitCreator;
         uint256 benefitPecentOperator;
         uint256 benefitOperator;
-        uint256 originPrice;
     }
 
     struct offering {
@@ -44,12 +44,14 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint price;
         uint amount;
         bool closed;
+        address erc_20_token;
     }
 
     struct closeOfferingData {
         address buyer;
         uint price;
-        uint totalPrice;
+        uint totalPrice;// final erc-20 amount which offer should be receive
+        uint256 originPrice; // origin erc-20 amount for this closing offering
         uint256 balanceBuyer;
         uint256 approvalToken;
     }
@@ -62,7 +64,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         require(operator_ != address(0x0), "operator is zero address");
         require(roveToken_ != address(0x0), "rove token is zero address");
         require(parameterControl_ != address(0x0), "parametercontrol is zero address");
-        
+
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
         roveToken = roveToken_;
@@ -95,11 +97,11 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, uint _price, uint _amount) public nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc_20_token, uint _price, uint _amount) public nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // get hostContract of erc-1155
-        ERC1155Tradable hostContract = ERC1155Tradable(_hostContract);
+        ERC1155 hostContract = ERC1155(_hostContract);
         uint256 nftBalance = hostContract.balanceOf(nftOwner, _tokenId);
         console.log("nftOwner balance: ", nftBalance);
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
@@ -124,6 +126,11 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
         offeringRegistry[offeringId].amount = _amount;
+        if (_erc_20_token != address(0x0)) {
+            offeringRegistry[offeringId].erc_20_token = _erc_20_token;
+        } else {
+            offeringRegistry[offeringId].erc_20_token = roveToken;
+        }
         console.log("init offeringId: %s", toHex(offeringId));
 
         string memory uri = hostContract.uri(_tokenId);
@@ -133,11 +140,12 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
     function closeOffering(bytes32 _offeringId, uint _amount) public nonReentrant {
         // buyer is sender
-        ERC20 token = ERC20(roveToken);
+        ERC20 token = ERC20(offeringRegistry[_offeringId].erc_20_token);
 
         closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
             offeringRegistry[_offeringId].price,
+            offeringRegistry[_offeringId].price * _amount,
             offeringRegistry[_offeringId].price * _amount,
             token.balanceOf(msg.sender),
             token.allowance(msg.sender, address(this))
@@ -149,7 +157,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         // get offer
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
-        ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
+        IERC1155Tradable hostContract = IERC1155Tradable(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
         uint remainAmount = offeringRegistry[_offeringId].amount;
@@ -174,10 +182,10 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.totalPrice);
+        benefit memory _benefit = benefit(0, 0, 0, 0);
         _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _benefit.originPrice / 100 * _benefit.benefitPecentOperator;
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
@@ -186,17 +194,22 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // benefit of minter nfts here
         _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPecentCreator > 0) {
-            _benefit.benefitCreator = _benefit.originPrice / 100 * _benefit.benefitPecentCreator;
-            _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-            console.log("creator profit %s", _benefit.benefitCreator);
-            // update balance(on market) of creator erc-1155
-            address creator = hostContract.getCreator(tokenID);
-            _balances[creator] += _benefit.benefitCreator;
+            if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
+                address creator = hostContract.getCreator(tokenID);
+                if (creator != address(0x0)) {
+                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
+                    _closeOfferingData.totalPrice -= _benefit.benefitCreator;
+                    console.log("creator profit %s", _benefit.benefitCreator);
+                    // update balance(on market) of creator erc-1155
+                    console.log("benefit creator %s: +%s", creator, _benefit.benefitCreator);
+                    _balances[creator] += _benefit.benefitCreator;
+                }
+            }
         }
 
         // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
-        bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.totalPrice);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+        bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
         require(success == true, "transfer erc-20 failure");
         offeringRegistry[_offeringId].amount -= _amount;
 
@@ -246,7 +259,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         require(msg.sender == operator, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         require(_newOperator != address(0x0), "new operator is zero address");
-        
+
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
@@ -279,7 +292,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         require(msg.sender == operator, "Only operator dApp can close offerings");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
-        ERC1155Tradable hostContract = ERC1155Tradable(hostContractOffering);
+        ERC1155 hostContract = ERC1155(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
         uint amount = offeringRegistry[_offeringId].amount;

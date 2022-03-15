@@ -8,13 +8,14 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
+import "./IERC1155Tradable.sol";
 
 /**
  * @title ERC1155Tradable
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction {
+contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
 
@@ -329,5 +330,11 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     returns (address sender)
     {
         return creators[id];
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155PresetMinterPauser, IERC165) returns (bool) {
+        return
+        interfaceId == type(IERC1155Tradable).interfaceId ||
+        super.supportsInterface(interfaceId);
     }
 }
