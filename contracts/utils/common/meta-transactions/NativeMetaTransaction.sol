@@ -2,14 +2,12 @@
 
 pragma solidity 0.8.12;
 
-import {SafeMath} from  "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {EIP712Base} from "./EIP712Base.sol";
 
 contract NativeMetaTransaction is EIP712Base {
-    using SafeMath for uint256;
-    bytes32 private constant META_TRANSACTION_TYPEHASH = keccak256(
+    bytes32 private constant M_TX_HASH = keccak256(
         bytes(
-            "MetaTransaction(uint256 nonce,address from,bytes functionSignature)"
+            "MetaTransaction(nonce,from,signature)"
         )
     );
     event MetaTransactionExecuted(
@@ -49,7 +47,7 @@ contract NativeMetaTransaction is EIP712Base {
         );
 
         // increase nonce for user (to avoid re-use)
-        nonces[userAddress] = nonces[userAddress].add(1);
+        nonces[userAddress] = nonces[userAddress] + 1;
 
         emit MetaTransactionExecuted(
             userAddress,
@@ -61,7 +59,7 @@ contract NativeMetaTransaction is EIP712Base {
         (bool success, bytes memory returnData) = address(this).call(
             abi.encodePacked(functionSignature, userAddress)
         );
-        require(success, "Function call not successful");
+        require(success, "fail");
 
         return returnData;
     }
@@ -74,7 +72,7 @@ contract NativeMetaTransaction is EIP712Base {
         return
             keccak256(
                 abi.encode(
-                    META_TRANSACTION_TYPEHASH,
+                    M_TX_HASH,
                     metaTx.nonce,
                     metaTx.from,
                     keccak256(metaTx.functionSignature)
@@ -93,7 +91,7 @@ contract NativeMetaTransaction is EIP712Base {
         bytes32 sigS,
         uint8 sigV
     ) internal view returns (bool) {
-        require(signer != address(0), "NativeMetaTransaction: INVALID_SIGNER");
+        require(signer != address(0), "IN_SIGNER");
         return
             signer ==
             ecrecover(
