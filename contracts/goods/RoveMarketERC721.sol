@@ -33,7 +33,6 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         uint256 benefitCreator;
         uint256 benefitPecentOperator;
         uint256 benefitOperator;
-        uint256 originPrice;
     }
 
     struct offering {
@@ -42,11 +41,13 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         uint tokenId;
         uint price;
         bool closed;
+        address erc_20_token;
     }
 
     struct closeOfferingData {
         address buyer;
         uint price;
+        uint originPrice;
         uint256 balanceBuyer;
         uint256 approvalToken;
     }
@@ -88,7 +89,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, uint _price) public nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc_20_token, uint _price) public nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -114,6 +115,11 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].hostContract = _hostContract;
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
+        if (_erc_20_token != address(0x0)) {
+            offeringRegistry[offeringId].erc_20_token = _erc_20_token;
+        } else {
+            offeringRegistry[offeringId].erc_20_token = roveToken;
+        }
         console.log("init offeringId: %s", toHex(offeringId));
 
         string memory uri = hostContract.tokenURI(_tokenId);
@@ -123,10 +129,11 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
     function closeOffering(bytes32 _offeringId) public nonReentrant {
         // buyer is sender
-        ERC20 token = ERC20(roveToken);
+        ERC20 token = ERC20(offeringRegistry[_offeringId].erc_20_token);
 
         closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
+            offeringRegistry[_offeringId].price,
             offeringRegistry[_offeringId].price,
             token.balanceOf(msg.sender),
             token.allowance(msg.sender, address(this))
@@ -162,10 +169,10 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0, _closeOfferingData.price);
+        benefit memory _benefit = benefit(0, 0, 0, 0);
         _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _benefit.originPrice / 100 * _benefit.benefitPecentOperator;
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
             _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
@@ -173,8 +180,8 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         }
 
         // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.price);
-        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.price);
+        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
 
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.price);
