@@ -22,7 +22,7 @@ class EnvironmentNFT {
             return;
         }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
-        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy();
+        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(this.senderPublicKey, this.senderPublicKey);
 
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
         return EnvironmentNFTDeploy.address;

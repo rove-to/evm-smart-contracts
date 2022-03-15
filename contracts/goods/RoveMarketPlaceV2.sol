@@ -194,17 +194,17 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // benefit of minter nfts here
         _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPecentCreator > 0) {
-            _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
-            _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-            console.log("creator profit %s", _benefit.benefitCreator);
-            // update balance(on market) of creator erc-1155
-             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                 address creator = hostContract.getCreator(tokenID);
-                 if (creator != address(0x0)) {
-                     console.log("benefit creator %s: +%s", creator, _benefit.benefitCreator);
-                     _balances[creator] += _benefit.benefitCreator;
-                 }
-             }
+            if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
+                address creator = hostContract.getCreator(tokenID);
+                if (creator != address(0x0)) {
+                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
+                    _closeOfferingData.totalPrice -= _benefit.benefitCreator;
+                    console.log("creator profit %s", _benefit.benefitCreator);
+                    // update balance(on market) of creator erc-1155
+                    console.log("benefit creator %s: +%s", creator, _benefit.benefitCreator);
+                    _balances[creator] += _benefit.benefitCreator;
+                }
+            }
         }
 
         // tranfer erc-20 token to this market contract

@@ -20,14 +20,15 @@ class ObjectNFT {
             console.log("not run local");
             return;
         }
-        
+
         const ObjectNFT = await ethers.getContractFactory("ObjectNFT");
-        const ObjectNFTDeploy = await ObjectNFT.deploy();
+        console.log("ObjectNFT.deploying ...")
+        const ObjectNFTDeploy = await ObjectNFT.deploy(this.senderPublicKey, this.senderPublicKey);
 
         console.log("Rove ObjectNFT deployed:", ObjectNFTDeploy.address);
         return ObjectNFTDeploy.address;
     }
-    
+
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
         let API_URL: any;
         if (this.network === 'mumbai') {
@@ -36,7 +37,7 @@ class ObjectNFT {
             console.log("Not is mumbai");
             return;
         }
-        
+
         // load contract
         let contract = require(path.resolve("./artifacts/contracts/goods/ObjectNFT.sol/ObjectNFT.json"));
         const web3 = createAlchemyWeb3(API_URL)
@@ -53,31 +54,30 @@ class ObjectNFT {
             data: nftContract.methods.safeTransferFrom(this.senderPublicKey, receiver, tokenID, amount, "0x").encodeABI(),
         }
 
-        const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        signPromise
-            .then((signedTx) => {
-                if (signedTx.rawTransaction != null) {
-                    web3.eth.sendSignedTransaction(
-                        signedTx.rawTransaction,
-                        function (err, hash) {
-                            if (!err) {
-                                console.log(
-                                    "The hash of your transaction is: ",
-                                    hash,
-                                    "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                                )
-                            } else {
-                                console.log(
-                                    "Something went wrong when submitting your transaction:",
-                                    err
-                                )
-                            }
-                        }
-                    )
+        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
+        if (signedTx.rawTransaction != null) {
+            return (await web3.eth.sendSignedTransaction(
+                signedTx.rawTransaction,
+                function (err, hash) {
+                    if (!err) {
+                        console.log(
+                            "The hash of your transaction is: ",
+                            hash,
+                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
+                        )
+                    } else {
+                        console.log(
+                            "Something went wrong when submitting your transaction:",
+                            err
+                        )
+                    }
                 }
-            })
-            .catch((err) => {
-            })
+            ));
+        }
+    }
+
+    async setCreator(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+
     }
 
     async mintObjectNFT(ownerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
@@ -105,31 +105,26 @@ class ObjectNFT {
             data: nftContract.methods.createNFT(ownerAddress, initSupply, tokenURI).encodeABI(),
         }
 
-        const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        signPromise
-            .then((signedTx) => {
-                if (signedTx.rawTransaction != null) {
-                    web3.eth.sendSignedTransaction(
-                        signedTx.rawTransaction,
-                        function (err, hash) {
-                            if (!err) {
-                                console.log(
-                                    "The hash of your transaction is: ",
-                                    hash,
-                                    "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                                )
-                            } else {
-                                console.log(
-                                    "Something went wrong when submitting your transaction:",
-                                    err
-                                )
-                            }
-                        }
-                    )
+        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
+        if (signedTx.rawTransaction != null) {
+            return (await web3.eth.sendSignedTransaction(
+                signedTx.rawTransaction,
+                function (err, hash) {
+                    if (!err) {
+                        console.log(
+                            "The hash of your transaction is: ",
+                            hash,
+                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
+                        )
+                    } else {
+                        console.log(
+                            "Something went wrong when submitting your transaction:",
+                            err
+                        )
+                    }
                 }
-            })
-            .catch((err) => {
-            })
+            ));
+        }
     }
 }
 
