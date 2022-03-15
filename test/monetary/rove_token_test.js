@@ -491,7 +491,7 @@ describe("Token contract", function () {
     }
   });
 
-  it.only("-- Test transfer token to new admin then schedule minting", async () => {
+  it("-- Test transfer token to new admin then schedule minting", async () => {
     const newAdminContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
     const newAdminContractPrivateKey =
       "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
@@ -513,19 +513,21 @@ describe("Token contract", function () {
     console.log("balance Of New Admin: ", balanceOfNewAdmin);
     expect(balanceOfNewAdmin).to.equal(totalSupply);
     // new admin schedule minting
-    try {
-      await signAnotherContractThenExcuteFunction(
-        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
-        roveToken.address,
-        newAdminContract,
-        "schedule_minting",
-        [roveTokenlockTimeAddressArrays],
-        newAdminContractPrivateKey
-      );
-    } catch (error) {
-      expect(error.toString()).to.include(
-        "ERC20: transfer amount exceeds balance"
-      );
+    await signAnotherContractThenExcuteFunction(
+      "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+      roveToken.address,
+      newAdminContract,
+      "schedule_minting",
+      [roveTokenlockTimeAddressArrays],
+      newAdminContractPrivateKey
+    );
+    console.log("--- Call release for token locktime");
+    for (let i = 0; i < 4; i++) {
+      await sleep(10);
+      let lock = roveTokenlockTimeArrays[i];
+      let balance = await lock.current_balance();
+      console.log("balance of %s is %s", lock.address, balance);
+      expect(balance).to.gt(0);
     }
   });
 });
