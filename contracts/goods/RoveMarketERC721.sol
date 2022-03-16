@@ -151,8 +151,11 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         ERC721 hostContract = ERC721(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
+        bool approval = hostContract.isApprovedForAll(offerer, address(this));
 
         // check require
+        // check approval of erc-1155 on this contract
+        require(approval == true, "this contract address is not approved");
         require(approvalToken == _closeOfferingData.price, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer) == 1, "Not enough token erc-721 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");

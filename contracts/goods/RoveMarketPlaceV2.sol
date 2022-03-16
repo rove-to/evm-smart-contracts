@@ -164,8 +164,11 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
         uint remainAmount = offeringRegistry[_offeringId].amount;
-
+        bool approval = hostContract.isApprovedForAll(offerer, address(this));
+        
         // check require
+        // check approval of erc-1155 on this contract
+        require(approval == true, "this contract address is not approved");
         require(remainAmount >= _amount, "Amount > offering amount");
         require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
