@@ -59,6 +59,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        if (operator != _msgSender()) {
+            _revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }

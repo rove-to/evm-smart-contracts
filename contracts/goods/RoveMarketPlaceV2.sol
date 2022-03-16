@@ -67,6 +67,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        if (operator != _msgSender()) {
+            _revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
