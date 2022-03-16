@@ -31,9 +31,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     mapping(address => uint) private _balances;
 
     struct benefit {
-        uint256 benefitPecentCreator;
+        uint256 benefitPercentCreator;
         uint256 benefitCreator;
-        uint256 benefitPecentOperator;
+        uint256 benefitPercentOperator;
         uint256 benefitOperator;
     }
 
@@ -67,6 +67,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        if (operator != _msgSender()) {
+            _revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
@@ -97,7 +100,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc_20_token, uint _price, uint _amount) public nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc_20_token, uint _price, uint _amount) external nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // get hostContract of erc-1155
@@ -138,7 +141,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
-    function closeOffering(bytes32 _offeringId, uint _amount) public nonReentrant {
+    function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant {
         // buyer is sender
         ERC20 token = ERC20(offeringRegistry[_offeringId].erc_20_token);
 
@@ -161,13 +164,16 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
         uint remainAmount = offeringRegistry[_offeringId].amount;
-
+        bool approval = hostContract.isApprovedForAll(offerer, address(this));
+        
         // check require
+        // check approval of erc-1155 on this contract
+        require(approval == true, "this contract address is not approved");
         require(remainAmount >= _amount, "Amount > offering amount");
         require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer not enough funds erc-20 to buy");
-        require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
+        require(!offeringRegistry[_offeringId].closed, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
@@ -183,21 +189,21 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
         benefit memory _benefit = benefit(0, 0, 0, 0);
-        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
-        if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
+        _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPercentOperator > 0) {
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[operator] += _benefit.benefitOperator;
         }
         // benefit of minter nfts here
-        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
-        if (_benefit.benefitPecentCreator > 0) {
+        _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
+        if (_benefit.benefitPercentCreator > 0) {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
                 address creator = hostContract.getCreator(tokenID);
                 if (creator != address(0x0)) {
-                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
+                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
                     console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
@@ -228,7 +234,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         }
     }
 
-    function withdrawBalance() external {
+    function withdrawBalance() external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
         console.log("balance of sender: ", _balances[withdrawer]);
@@ -263,13 +269,15 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousOperator);
         emit OperatorChanged(previousOperator, operator);
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "only the operator can change the current _parameterControl");
+        require(msg.sender == operator, "only the operator can change the current operator");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         require(_new != address(0x0), "new parametercontrol is zero address");
-
+    
         address previousParameterControl = parameterControl;
         parameterControl = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControl);

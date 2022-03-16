@@ -10,31 +10,34 @@ let sleep = second => {
 
 let signAnotherContractThenExcuteFunction = async (
   jsonFile, // json file of contract
-  instantAddress,
-  instantNeedToChange, // current instant
+  deployedContractAddress,
+  instantSignContract, // instant sign contract
   executeFunc,
   data, // argument of excuteFunc type: array[]
-  instantNeedToChangePrivateKey
+  instantSignContractPrivateKey
 ) => {
   let contract = require(path.resolve(jsonFile));
   const web3 = createAlchemyWeb3(
     hardhatConfig.networks[hardhatConfig.defaultNetwork].url
   );
-  const newInstant = new web3.eth.Contract(contract.abi, instantAddress);
+  const newInstant = new web3.eth.Contract(
+    contract.abi,
+    deployedContractAddress
+  );
   const nonce = await web3.eth.getTransactionCount(
-    instantNeedToChange,
+    instantSignContract,
     "latest"
   ); //get latest nonce
   const tx = {
-    from: instantNeedToChange,
-    to: instantAddress,
+    from: instantSignContract,
+    to: deployedContractAddress,
     nonce: nonce,
     gas: 500000,
     data: newInstant.methods[executeFunc](...data).encodeABI(),
   };
   const signedTx = await web3.eth.accounts.signTransaction(
     tx,
-    instantNeedToChangePrivateKey
+    instantSignContractPrivateKey
   );
   if (signedTx.rawTransaction != null) {
     await web3.eth.sendSignedTransaction(signedTx.rawTransaction);

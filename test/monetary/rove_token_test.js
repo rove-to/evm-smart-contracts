@@ -3,8 +3,8 @@ var chai = require("chai");
 chai.use(solidity);
 const { ethers } = require("hardhat");
 const expect = chai.expect;
-const { addresses } = require("../constants");
-
+const { addresses, private_keys } = require("../constants");
+const { signAnotherContractThenExcuteFunction } = require("../common_libs");
 const admin_address = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
 
 function addSeconds(date, seconds) {
@@ -211,9 +211,46 @@ describe("Token contract", function () {
     expect(adminBalance1).to.equal(newAmount);
   });
 
-  it("-- Test team transfer to member after release first times", async () => {
+  it("-- Test mint to admin before schedule minting", async () => {
+    const newAmount = 50000000;
+    console.log("--- Minting new amount to admin");
+    await roveToken.mint(admin_address, newAmount);
+    const adminBalance1 = await roveToken.balanceOf(admin_address);
+    console.log("adminBalance befire schedule mint", adminBalance1);
+    // expect(adminBalance1).to.equal(newAmount);
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    try {
+      await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
+    } catch (error) {
+      expect(error.toString()).to.include(
+        "RoveToken: schedule minting first_year 400000000 is invalid"
+      );
+    }
+  });
+
+  it("-- Test mint without admin role", async () => {
+    const newAmount = 50000000;
+    console.log("--- Minting new amount to admin");
+    try {
+      await signAnotherContractThenExcuteFunction(
+        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+        roveToken.address,
+        addresses[1],
+        "mint",
+        [admin_address, newAmount],
+        private_keys[1]
+      );
+    } catch (error) {
+      expect(error.toString()).to.include("Caller is not a admin");
+    }
+  });
+
+  it("-- Test community transfer direct to member after release first times", async () => {
     const menberContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
-    const transferAmount = ethers.utils.parseEther("10");
+    const transferAmount = 1;
     console.log(
       "--- Minting Schedule on timelock contracts",
       roveTokenlockTimeAddressArrays
@@ -251,20 +288,162 @@ describe("Token contract", function () {
       let balance = await roveToken.balanceOf(addr);
       console.log("balance of %s is %s", addr, balance);
     }
-    // team transfer to team member
+    // transfer direct from community to member
+    let communityBalanceBeforeTransfer = await roveToken.balanceOf(
+      addresses[0]
+    );
+    console.log(
+      "Community balance before transfer: ",
+      communityBalanceBeforeTransfer
+    );
+    await roveToken.transfer(menberContract, transferAmount);
+    let memberBalance = await roveToken.balanceOf(menberContract);
+    let communityBalanceAfterTransfer = await roveToken.balanceOf(addresses[0]);
+    console.log("Member balance after transfer: ", memberBalance);
+    console.log(
+      "Community balance after transfer: ",
+      communityBalanceAfterTransfer
+    );
+    expect(memberBalance).to.equal(transferAmount);
+    expect(communityBalanceBeforeTransfer).to.equal(
+      communityBalanceAfterTransfer.add(memberBalance)
+    );
+  });
+
+  it("-- Test team transfer to member", async () => {
+    const menberContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
+    const transferAmount = 1;
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
+
+    console.log("--- Check amount of admin address now is 0");
+    const adminBalance = await roveToken.balanceOf(admin_address);
+    console.log("adminBalance after token lock limit", adminBalance);
+    expect(adminBalance).to.equal(0);
+
+    console.log(
+      "--- Check amount of 'token time lock' address now is available"
+    );
+    for (let i = 0; i < 4; i++) {
+      await sleep(10);
+      let lock = roveTokenlockTimeArrays[i];
+      let balance = await lock.current_balance();
+      console.log("balance of %s is %s", lock.address, balance);
+      expect(balance).to.gt(0);
+    }
+
+    console.log("--- Call release for token locktime");
+    let lock = roveTokenlockTimeArrays[0];
+    await sleep(releaseDeltaSeconds + 5);
+    await lock.release();
+    console.log("release for %s", lock.address);
+    console.log("--- Check balance of all address after release firsttime");
+    // community:  2600000000000
+    // team:  800000000000
+    // sales:  400000000000
+    // liquidity:  200000000000
+    for (let i = 0; i < addresses.length; i++) {
+      let addr = addresses[i];
+      let balance = await roveToken.balanceOf(addr);
+      console.log("balance of %s is %s", addr, balance);
+    }
+    // transfer direct from team to member
+    let teamBalanceBeforeTransfer = await roveToken.balanceOf(addresses[1]);
+    console.log(
+      "Community balance before transfer: ",
+      teamBalanceBeforeTransfer
+    );
     await signAnotherContractThenExcuteFunction(
       "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
       roveToken.address,
-      admin_address,
+      addresses[1],
       "transfer",
       [menberContract, transferAmount],
-      private_keys[0]
+      private_keys[1]
     );
-    // await roveToken.allowance(addresses[1], menberContract);
+
     let memberBalance = await roveToken.balanceOf(menberContract);
-    let owner1 = await roveToken.balanceOf(addresses[1]);
-    console.log("Member balance: ", memberBalance);
-    console.log("Owner1 balance: ", owner1);
+    let teamBalanceAfterTransfer = await roveToken.balanceOf(addresses[1]);
+    console.log("Member balance after transfer: ", memberBalance);
+    console.log("Team balance after transfer: ", teamBalanceAfterTransfer);
+    expect(memberBalance).to.equal(transferAmount);
+    expect(teamBalanceBeforeTransfer).to.equal(
+      teamBalanceAfterTransfer.add(memberBalance)
+    );
+  });
+
+  it("-- Test community transfer by approval to member after release first times", async () => {
+    const menberContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
+    const transferAmount = 1;
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
+
+    console.log("--- Check amount of admin address now is 0");
+    const adminBalance = await roveToken.balanceOf(admin_address);
+    console.log("adminBalance after token lock limit", adminBalance);
+    expect(adminBalance).to.equal(0);
+
+    console.log(
+      "--- Check amount of 'token time lock' address now is available"
+    );
+    for (let i = 0; i < 4; i++) {
+      await sleep(10);
+      let lock = roveTokenlockTimeArrays[i];
+      let balance = await lock.current_balance();
+      console.log("balance of %s is %s", lock.address, balance);
+      expect(balance).to.gt(0);
+    }
+
+    console.log("--- Call release for token locktime");
+    let lock = roveTokenlockTimeArrays[0];
+    await sleep(releaseDeltaSeconds + 5);
+    await lock.release();
+    console.log("release for %s", lock.address);
+    console.log("--- Check balance of all address after release firsttime");
+    // community:  2600000000000
+    // team:  800000000000
+    // sales:  400000000000
+    // liquidity:  200000000000
+    for (let i = 0; i < addresses.length; i++) {
+      let addr = addresses[i];
+      let balance = await roveToken.balanceOf(addr);
+      console.log("balance of %s is %s", addr, balance);
+    }
+    let communityBalanceBeforeTransfer = await roveToken.balanceOf(
+      addresses[0]
+    );
+    console.log(
+      "Community balance before transfer: ",
+      communityBalanceBeforeTransfer
+    );
+    // community transfer to team member by approval
+    await roveToken.approve(addresses[1], transferAmount);
+    await signAnotherContractThenExcuteFunction(
+      "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+      roveToken.address,
+      addresses[1],
+      "transferFrom",
+      [addresses[0], menberContract, transferAmount],
+      private_keys[1]
+    );
+
+    let memberBalance = await roveToken.balanceOf(menberContract);
+    let communityBalanceAfterTransfer = await roveToken.balanceOf(addresses[0]);
+    console.log("Member balance after transfer: ", memberBalance);
+    console.log(
+      "Community balance after transfer: ",
+      communityBalanceAfterTransfer
+    );
+    expect(memberBalance).to.equal(transferAmount);
+    expect(communityBalanceBeforeTransfer).to.equal(
+      communityBalanceAfterTransfer.add(memberBalance)
+    );
   });
 
   it("-- Test release at current time before release time", async () => {
@@ -300,53 +479,90 @@ describe("Token contract", function () {
       );
     }
   });
-  /*describe("Transactions", function () {
-        it("Should transfer tokens between accounts", async function () {
-            // Transfer 50 tokens from owner to addr1
-            await roveToken.transfer(addr1.address, 50);
-            const addr1Balance = await roveToken.balanceOf(addr1.address);
-            expect(addr1Balance).to.equal(50);
 
-            // Transfer 50 tokens from addr1 to addr2
-            // We use .connect(signer) to send a transaction from another account
-            await roveToken.connect(addr1).transfer(addr2.address, 50);
-            const addr2Balance = await roveToken.balanceOf(addr2.address);
-            expect(addr2Balance).to.equal(50);
-        });
+  it("-- Test old admin schedule minting", async () => {
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    // change admin
+    await roveToken.changeAdmin(newAdminContract);
+    const newAdmin = await roveToken.admin();
+    console.log("New admin: ", newAdmin);
+    try {
+      await roveToken.schedule_minting(roveTokenlockTimeAddressArrays);
+    } catch (error) {
+      expect(error.toString()).to.include("Caller is not admin");
+    }
+  });
 
-        it("Should fail if sender doesn’t have enough tokens", async function () {
-            const initialOwnerBalance = await roveToken.balanceOf(owner.address);
+  it("-- Test New admin own 0 token schedule minting", async () => {
+    const newAdminContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
+    const newAdminContractPrivateKey =
+      "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
 
-            // Try to send 1 token from addr1 (0 tokens) to owner (1000000 tokens).
-            // `require` will evaluate false and revert the transaction.
-            await expect(
-                roveToken.connect(addr1).transfer(owner.address, 1)
-            ).to.be.revertedWith("Not enough tokens");
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    // change admin
+    await roveToken.changeAdmin(newAdminContract);
+    const newAdmin = await roveToken.admin();
+    console.log("New admin: ", newAdmin);
+    // new admin schedule minting
+    try {
+      await signAnotherContractThenExcuteFunction(
+        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+        roveToken.address,
+        newAdminContract,
+        "schedule_minting",
+        [roveTokenlockTimeAddressArrays],
+        newAdminContractPrivateKey
+      );
+    } catch (error) {
+      expect(error.toString()).to.include(
+        "ERC20: transfer amount exceeds balance"
+      );
+    }
+  });
 
-            // Owner balance shouldn't have changed.
-            expect(await roveToken.balanceOf(owner.address)).to.equal(
-                initialOwnerBalance
-            );
-        });
+  it("-- Test transfer token to new admin then schedule minting", async () => {
+    const newAdminContract = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
+    const newAdminContractPrivateKey =
+      "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
+    const totalSupply = await roveToken.totalSupply();
+    console.log("balance totalSupply: ", totalSupply);
 
-        it("Should update balances after transfers", async function () {
-            const initialOwnerBalance = await roveToken.balanceOf(owner.address);
-
-            // Transfer 100 tokens from owner to addr1.
-            await roveToken.transfer(addr1.address, 100);
-
-            // Transfer another 50 tokens from owner to addr2.
-            await roveToken.transfer(addr2.address, 50);
-
-            // Check balances.
-            const finalOwnerBalance = await roveToken.balanceOf(owner.address);
-            expect(finalOwnerBalance).to.equal(initialOwnerBalance.sub(150));
-
-            const addr1Balance = await roveToken.balanceOf(addr1.address);
-            expect(addr1Balance).to.equal(100);
-
-            const addr2Balance = await roveToken.balanceOf(addr2.address);
-            expect(addr2Balance).to.equal(50);
-        });
-    });*/
+    console.log(
+      "--- Minting Schedule on timelock contracts",
+      roveTokenlockTimeAddressArrays
+    );
+    // change admin
+    await roveToken.changeAdmin(newAdminContract);
+    const newAdmin = await roveToken.admin();
+    console.log("New admin: ", newAdmin);
+    expect(newAdmin.toLowerCase()).to.equal(newAdminContract.toLowerCase());
+    // old admin transfers token to new admin
+    await roveToken.transfer(newAdmin, totalSupply);
+    const balanceOfNewAdmin = await roveToken.balanceOf(newAdmin);
+    console.log("balance Of New Admin: ", balanceOfNewAdmin);
+    expect(balanceOfNewAdmin).to.equal(totalSupply);
+    // new admin schedule minting
+    await signAnotherContractThenExcuteFunction(
+      "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json",
+      roveToken.address,
+      newAdminContract,
+      "schedule_minting",
+      [roveTokenlockTimeAddressArrays],
+      newAdminContractPrivateKey
+    );
+    console.log("--- Call release for token locktime");
+    for (let i = 0; i < 4; i++) {
+      await sleep(10);
+      let lock = roveTokenlockTimeArrays[i];
+      let balance = await lock.current_balance();
+      console.log("balance of %s is %s", lock.address, balance);
+      expect(balance).to.gt(0);
+    }
+  });
 });

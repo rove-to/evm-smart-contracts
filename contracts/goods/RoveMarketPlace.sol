@@ -30,9 +30,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     mapping(address => uint) private _balances;
 
     struct benefit {
-        uint256 benefitPecentCreator;
+        uint256 benefitPercentCreator;
         uint256 benefitCreator;
-        uint256 benefitPecentOperator;
+        uint256 benefitPercentOperator;
         uint256 benefitOperator;
     }
 
@@ -63,6 +63,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        if (operator != _msgSender()) {
+            _revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        }
         roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
@@ -93,7 +96,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc_20, uint _price) public nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc_20, uint _price) external nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -131,7 +134,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
-    function closeOffering(bytes32 _offeringId) public nonReentrant {
+    function closeOffering(bytes32 _offeringId) external nonReentrant {
         // buyer is sender
         ERC20 token = ERC20(offeringRegistry[_offeringId].erc_20);
 
@@ -152,12 +155,15 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         ERC1155 hostContract = ERC1155(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
         address offerer = offeringRegistry[_offeringId].offerer;
+        bool approval = hostContract.isApprovedForAll(offerer, address(this));
 
         // check require
+        // check approval of erc-1155 on this contract
+        require(approval == true, "this contract address is not approved");
         require(approvalToken >= _closeOfferingData.price, "this contract address is not approved for spending erc-20");
         require(hostContract.balanceOf(offerer, tokenID) >= 1, "Not enough token erc-1155 to sell");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
-        require(offeringRegistry[_offeringId].closed != true, "Offering is closed");
+        require(!offeringRegistry[_offeringId].closed, "Offering is closed");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
@@ -174,18 +180,18 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
         benefit memory _benefit = benefit(0, 0, 0, 0);
-        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
-        if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
+        _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPercentOperator > 0) {
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
             _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[operator] += _benefit.benefitOperator;
         }
         // benefit of minter nfts here
-        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
-        if (_benefit.benefitPecentCreator > 0) {
-            _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
+        _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
+        if (_benefit.benefitPercentCreator > 0) {
+            _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
             _closeOfferingData.price -= _benefit.benefitCreator;
             console.log("creator profit %s", _benefit.benefitCreator);
             // update balance(on market) of creator erc-1155
@@ -209,7 +215,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
     }
 
-    function withdrawBalance() external {
+    function withdrawBalance() external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
         console.log("balance of sender: ", _balances[withdrawer]);
@@ -250,6 +256,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
     function changeParameterControl(address _new) external {
         require(msg.sender == operator, "only the operator can change the current _parameterControl");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only the operator can change the current _parameterControl");
         require(_new != address(0x0), "new parametercontrol is zero address");
 
         address previousParameterControl = parameterControl;
