@@ -29,9 +29,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     mapping(address => uint) private _balances;
 
     struct benefit {
-        uint256 benefitPecentCreator;
+        uint256 benefitPercentCreator;
         uint256 benefitCreator;
-        uint256 benefitPecentOperator;
+        uint256 benefitPercentOperator;
         uint256 benefitOperator;
     }
 
@@ -173,9 +173,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
         benefit memory _benefit = benefit(0, 0, 0, 0);
-        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
-        if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
+        _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPercentOperator > 0) {
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
             _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator

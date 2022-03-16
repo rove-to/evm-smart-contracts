@@ -31,9 +31,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     mapping(address => uint) private _balances;
 
     struct benefit {
-        uint256 benefitPecentCreator;
+        uint256 benefitPercentCreator;
         uint256 benefitCreator;
-        uint256 benefitPecentOperator;
+        uint256 benefitPercentOperator;
         uint256 benefitOperator;
     }
 
@@ -186,21 +186,21 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
         benefit memory _benefit = benefit(0, 0, 0, 0);
-        _benefit.benefitPecentOperator = parameterController.getUInt256("MARKET_BENEFIT");
-        if (_benefit.benefitPecentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentOperator;
+        _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
+        if (_benefit.benefitPercentOperator > 0) {
+            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[operator] += _benefit.benefitOperator;
         }
         // benefit of minter nfts here
-        _benefit.benefitPecentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
-        if (_benefit.benefitPecentCreator > 0) {
+        _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
+        if (_benefit.benefitPercentCreator > 0) {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
                 address creator = hostContract.getCreator(tokenID);
                 if (creator != address(0x0)) {
-                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPecentCreator;
+                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
                     console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
