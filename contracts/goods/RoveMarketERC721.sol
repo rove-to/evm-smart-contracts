@@ -99,9 +99,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
         // get hostContract of erc-721
         ERC721 hostContract = ERC721(_hostContract);
-        uint256 nftBalance = hostContract.balanceOf(nftOwner);
-        console.log("nftOwner balance: ", nftBalance);
-        require(nftBalance == 1, "NFT owner not enough balance");
+        require(hostContract.ownerOf(_tokenId) == nftOwner, "Invalid NFT owner");
         // check approval of erc-721 on this contract
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
         require(approval == true, "this contract address is not approved");
@@ -157,7 +155,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         // check approval of erc-1155 on this contract
         require(approval == true, "this contract address is not approved");
         require(approvalToken >= _closeOfferingData.price, "this contract address is not approved for spending erc-20");
-        require(hostContract.balanceOf(offerer) == 1, "Not enough token erc-721 to sell");
+        require(hostContract.ownerOf(tokenID) == offerer, "Invalid NFT owner");
         require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "Not enough funds erc-20 to buy");
         require(!offeringRegistry[_offeringId].closed, "Offering is closed");
 
