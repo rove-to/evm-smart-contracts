@@ -187,8 +187,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
         // tranfer erc-20 token to this market contract
         console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-        token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-
+        bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+        require(success == true, "transfer erc-20 failure");
+        
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.price);
         _balances[offerer] += _closeOfferingData.price;
@@ -217,7 +218,8 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         uint amount = _balances[withdrawer];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
-        token.transfer(withdrawer, amount);
+        bool success = token.transfer(withdrawer, amount);
+        require(success == true, "transfer erc-20 failure");
 
         // reset balance
         _balances[withdrawer] = 0;
@@ -230,7 +232,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         require(msg.sender == operator, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         require(_newOperator != address(0x0), "new operator is zero address");
-        
+
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
@@ -242,7 +244,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         require(msg.sender == operator, "only the operator can change the current _parameterControl");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only the operator can change the current _parameterControl");
         require(_new != address(0x0), "new parametercontrol is zero address");
-        
+
         address previousParameterControl = parameterControl;
         parameterControl = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControl);
