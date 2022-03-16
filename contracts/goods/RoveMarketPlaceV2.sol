@@ -234,7 +234,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         }
     }
 
-    function withdrawBalance() external {
+    function withdrawBalance() external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
         console.log("balance of sender: ", _balances[withdrawer]);

@@ -201,7 +201,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
     }
 
-    function withdrawBalance() external {
+    function withdrawBalance() external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
         console.log("balance of sender: ", _balances[withdrawer]);
