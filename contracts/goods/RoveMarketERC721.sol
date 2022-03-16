@@ -226,6 +226,8 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     function changeOperator(address _newOperator) external {
         require(msg.sender == operator, "only the operator can change the current operator");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(_newOperator != address(0x0), "new operator is zero address");
+        
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
@@ -235,6 +237,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
     function changeParameterControl(address _new) external {
         require(msg.sender == operator, "only the operator can change the current _parameterControl");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only the operator can change the current _parameterControl");
+        require(_new != address(0x0), "new parametercontrol is zero address");
+        
         address previousParameterControl = parameterControl;
         parameterControl = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControl);

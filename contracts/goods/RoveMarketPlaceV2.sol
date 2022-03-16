@@ -266,13 +266,15 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         address previousOperator = operator;
         operator = _newOperator;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
+        _revokeRole(DEFAULT_ADMIN_ROLE, previousOperator);
         emit OperatorChanged(previousOperator, operator);
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "only the operator can change the current _parameterControl");
+        require(msg.sender == operator, "only the operator can change the current operator");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
         require(_new != address(0x0), "new parametercontrol is zero address");
-
+    
         address previousParameterControl = parameterControl;
         parameterControl = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControl);
