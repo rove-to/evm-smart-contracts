@@ -8,20 +8,20 @@ import {EnvironmentNFT} from "./environmentNFT";
             console.log("contract", contract)
         }
 
-        let tokenID: any;
+        let creatorAddress: any;
         if (process.argv.length >= 3) {
-            tokenID = process.argv[3];
-            console.log("tokenID", tokenID)
+            creatorAddress = process.argv[3];
+            console.log("creatorAddress", creatorAddress)
         }
 
-        let tokenUri: any;
+        let tokenIDs: any;
         if (process.argv.length >= 4) {
-            tokenUri = process.argv[4];
-            console.log("tokenUri", tokenUri)
+            tokenIDs = process.argv[4];
+            console.log("tokenID", tokenIDs)
         }
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        await nft.setCustomTokenUri(contract, tokenID, tokenUri, 500000);
+        await nft.setCreator(contract, creatorAddress, tokenIDs, 500000);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
