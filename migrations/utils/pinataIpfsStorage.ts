@@ -221,7 +221,7 @@ class PinataIpfsStorage {
     }
 
     pinataGatewateHash(hash: string) {
-        return "http://gateway.pinata.cloud/ipfs/" + hash;
+        return "ipfs://" + hash;
     }
 }
 
