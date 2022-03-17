@@ -1,0 +1,29 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle",
+      "value": "ipfs://QmTNaRSGbjNFtw6BgNt6qXNLaAY1pZzyo5bJ5Xd6EVhUd9"
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": ""
+    }
+  ],
+  "description": "Rove apartment is your mancave on metaverse. Customize it with your fancy artworks, invite friends, hold meetings, and hang out with your favorite people. Escape the usual 2D screen and enjoy the limitless 3D world. Make yourself at home!",
+  "image": "ipfs://QmQEgMQG8vJ6YmzZ1AofayNVUn8sGHTsUgiQ9bk72QPfo1",
+  "name": "Rove apartment",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmYWuJMyiUSZNfCuA2ETV4eKqoYEsC48K9Tzn2ZkPVtK6y"
+}
