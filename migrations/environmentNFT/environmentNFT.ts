@@ -179,31 +179,28 @@ class EnvironmentNFT {
             data: nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
         }
 
-        const signPromise = web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        signPromise
-            .then((signedTx) => {
-                if (signedTx.rawTransaction != null) {
-                    web3.eth.sendSignedTransaction(
-                        signedTx.rawTransaction,
-                        function (err, hash) {
-                            if (!err) {
-                                console.log(
-                                    "The hash of your transaction is: ",
-                                    hash,
-                                    "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                                )
-                            } else {
-                                console.log(
-                                    "Something went wrong when submitting your transaction:",
-                                    err
-                                )
-                            }
-                        }
-                    )
+        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
+        if (signedTx.rawTransaction != null) {
+            let sentTx = await web3.eth.sendSignedTransaction(
+                signedTx.rawTransaction,
+                function (err, hash) {
+                    if (!err) {
+                        console.log(
+                            "The hash of your transaction is: ",
+                            hash,
+                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
+                        )
+                    } else {
+                        console.log(
+                            "Something went wrong when submitting your transaction:",
+                            err
+                        )
+                    }
                 }
-            })
-            .catch((err) => {
-            })
+            )
+            return sentTx;
+        }
+        return null;
     }
 
     async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number) {
