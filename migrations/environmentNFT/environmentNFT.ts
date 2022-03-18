@@ -28,8 +28,8 @@ class EnvironmentNFT {
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
         return EnvironmentNFTDeploy.address;
     }
-    
-    async getAdminAddress(contractAddress:any) {
+
+    async getAdminAddress(contractAddress: any) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
@@ -54,8 +54,9 @@ class EnvironmentNFT {
             // data: null,
         }
 
-        const adminAddress: any = await nftContract.methods.admin.call(tx);
-        return adminAddress;
+        const adminAddress: any = await nftContract.methods.admin().call(tx);
+        const operatorAddress: any = await nftContract.methods.operator().call(tx);
+        return {adminAddress, operatorAddress};
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
@@ -204,8 +205,8 @@ class EnvironmentNFT {
             .catch((err) => {
             })
     }
-    
-    async setCreator(contractAddress:any, creatorAddress: any, ids:number[], gas: number) {
+
+    async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
