@@ -16,14 +16,14 @@ class EnvironmentNFT {
         this.senderPublicKey = senderPublicKey;
     }
 
-    async deploy() {
+    async deploy(adminAddress: any, operatorAddress: any) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
             return;
         }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
-        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(this.senderPublicKey, this.senderPublicKey);
+        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress);
 
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
         return EnvironmentNFTDeploy.address;
