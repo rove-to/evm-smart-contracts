@@ -181,7 +181,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
    */
     function setURI(
         string memory _newURI
-    ) public operatorOnly {
+    ) public creatorOnly {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "ONLY_CREATOR_ALLOWED");
         _setURI(_newURI);
     }
 
@@ -194,6 +195,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _tokenId,
         string memory _newURI
     ) public creatorOnly(_tokenId) {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "ONLY_CREATOR_ALLOWED");
         customUri[_tokenId] = _newURI;
         emit URI(_newURI, _tokenId);
     }
