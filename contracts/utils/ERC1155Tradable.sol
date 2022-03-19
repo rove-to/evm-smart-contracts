@@ -308,7 +308,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     }
 
     function setProxyRegistryAddress(address _proxyRegistryAddress) public operatorOnly {
-        require(_proxyRegistryAddress != address(0), "proxy address is invalid");
+        require(_proxyRegistryAddress != proxyRegistryAddress, "new proxy address is invalid");
         address previous = proxyRegistryAddress;
         proxyRegistryAddress = _proxyRegistryAddress;
         emit ProxyRegistryAddressChanged(previous, proxyRegistryAddress);
