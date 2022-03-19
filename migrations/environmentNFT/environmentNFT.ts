@@ -272,7 +272,7 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.setProxyRegistryAddress(contractAddress, proxyAddress).encodeABI(),
+            data: nftContract.methods.setProxyRegistryAddress(proxyAddress).encodeABI(),
         }
 
         const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
