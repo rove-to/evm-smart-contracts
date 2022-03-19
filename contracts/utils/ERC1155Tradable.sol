@@ -10,6 +10,12 @@ import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
 import "./IERC1155Tradable.sol";
 
+contract OwnableDelegateProxy {}
+
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
+}
+
 /**
  * @title ERC1155Tradable
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
@@ -18,6 +24,7 @@ import "./IERC1155Tradable.sol";
 contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
+    event ProxyRegistryAddressChanged (address previous, address new_);
 
     using Strings for string;
     using SafeMath for uint256;
@@ -27,6 +34,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     // operator
     address public operator;
 
+    address public proxyRegistryAddress;
     mapping(uint256 => address) public creators;
     mapping(uint256 => uint256) public tokenSupply;
     mapping(uint256 => string) customUri;
@@ -75,8 +83,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     ) ERC1155PresetMinterPauser(_uri) {
         name = _name;
         symbol = _symbol;
+        proxyRegistryAddress = address(0);
         _initializeEIP712(name);
-
 
         admin = _admin;
         // set role for admin address
@@ -181,7 +189,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
    */
     function setURI(
         string memory _newURI
-    ) public creatorOnly {
+    ) public operatorOnly {
         require(hasRole(CREATOR_ROLE, _msgSender()), "ONLY_CREATOR_ALLOWED");
         _setURI(_newURI);
     }
@@ -299,6 +307,31 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         }
     }
 
+    function setProxyRegistryAddress(address _proxyRegistryAddress) public operatorOnly {
+        require(_proxyRegistryAddress != address(0), "proxy address is invalid");
+        address previous = proxyRegistryAddress;
+        proxyRegistryAddress = _proxyRegistryAddress;
+        emit ProxyRegistryAddressChanged(previous, proxyRegistryAddress);
+    }
+
+    /**
+   * Override isApprovedForAll to whitelist user's [OpenSea] proxy accounts to enable gas-free listings.
+   */
+    function isApprovedForAll(
+        address _owner,
+        address _operator
+    ) override(ERC1155, IERC1155) public view returns (bool isOperator) {
+        if (proxyRegistryAddress != address(0)) {
+            // Whitelist OpenSea proxy contract for easy trading.
+            ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+            if (address(proxyRegistry.proxies(_owner)) == _operator) {
+                return true;
+            }
+        }
+
+        return ERC1155.isApprovedForAll(_owner, _operator);
+    }
+
     /**
       * @dev Change the creator address for given token
     * @param _to   Address of the new creator
@@ -338,5 +371,17 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         return
         interfaceId == type(IERC1155Tradable).interfaceId ||
         super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * This is used instead of msg.sender as transactions won't be sent by the original token owner, but by OpenSea.
+     */
+    function _msgSender()
+    internal
+    override
+    view
+    returns (address sender)
+    {
+        return ContextMixin.msgSender();
     }
 }
