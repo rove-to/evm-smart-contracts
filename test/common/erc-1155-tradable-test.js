@@ -21,7 +21,8 @@ const {
     - Test get total supply
     - Test token is not exists
     - Test get non existed token URI
-    - Test admin can't create token
+    - Test admin can't create token without creator role
+    - Test set creator for admin then create token
     - Test operator can create token with supply is zero
     - Test operator can create token
     - Test create token with overflow number
@@ -194,7 +195,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it("- Test admin can't create token", async () => {
+    it("- Test admin can't create token without creator role", async () => {
       try {
         await erc1155Tradable.create(
           adminContract,
@@ -204,10 +205,65 @@ describe("** NFTs ERC-1155 tradable", () => {
           operatorContract
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("Sender has not creator role");
       }
+    });
+
+    it("- Test set creator for admin then create new token", async () => {
+      // admin set creator role for itself
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      // Verify token is create success and creator is the right address
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      console.log("Token supply: ", tokenSupply);
+      console.log("Token creator: ", creator);
+      expect(isTokenExists).to.equal(true);
+      expect(tokenSupply).to.equal(numberTokenCreate);
+      expect(creator).to.equal(operatorContract);
+
+      // Set creator for admin then create new token
+      const executeFunc1 = "setCreator";
+      const data1 = [adminContract, [tokenId]];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc1,
+        data1,
+        private_keys[1]
+      );
+      const newCreator = await erc1155Tradable.getCreator(tokenId);
+      console.log("New creator: ", newCreator);
+      // create new token by admin after set creator role
+      const newTokenId = 2;
+      const _numberTokenCreate = 1991;
+      await erc1155Tradable.create(
+        adminContract,
+        newTokenId,
+        _numberTokenCreate,
+        tokenURI,
+        "0x00"
+      );
+      const isNewTokenExists = await erc1155Tradable.exists(newTokenId);
+      const newTokenSupply = await erc1155Tradable.totalSupply(newTokenId);
+      const balanceOfAdminWithNewToken = await erc1155Tradable.balanceOf(
+        adminContract,
+        newTokenId
+      );
+      expect(isNewTokenExists).to.equal(true);
+      expect(newTokenSupply).to.equal(_numberTokenCreate);
+      expect(newCreator.toLowerCase()).to.equal(adminContract.toLowerCase());
+      expect(balanceOfAdminWithNewToken).to.equal(_numberTokenCreate);
     });
 
     it("- Test operator can create token with supply is zero", async () => {
