@@ -9,8 +9,24 @@
       "value": "1.0"
     },
     {
-      "trait_type": "rove-asset-bundle",
-      "value": "ipfs://QmTNaRSGbjNFtw6BgNt6qXNLaAY1pZzyo5bJ5Xd6EVhUd9"
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmcksQhDox8HkUW4wNJEmV3Be5qihjoYqPc1oK78GuDtkh"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmeJqF5HdRtBi8QY7a7XWV8EpCuE2ojqbvV64TgpeNCFuL"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmPEbf1t48FrZUMUcNKtaQT9bNArTxsADLdqqSALR6KCqt"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
     },
     {
       "trait_type": "rove-asset-addressable",
@@ -18,12 +34,14 @@
     },
     {
       "trait_type": "rove-room-state",
-      "value": ""
+      "value": "ipfs://QmdvcEESTVekMC62cqtuXJYaDrdR5xA9SC1qsqb73c8REF"
     }
   ],
   "description": "Rove apartment is your mancave on metaverse. Customize it with your fancy artworks, invite friends, hold meetings, and hang out with your favorite people. Escape the usual 2D screen and enjoy the limitless 3D world. Make yourself at home!",
   "image": "ipfs://QmQEgMQG8vJ6YmzZ1AofayNVUn8sGHTsUgiQ9bk72QPfo1",
   "name": "Rove apartment",
   "external_url": "https://rove.to/",
-  "animation_url": "ipfs://QmYWuJMyiUSZNfCuA2ETV4eKqoYEsC48K9Tzn2ZkPVtK6y"
+  "animation_url": "ipfs://QmWdXpMrsFSfAxGtexZ2imvZogRebTqwaka5X9Y67pHvQo"
 }
+
+ipfs://QmcFKX5Yib8FMUXm3mT3yQLJjysJUMMnXEKWvJU3sSVWmM
