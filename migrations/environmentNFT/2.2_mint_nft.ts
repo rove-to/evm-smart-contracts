@@ -2,7 +2,10 @@ import {EnvironmentNFT} from "./environmentNFT";
 
 (async () => {
     try {
-        console.log(process.argv);
+        if (process.env.NETWORK != "local") {
+            console.log("wrong network");
+            return;
+        }
 
         // set init owner
         let initOwnerAddress: any;
