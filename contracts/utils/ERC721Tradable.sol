@@ -7,6 +7,12 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
 
+contract OwnableDelegateProxy {}
+
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
+}
+
 /**
  * @title ERC721Tradable
  * ERC721Tradable - ERC721 contract that whitelists a trading address, and has minting functionality.
@@ -153,6 +159,33 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
         } else {
             return string(abi.encodePacked(baseTokenURI(), Strings.toString(_tokenId)));
         }
+    }
+
+    function setProxyRegistryAddress(address _proxyRegistryAddress) public operatorOnly {
+        require(_proxyRegistryAddress != proxyRegistryAddress, "new proxy address is invalid");
+        address previous = proxyRegistryAddress;
+        proxyRegistryAddress = _proxyRegistryAddress;
+        emit ProxyRegistryAddressChanged(previous, proxyRegistryAddress);
+    }
+
+    /**
+     * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
+     */
+    function isApprovedForAll(address _owner, address _operator)
+    override
+    public
+    view
+    returns (bool)
+    {
+        if (proxyRegistryAddress != address(0)) {
+            // Whitelist OpenSea proxy contract for easy trading.
+            ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+            if (address(proxyRegistry.proxies(_owner)) == _operator) {
+                return true;
+            }
+        }
+
+        return super.isApprovedForAll(_owner, operator);
     }
 
     /**
