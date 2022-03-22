@@ -20,6 +20,7 @@ contract ProxyRegistry {
 contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeMetaTransaction {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
+    event ProxyRegistryAddressChanged (address previous, address new_);
 
     using Counters for Counters.Counter;
 
@@ -34,6 +35,7 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
      * Read more about it here: https://shiny.mirror.xyz/OUampBbIz9ebEicfGnQf5At_ReMHlZy0tB4glb9xQ0E
      */
     Counters.Counter private _nextTokenId;
+    address proxyRegistryAddress;
 
     function nextTokenId() public view returns (uint256) {
         return _nextTokenId.current();
