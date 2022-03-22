@@ -232,7 +232,6 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         bytes memory _data
     ) public
     returns (uint256) {
-        require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
         require(!_exists(_id), "token _id already exists");
         // creators[_id] = _msgSender();
         creators[_id] = operator;
