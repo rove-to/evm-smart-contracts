@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
@@ -21,7 +22,7 @@ contract ProxyRegistry {
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable {
+contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable, IERC2981 {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
@@ -385,5 +386,39 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     returns (address sender)
     {
         return ContextMixin.msgSender();
+    }
+
+    /** @dev EIP2981 royalties implementation. */
+    struct RoyaltyInfo {
+        address recipient;
+        uint24 amount;
+        bool isValue;
+    }
+
+    mapping(uint256 => RoyaltyInfo) public royalties;
+
+    function setTokenRoyalty(
+        uint256 _tokenId,
+        address _recipient,
+        uint256 _value
+    ) public operatorOnly {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
+        require(_value <= 10000, 'TokenRoyalty: Too high');
+        royalties[_tokenId] = RoyaltyInfo(_recipient, uint24(_value), true);
+    }
+
+    // EIP2981 standard royalties return.
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override
+    returns (address receiver, uint256 royaltyAmount)
+    {
+        RoyaltyInfo memory royalty = royalties[_tokenId];
+        if (royalty.isValue) {
+            receiver = royalty.recipient;
+            royaltyAmount = (_salePrice * royalty.amount) / 10000;
+        } else {
+            receiver = creators[_tokenId];
+            royaltyAmount = (_salePrice * 500) / 10000;
+        }
+
     }
 }
