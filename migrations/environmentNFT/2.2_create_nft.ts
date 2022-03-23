@@ -2,7 +2,7 @@ import {EnvironmentNFT} from "./environmentNFT";
 
 (async () => {
     try {
-        if (process.env.NETWORK != "rinkeby") {
+        if (process.env.NETWORK != "local") {
             console.log("wrong network");
             return;
         }
