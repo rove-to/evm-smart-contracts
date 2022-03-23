@@ -27,6 +27,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
     event CreateEvent (address _initialOwner, uint256 _id, uint256 _initialSupply, string _uri, address _operator);
+    event MintEvent (address _to, uint256 _id, uint256 _quantity, bool whitelist);
+    event WhitelistChanged (uint256[] previous, uint256[] new_);
 
     using Strings for string;
     using SafeMath for uint256;
@@ -44,6 +46,9 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     string public name;
     // Contract symbol
     string public symbol;
+    uint256 [] public white_list_mint_token_ids;
+
+
 
     /**
      * @dev Require _msgSender() to be the creator of the token id
@@ -90,20 +95,10 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
 
         admin = _admin;
         // set role for admin address
-        // DEFAULT_ADMIN_ROLE
-        // CREATOR_ROLE
-        // MINTER_ROLE
         grantRole(DEFAULT_ADMIN_ROLE, admin);
-        //        grantRole(CREATOR_ROLE, admin);
-        //        grantRole(MINTER_ROLE, admin);
-        //        grantRole(PAUSER_ROLE, operator);
 
         operator = _operator;
         // set role for operator address   
-        // OPERATOR_ROLE
-        // CREATOR_ROLE
-        // MINTER_ROLE
-        // PAUSER_ROLE
         grantRole(OPERATOR_ROLE, operator);
         grantRole(CREATOR_ROLE, operator);
         grantRole(MINTER_ROLE, operator);
@@ -115,6 +110,12 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
             revokeRole(PAUSER_ROLE, _msgSender());
             revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
         }
+    }
+
+    function changeWhiteListMintTokenIds(uint256[] memory _ids) public operatorOnly {
+        uint256[] memory previous = white_list_mint_token_ids;
+        white_list_mint_token_ids = _ids;
+        emit WhitelistChanged(previous, white_list_mint_token_ids);
     }
 
     // changeOperator: update operator by admin
@@ -232,11 +233,11 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _initialSupply,
         string memory _uri,
         bytes memory _data
-    ) public
+    ) public operatorOnly
     returns (uint256) {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
         require(!_exists(_id), "token _id already exists");
-        // creators[_id] = _msgSender();
-        creators[_id] = operator;
+        creators[_id] = _msgSender();
 
         if (bytes(_uri).length > 0) {
             customUri[_id] = _uri;
@@ -262,10 +263,26 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _id,
         uint256 _quantity,
         bytes memory _data
-    ) virtual public override creatorOnly(_id) {
-        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
+    ) virtual public override {
+        require(_exists(_id), "token _id not already exists");
+
+        // check white list item
+        uint arrayLength = white_list_mint_token_ids.length;
+        bool found = false;
+        for (uint i = 0; i < arrayLength; i++) {
+            if (white_list_mint_token_ids[i] == _id) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // not in white list
+            require(creators[_id] == _msgSender(), "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED");
+            require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
+        }
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
+        emit MintEvent(_to, _id, _quantity, found);
     }
 
     /**
