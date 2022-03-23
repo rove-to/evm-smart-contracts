@@ -153,7 +153,7 @@ class EnvironmentNFT {
         }
     }
 
-    async mintEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+    async createEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
