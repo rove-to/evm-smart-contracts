@@ -21,7 +21,7 @@ const {
     - Test get total supply
     - Test token is not exists
     - Test get non existed token URI
-    - Test admin can't create token without creator role
+    - Test admin can create token without creator role
     - Test set creator for admin then create token
     - Test operator can create token with supply is zero
     - Test operator can create token
@@ -39,7 +39,7 @@ const {
     - Test batchMint by creator
 */
 
-describe("** NFTs ERC-1155 tradable", () => {
+describe.only("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -58,7 +58,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     tokenId,
     numberTokenCreate,
     tokenURI,
-    operatorContract,
+    "0x00",
   ];
 
   beforeEach(async function () {
@@ -195,18 +195,23 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it("- Test admin can't create token without creator role", async () => {
-      try {
-        await erc1155Tradable.create(
-          adminContract,
-          tokenId,
-          numberTokenCreate,
-          tokenURI,
-          operatorContract
-        );
-      } catch (error) {
-        expect(error.toString()).to.include("Sender has not creator role");
-      }
+    it("- Test admin can create token without operator role", async () => {
+      await erc1155Tradable.create(
+        adminContract,
+        tokenId,
+        numberTokenCreate,
+        tokenURI,
+        "0x00"
+      );
+      // Verify token is create success and creator is the right address
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
+      const creator = await erc1155Tradable.getCreator(tokenId);
+      console.log("Token supply: ", tokenSupply);
+      console.log("Token creator: ", creator);
+      expect(isTokenExists).to.equal(true);
+      expect(tokenSupply).to.equal(numberTokenCreate);
+      expect(creator).to.equal(operatorContract);
     });
 
     it("- Test set creator for admin then create new token", async () => {
