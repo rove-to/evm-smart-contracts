@@ -218,6 +218,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
         require(success == true, "transfer erc-20 failure");
         offeringRegistry[_offeringId].amount -= _amount;
+        remainAmount = offeringRegistry[_offeringId].amount;
 
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.totalPrice);

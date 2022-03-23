@@ -25,6 +25,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
+    event CreateEvent (address _initialOwner, uint256 _id, uint256 _initialSupply, string _uri, address _operator);
 
     using Strings for string;
     using SafeMath for uint256;
@@ -244,6 +245,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         _mint(_initialOwner, _id, _initialSupply, _data);
 
         tokenSupply[_id] = _initialSupply;
+        emit CreateEvent(_initialOwner, _id, _initialSupply, _uri, operator);
         return _id;
     }
 
