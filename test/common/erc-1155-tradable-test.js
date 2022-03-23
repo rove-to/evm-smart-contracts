@@ -730,5 +730,32 @@ describe("** NFTs ERC-1155 tradable", () => {
         tokenSupplyAfterMint
       );
     });
+
+    context("* Royalty", () => {
+      it.only("- Test set royalty", async () => {
+        const executeFunc = "create";
+        // Operator sign contract then create token
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          executeFunc,
+          dataCreateToken,
+          private_keys[1]
+        );
+
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          "setTokenRoyalty",
+          [tokenId, operatorContract, 10000],
+          private_keys[1]
+        );
+        const van = await erc1155Tradable.royaltyInfo(tokenId, 900);
+        console.log("van: ", van);
+        // await erc1155Tradable.setTokenRoyalty(tokenId, operatorContract, 9999);
+      });
+    });
   });
 });
