@@ -41,7 +41,7 @@ c    - Test operator can create token with supply is zero
     - Test Non operator changes whitelist for TokenID
 */
 
-describe("** NFTs ERC-1155 tradable", () => {
+describe.only("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -915,31 +915,33 @@ describe("** NFTs ERC-1155 tradable", () => {
           "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED"
         );
       }
-    context("* Royalty", () => {
-      it.skip("- Test set royalty", async () => {
-        const executeFunc = "create";
-        // Operator sign contract then create token
-        await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          executeFunc,
-          dataCreateToken,
-          private_keys[1]
-        );
+    });
+  });
 
-        await signAnotherContractThenExcuteFunction(
-          jsonFile,
-          erc1155TradbleAddress,
-          operatorContract,
-          "setTokenRoyalty",
-          [tokenId, operatorContract, 10000],
-          private_keys[1]
-        );
-        const van = await erc1155Tradable.royaltyInfo(tokenId, 900);
-        console.log("van: ", van);
-        // await erc1155Tradable.setTokenRoyalty(tokenId, operatorContract, 9999);
-      });
+  context("* Royalty", () => {
+    it.skip("- Test set royalty", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "setTokenRoyalty",
+        [tokenId, operatorContract, 10000],
+        private_keys[1]
+      );
+      const van = await erc1155Tradable.royaltyInfo(tokenId, 900);
+      console.log("van: ", van);
+      // await erc1155Tradable.setTokenRoyalty(tokenId, operatorContract, 9999);
     });
   });
 });
