@@ -41,9 +41,16 @@ const path = require("path");
     - Test mint after set new creator
     - Test batchMint by operator
     - Test batchMint by non operator
-    - Test everyone can mint if token id is in whitelsit
-    - Test Non operator changes whitelist for TokenID
-    - Test mint list whitelist token ID
+    - Test everyone can mint if token id is in whitelsit // not use whitelist
+    - Test Non operator changes whitelist for TokenID // not use whitelist
+    - Test mint list whitelist token ID // not use whitelist
+    - Test create token with price and max token
+    - Test user mint with value greater than token price
+    - Test user mint with value smaller than token price
+    - Test user mint greater than max supply
+    - Test withdraw after user mint
+    - Test mint with token greater than max supply
+
 */
 
 describe("** NFTs ERC-1155 tradable", () => {
@@ -1194,6 +1201,31 @@ describe("** NFTs ERC-1155 tradable", () => {
         await erc1155Tradable.withdraw(receiver);
       } catch (error) {
         expect(error.toString()).to.include("not enough balance");
+      }
+    });
+
+    it("- Test mint with token greater than max supply", async () => {
+      // call craete token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // mint
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          "mint",
+          [userContract, tokenId, 100, "0x00"],
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("Reach max supply");
       }
     });
   });
