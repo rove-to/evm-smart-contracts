@@ -21,9 +21,8 @@ const {
     - Test get total supply
     - Test token is not exists
     - Test get non existed token URI
-    - Test admin can create token without creator role
-    - Test set creator for admin then create token
-    - Test operator can create token with supply is zero
+    - Test admin can't create token without operator role
+c    - Test operator can create token with supply is zero
     - Test operator can create token
     - Test create token with overflow number
     - Test new operator create token
@@ -36,7 +35,10 @@ const {
     - Test mint by creator
     - Test non creator can't mint
     - Test mint after set new creator
-    - Test batchMint by creator
+    - Test batchMint by operator
+    - Test batchMint by non operator
+    - Test everyone can mint if token id is in whitelsit
+    - Test Non operator changes whitelist for TokenID
 */
 
 describe("** NFTs ERC-1155 tradable", () => {
@@ -52,7 +54,7 @@ describe("** NFTs ERC-1155 tradable", () => {
   const tokenId = 1;
   const tokenURI =
     "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-  const numberTokenCreate = 9876543210;
+  const numberTokenCreate = 10;
   const dataCreateToken = [
     adminContract,
     tokenId,
@@ -195,23 +197,20 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it("- Test admin can create token without operator role", async () => {
-      await erc1155Tradable.create(
-        adminContract,
-        tokenId,
-        numberTokenCreate,
-        tokenURI,
-        "0x00"
-      );
-      // Verify token is create success and creator is the right address
-      const isTokenExists = await erc1155Tradable.exists(tokenId);
-      const tokenSupply = await erc1155Tradable.totalSupply(tokenId);
-      const creator = await erc1155Tradable.getCreator(tokenId);
-      console.log("Token supply: ", tokenSupply);
-      console.log("Token creator: ", creator);
-      expect(isTokenExists).to.equal(true);
-      expect(tokenSupply).to.equal(numberTokenCreate);
-      expect(creator).to.equal(operatorContract);
+    it("- Test admin can't create token without operator role", async () => {
+      try {
+        await erc1155Tradable.create(
+          adminContract,
+          tokenId,
+          numberTokenCreate,
+          tokenURI,
+          "0x00"
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
     });
 
     it("- Test set creator for admin then create new token", async () => {
@@ -252,23 +251,19 @@ describe("** NFTs ERC-1155 tradable", () => {
       // create new token by admin after set creator role
       const newTokenId = 2;
       const _numberTokenCreate = 1991;
-      await erc1155Tradable.create(
-        adminContract,
-        newTokenId,
-        _numberTokenCreate,
-        tokenURI,
-        "0x00"
-      );
-      const isNewTokenExists = await erc1155Tradable.exists(newTokenId);
-      const newTokenSupply = await erc1155Tradable.totalSupply(newTokenId);
-      const balanceOfAdminWithNewToken = await erc1155Tradable.balanceOf(
-        adminContract,
-        newTokenId
-      );
-      expect(isNewTokenExists).to.equal(true);
-      expect(newTokenSupply).to.equal(_numberTokenCreate);
-      expect(newCreator.toLowerCase()).to.equal(adminContract.toLowerCase());
-      expect(balanceOfAdminWithNewToken).to.equal(_numberTokenCreate);
+      try {
+        await erc1155Tradable.create(
+          adminContract,
+          newTokenId,
+          _numberTokenCreate,
+          tokenURI,
+          "0x00"
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
     });
 
     it("- Test operator can create token with supply is zero", async () => {
@@ -642,8 +637,9 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[2]
         );
       } catch (error) {
+        console.log(error);
         expect(error.toString()).to.include(
-          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
+          "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED"
         );
       }
     });
@@ -699,7 +695,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       [numberTokenMint],
       private_keys[0],
     ];
-    it("- Test batchMint by creator", async () => {
+    it("- Test batchMint by operator", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
@@ -729,6 +725,196 @@ describe("** NFTs ERC-1155 tradable", () => {
       expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
         tokenSupplyAfterMint
       );
+    });
+
+    it("- Test batchMint by non operator", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      // Verify token is create success
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      expect(isTokenExists).to.equal(true);
+      // Mint by non operator
+      try {
+        await erc1155Tradable.batchMint(
+          adminContract,
+          [tokenId],
+          [numberTokenMint],
+          private_keys[0]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
+      const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
+      expect(tokenSupplyBeforeMint).to.equal(tokenSupplyAfterMint);
+    });
+  });
+
+  context("* Whitelist token ID", () => {
+    // Everyone can mint if toke id in white list
+    // Only creator has MINT_ROLE can mint if token id is not in whitelist
+    it("- Test everyone can mint if token id is in whitelsit", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      // Verify token is create success and creator is the right address
+      const isTokenExists = await erc1155Tradable.exists(tokenId);
+      const tokenSupplyBeforeMint = await erc1155Tradable.totalSupply(tokenId);
+      console.log("Before mint:", tokenSupplyBeforeMint);
+      expect(isTokenExists).to.equal(true);
+      // set whitelist for created token ID - 1
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "changeWhiteListMintTokenIds",
+        [[tokenId]],
+        private_keys[1]
+      );
+      // mint after set whitelist
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        newOperatorContract, // not set operator role
+        "mint",
+        [adminContract, tokenId, 5, private_keys[0]],
+        private_keys[2]
+      );
+      const tokenSupplyAfterMint = await erc1155Tradable.totalSupply(tokenId);
+      console.log("After mint:", tokenSupplyAfterMint);
+      expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(5));
+    });
+
+    it("- Test Non operator changes whitelist for TokenID", async () => {
+      try {
+        await erc1155Tradable.changeWhiteListMintTokenIds([tokenId]);
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
+    });
+
+    it.only("- Test mint list whitelist token ID", async () => {
+      const executeFunc = "create";
+      const tokenId2 = 2;
+      const tokenId3 = 3;
+
+      const numberToken2Create = 15;
+      const numberToken3Create = 15;
+
+      // Operator sign contract then create token 1
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      // Create token 2
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        [adminContract, tokenId2, numberToken2Create, tokenURI, "0x00"],
+        private_keys[1]
+      );
+      // Create token 3
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        [adminContract, tokenId3, numberToken3Create, tokenURI, "0x00"],
+        private_keys[1]
+      );
+      const isToken1Exists = await erc1155Tradable.exists(tokenId);
+      const isToken2Exists = await erc1155Tradable.exists(tokenId2);
+      expect(isToken1Exists).to.equal(true);
+      expect(isToken2Exists).to.equal(true);
+      const balanceOfToken1 = await erc1155Tradable.balanceOf(
+        adminContract,
+        tokenId
+      );
+      const balanceOfToken2 = await erc1155Tradable.balanceOf(
+        adminContract,
+        tokenId2
+      );
+      expect(balanceOfToken1).to.equal(numberTokenCreate);
+      expect(balanceOfToken2).to.equal(numberToken2Create);
+
+      // add 2 tokens to whitelist
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "changeWhiteListMintTokenIds",
+        [[tokenId, tokenId2]],
+        private_keys[1]
+      );
+
+      // mint 2 token by non creator with mint role
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        newOperatorContract, // not set operator role
+        "mint",
+        [adminContract, tokenId, 5, private_keys[0]],
+        private_keys[2]
+      );
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        newOperatorContract, // not set operator role
+        "mint",
+        [adminContract, tokenId2, 5, private_keys[0]],
+        private_keys[2]
+      );
+      // check balance after mint
+      const balanceOfToken1AfterMint = await erc1155Tradable.balanceOf(
+        adminContract,
+        tokenId
+      );
+      const balanceOfToken2AfterMint = await erc1155Tradable.balanceOf(
+        adminContract,
+        tokenId2
+      );
+      expect(balanceOfToken1.add(5)).to.equal(balanceOfToken1AfterMint);
+      expect(balanceOfToken2.add(5)).to.equal(balanceOfToken2AfterMint);
+      // non creator with mint role mint token is not in whitelist
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          newOperatorContract, // not set operator role
+          "mint",
+          [adminContract, tokenId3, 5, private_keys[0]],
+          private_keys[2]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED"
+        );
+      }
     });
   });
 });
