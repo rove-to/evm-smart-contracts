@@ -120,7 +120,7 @@ class EnvironmentNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async createEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
+    async createEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, price: number, max: number, tokenURI: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
@@ -130,41 +130,10 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
+            data: temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI, price, max).encodeABI(),
         }
 
         return await this.signedAndSendTx(temp?.web3, tx);
-    }
-
-    async changeWhiteListMintTokenIds(contractAddress: any, tokenIds: number[], gas: number) {
-        let temp = this.getContract(contractAddress);
-        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
-        //the transaction
-        const tx = {
-            from: this.senderPublicKey,
-            to: contractAddress,
-            nonce: nonce,
-            gas: gas,
-            data: temp?.nftContract.methods.changeWhiteListMintTokenIds(tokenIds).encodeABI(),
-        }
-
-        return await this.signedAndSendTx(temp?.web3, tx);
-    }
-
-    async getWhiteListMintTokenIds(contractAddress: any, index: number) {
-        let temp = this.getContract(contractAddress);
-        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
-        //the transaction
-        const tx = {
-            from: this.senderPublicKey,
-            to: contractAddress,
-            nonce: nonce,
-        }
-
-        const listItems: any = await temp?.nftContract.methods.white_list_mint_token_ids(index).call(tx);
-        return listItems;
     }
 
     async mintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
@@ -180,6 +149,25 @@ class EnvironmentNFT {
             data: temp?.nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
         }
 
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async userMintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, ethAmount: string, gas: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        let tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            value: 0,
+            data: temp?.nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
+        }
+        if (ethAmount != "") {
+            tx.value = ethers.utils.parseEther(ethAmount);
+        }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
@@ -269,6 +257,5 @@ class EnvironmentNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 }
-
 
 export {EnvironmentNFT};
