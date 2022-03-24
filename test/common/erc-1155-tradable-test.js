@@ -22,7 +22,8 @@ const {
     - Test token is not exists
     - Test get non existed token URI
     - Test admin can't create token without operator role
-c    - Test operator can create token with supply is zero
+    - Test set creator for admin then create new token
+    - Test operator can create token with supply is zero
     - Test operator can create token
     - Test create token with overflow number
     - Test new operator create token
@@ -39,9 +40,10 @@ c    - Test operator can create token with supply is zero
     - Test batchMint by non operator
     - Test everyone can mint if token id is in whitelsit
     - Test Non operator changes whitelist for TokenID
+    - Test mint list whitelist token ID
 */
 
-describe.only("** NFTs ERC-1155 tradable", () => {
+describe("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -332,7 +334,6 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       const uri = await erc1155Tradable.uri(tokenId);
       expect(uri).to.equal(tokenURI);
     });
-
     it("- Test create token with overflow number", async () => {
       const executeFunc = "create";
       const dataCreateToken = [
@@ -900,7 +901,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       );
       expect(balanceOfToken1.add(5)).to.equal(balanceOfToken1AfterMint);
       expect(balanceOfToken2.add(5)).to.equal(balanceOfToken2AfterMint);
-      // non creator with mint role mint token is not in whitelist
+      // non creator without mint role mint token is not in whitelist
       try {
         await signAnotherContractThenExcuteFunction(
           jsonFile,
