@@ -8,6 +8,7 @@ const hardhatConfig = require("../../hardhat.config");
 const {
   sleep,
   signAnotherContractThenExcuteFunction,
+  signAnotherContractThenExcuteFunctionWithValue,
 } = require("../common_libs");
 
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
@@ -962,8 +963,10 @@ describe("** NFTs ERC-1155 tradable", () => {
   });
 
   context("* Create with price and max token", () => {
+    const userContract = addresses[3];
     const maxSupplyToken = 20;
-    const tokenPrice = 1000000000000000; // 0.001 ETH
+    const tokenPrice = 10; // WEI
+    const ethValue = 20; // WEI
     const dataNewCreateToken = [
       adminContract,
       tokenId,
@@ -973,6 +976,10 @@ describe("** NFTs ERC-1155 tradable", () => {
       tokenPrice,
       maxSupplyToken,
     ];
+    const web3 = createAlchemyWeb3(
+      hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+    );
+
     it("- Test create token with price and max token", async () => {
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -1013,7 +1020,6 @@ describe("** NFTs ERC-1155 tradable", () => {
     });
 
     it("- Test user mint with value greater than token price", async () => {
-      const userContract = addresses[3];
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
@@ -1033,46 +1039,22 @@ describe("** NFTs ERC-1155 tradable", () => {
       console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
 
       //user mint
-      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
-      let contract = require(path.resolve(jsonFile));
-      const web3 = createAlchemyWeb3(
-        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-      );
-      // check balance eth before mint
-      const balanceEthBeforMint = await web3.eth.getBalance(
-        erc1155TradbleAddress
-      );
-      console.log("balance ETH before mint: ", balanceEthBeforMint);
-      expect(balanceEthBeforMint).to.equal("0");
-      const newInstant = new web3.eth.Contract(
-        contract.abi,
-        erc1155TradbleAddress
-      );
-      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
-      const tx = {
-        from: userContract,
-        to: erc1155TradbleAddress,
-        nonce: nonce,
-        gas: 500000,
-        value: 2000000000000000, // 0.002 ETH
-        data: newInstant.methods
-          .userMint(userContract, tokenId, 9, "0x00")
-          .encodeABI(),
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(
-        tx,
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        erc1155TradbleAddress,
+        userContract,
+        ethValue,
+        "userMint",
+        [userContract, tokenId, 9, "0x00"],
         private_keys[3]
       );
-      if (signedTx.rawTransaction != null) {
-        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      }
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
       console.log("tokenSupplyAfterMint: ", tokenSupplyAfterMint);
       expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(9));
       // check balance ETH after user mint
       const balanceEth = await web3.eth.getBalance(erc1155TradbleAddress);
       console.log("balance ETH after mint: ", balanceEth);
-      expect(balanceEth).to.equal(tx.value.toString());
+      expect(balanceEth).to.equal(ethValue.toString());
     });
 
     it("- Test user mint with value smaller than token price", async () => {
@@ -1096,42 +1078,18 @@ describe("** NFTs ERC-1155 tradable", () => {
       console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
 
       //user mint
-      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
-      let contract = require(path.resolve(jsonFile));
-      const web3 = createAlchemyWeb3(
-        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-      );
-      // check balance eth before mint
-      const balanceEthBeforMint = await web3.eth.getBalance(
-        erc1155TradbleAddress
-      );
-      console.log("balance ETH before mint: ", balanceEthBeforMint);
-      expect(balanceEthBeforMint).to.equal("0");
-      const newInstant = new web3.eth.Contract(
-        contract.abi,
-        erc1155TradbleAddress
-      );
-      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
-      const tx = {
-        from: userContract,
-        to: erc1155TradbleAddress,
-        nonce: nonce,
-        gas: 500000,
-        value: 200000000000000, // 0.0002 ETH
-        data: newInstant.methods
-          .userMint(userContract, tokenId, 9, "0x00")
-          .encodeABI(),
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(
-        tx,
-        private_keys[3]
-      );
-      if (signedTx.rawTransaction != null) {
-        try {
-          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        } catch (error) {
-          expect(error.toString()).to.include("msg.value < price");
-        }
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          erc1155TradbleAddress,
+          userContract,
+          2, // 2 ETH
+          "userMint",
+          [userContract, tokenId, 9, "0x00"],
+          private_keys[3]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("msg.value < price");
       }
     });
 
@@ -1155,43 +1113,87 @@ describe("** NFTs ERC-1155 tradable", () => {
       const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
       console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
 
-      //user mint
-      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
-      let contract = require(path.resolve(jsonFile));
-      const web3 = createAlchemyWeb3(
-        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-      );
       // check balance eth before mint
       const balanceEthBeforMint = await web3.eth.getBalance(
         erc1155TradbleAddress
       );
       console.log("balance ETH before mint: ", balanceEthBeforMint);
       expect(balanceEthBeforMint).to.equal("0");
-      const newInstant = new web3.eth.Contract(
-        contract.abi,
-        erc1155TradbleAddress
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          erc1155TradbleAddress,
+          userContract,
+          ethValue, // 0.0002 ETH
+          "userMint",
+          [userContract, tokenId, 20, "0x00"],
+          private_keys[3]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("Reach max supply");
+      }
+    });
+
+    it("- Test withdraw after user mint", async () => {
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
       );
-      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
-      const tx = {
-        from: userContract,
-        to: erc1155TradbleAddress,
-        nonce: nonce,
-        gas: 500000,
-        value: 2000000000000000, // 0.002 ETH
-        data: newInstant.methods
-          .userMint(userContract, tokenId, 20, "0x00")
-          .encodeABI(),
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(
-        tx,
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        erc1155TradbleAddress,
+        userContract,
+        ethValue,
+        "userMint",
+        [userContract, tokenId, 9, "0x00"],
         private_keys[3]
       );
-      if (signedTx.rawTransaction != null) {
-        try {
-          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        } catch (error) {
-          expect(error.toString()).to.include("Reach max supply");
-        }
+      const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyAfterMint: ", tokenSupplyAfterMint);
+      expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(9));
+      // check balance ETH after user mint
+      const balanceEth = await web3.eth.getBalance(erc1155TradbleAddress);
+      console.log("balance ETH after user mint: ", balanceEth);
+      expect(balanceEth).to.equal(ethValue.toString());
+
+      // process withdraw
+      const receiver = "0xab5801a7d398351b8be11c439e05c5b3259aec9b";
+      const receiverEthBalance = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance before withdraw: ", receiverEthBalance);
+      // check balance eth of receiver before withdraw
+      // expect(receiverEthBalance).to.equal("10000000000000000000000");
+      // withdraw;
+      await erc1155Tradable.withdraw(receiver);
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
+        receiver
+      );
+      console.log(
+        "Receiver Eth Balance after withdraw: ",
+        receiverEthBalanceAfterWithdraw
+      );
+      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(
+        parseInt(receiverEthBalance) + ethValue
+      );
+      // continue withdraw
+      try {
+        await erc1155Tradable.withdraw(receiver);
+      } catch (error) {
+        expect(error.toString()).to.include("not enough balance");
       }
     });
   });
