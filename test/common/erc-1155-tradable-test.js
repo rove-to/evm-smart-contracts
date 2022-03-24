@@ -812,7 +812,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it.only("- Test mint list whitelist token ID", async () => {
+    it("- Test mint list whitelist token ID", async () => {
       const executeFunc = "create";
       const tokenId2 = 2;
       const tokenId3 = 3;
