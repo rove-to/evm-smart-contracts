@@ -311,7 +311,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
             require(msg.value >= price_tokens[_id], "msg.value < price");
         }
         if (max_supply_tokens[_id] != 0) {
-            require(tokenSupply[_id].add(_quantity) < max_supply_tokens[_id], "Reach max supply");
+            require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "Reach max supply");
         }
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
