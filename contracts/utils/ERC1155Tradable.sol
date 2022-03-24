@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
@@ -22,13 +23,13 @@ contract ProxyRegistry {
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable, IERC2981 {
+contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable, IERC2981, ReentrancyGuard {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
     event CreateEvent (address _initialOwner, uint256 _id, uint256 _initialSupply, string _uri, address _operator);
-    event MintEvent (address _to, uint256 _id, uint256 _quantity, bool whitelist);
-    event WhitelistChanged (uint256[] previous, uint256[] new_);
+    event MintEvent (address _to, uint256 _id, uint256 _quantity);
+    event PriceChanged (uint256 _id, uint256 previous, uint256 new_);
 
     using Strings for string;
     using SafeMath for uint256;
@@ -46,8 +47,8 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     string public name;
     // Contract symbol
     string public symbol;
-    uint256 [] public white_list_mint_token_ids;
-
+    mapping(uint256 => uint256) public price_tokens;
+    mapping(uint256 => uint256) public max_supply_tokens;
 
 
     /**
@@ -112,10 +113,18 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         }
     }
 
-    function changeWhiteListMintTokenIds(uint256[] memory _ids) public operatorOnly {
-        uint256[] memory previous = white_list_mint_token_ids;
-        white_list_mint_token_ids = _ids;
-        emit WhitelistChanged(previous, white_list_mint_token_ids);
+    function changePriceToken(uint256 _id, uint256 _price) public operatorOnly {
+        uint256 prev = price_tokens[_id];
+        price_tokens[_id] = _price;
+        emit PriceChanged(_id, prev, _price);
+    }
+
+    function getPriceToken(uint256 _id) public view returns (uint256) {
+        return price_tokens[_id];
+    }
+
+    function getMaxSupplyToken(uint256 _id) public view returns (uint256) {
+        return max_supply_tokens[_id];
     }
 
     // changeOperator: update operator by admin
@@ -232,11 +241,17 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _id,
         uint256 _initialSupply,
         string memory _uri,
-        bytes memory _data
+        bytes memory _data,
+        uint256 _price,
+        uint256 _max
     ) public operatorOnly
     returns (uint256) {
         require(hasRole(CREATOR_ROLE, _msgSender()), "Sender has not creator role");
         require(!_exists(_id), "token _id already exists");
+        if (_max > 0) {
+            require(_initialSupply <= _max, "init supply > max");
+        }
+
         creators[_id] = _msgSender();
 
         if (bytes(_uri).length > 0) {
@@ -247,6 +262,10 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         _mint(_initialOwner, _id, _initialSupply, _data);
 
         tokenSupply[_id] = _initialSupply;
+
+        price_tokens[_id] = _price;
+        max_supply_tokens[_id] = _max;
+
         emit CreateEvent(_initialOwner, _id, _initialSupply, _uri, operator);
         return _id;
     }
@@ -263,27 +282,42 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         uint256 _id,
         uint256 _quantity,
         bytes memory _data
-    ) virtual public override {
+    ) virtual public override creatorOnly(_id) {
         require(_exists(_id), "token _id not already exists");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
 
-        // check white list item
-        uint arrayLength = white_list_mint_token_ids.length;
-        bool found = false;
-        for (uint i = 0; i < arrayLength; i++) {
-            if (white_list_mint_token_ids[i] == _id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            // not in white list
-            require(creators[_id] == _msgSender(), "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED");
-            require(hasRole(MINTER_ROLE, _msgSender()), "Sender has not minter role");
+        if (max_supply_tokens[_id] != 0) {
+            require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "Reach max supply");
         }
         _mint(_to, _id, _quantity, _data);
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
-        emit MintEvent(_to, _id, _quantity, found);
+        emit MintEvent(_to, _id, _quantity);
     }
+
+    /**
+      * @dev Mints some amount of tokens to an address
+    * @param _to          Address of the future owner of the token
+    * @param _id          Token ID to mint
+    * @param _quantity    Amount of tokens to mint
+    * @param _data        Data to pass if receiver is contract
+    */
+    function userMint(address _to,
+        uint256 _id,
+        uint256 _quantity,
+        bytes memory _data
+    ) virtual public payable {
+        require(_exists(_id), "token _id not already exists");
+        if (price_tokens[_id] != 0) {
+            require(msg.value >= price_tokens[_id], "msg.value < price");
+        }
+        if (max_supply_tokens[_id] != 0) {
+            require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "Reach max supply");
+        }
+        _mint(_to, _id, _quantity, _data);
+        tokenSupply[_id] = tokenSupply[_id].add(_quantity);
+        emit MintEvent(_to, _id, _quantity);
+    }
+
 
     /**
       * @dev Mint tokens for each id in _ids
@@ -436,6 +470,12 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
             receiver = creators[_tokenId];
             royaltyAmount = (_salePrice * 500) / 10000;
         }
+    }
 
+    // Withdraw
+    function withdraw(address _to) external nonReentrant adminOnly {
+        require(address(this).balance > 0, "not enough balance");
+        (bool success,) = _to.call{value : address(this).balance}("");
+        require(success, "withdraw error");
     }
 }
