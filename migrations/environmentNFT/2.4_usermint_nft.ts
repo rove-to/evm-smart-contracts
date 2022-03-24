@@ -43,9 +43,9 @@ const {ethers} = require("hardhat");
         console.log("nftContract:", nftContract);
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const maxSupply = await nft.getMaxSupply(nftContract, 1);
+        const maxSupply = await nft.getMaxSupply(nftContract, tokenId);
         console.log(maxSupply);
-        const price = await nft.getPriceToken(nftContract, 1);
+        const price = await nft.getPriceToken(nftContract, tokenId);
         console.log(ethers.utils.formatEther(price));
         const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 5000000);
         console.log(tx);
