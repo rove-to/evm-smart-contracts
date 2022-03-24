@@ -2,7 +2,7 @@ import {EnvironmentNFT} from "./environmentNFT";
 
 (async () => {
     try {
-        if (process.env.NETWORK != "rinkeby") {
+        if (process.env.NETWORK != "local") {
             console.log("wrong network");
             return;
         }
@@ -15,10 +15,10 @@ import {EnvironmentNFT} from "./environmentNFT";
         console.log("nftContract:", nftContract);
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.changeWhiteListMintTokenIds(nftContract, [1, 2], 500000);
-        console.log(tx);
-        // const temp = await nft.getWhiteListMintTokenIds(nftContract, 0);
-        // console.log(temp);
+        // const tx = await nft.changeWhiteListMintTokenIds(nftContract, [1, 2], 500000);
+        // console.log(tx);
+        const temp = await nft.getWhiteListMintTokenIds(nftContract, 1);
+        console.log(temp);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
