@@ -1,8 +1,9 @@
 import {EnvironmentNFT} from "./environmentNFT";
 
+const {ethers} = require("hardhat");
 (async () => {
     try {
-        if (process.env.NETWORK != "local") {
+        if (process.env.NETWORK != "rinkeby") {
             console.log("wrong network");
             return;
         }
@@ -21,9 +22,9 @@ import {EnvironmentNFT} from "./environmentNFT";
         }
         console.log("amount:", amount);
 
-        let eth_amount: any = 0;
+        let eth_amount: any;
         if (process.argv.length >= 4) {
-            amount = process.argv[4];
+            eth_amount = process.argv[4];
         }
         console.log("eth_amount:", eth_amount);
 
@@ -42,6 +43,14 @@ import {EnvironmentNFT} from "./environmentNFT";
         console.log("nftContract:", nftContract);
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
+        const maxSupply = await nft.getMaxSupply(nftContract, 1);
+        console.log(maxSupply);
+        const price = await nft.getPriceToken(nftContract, 1);
+        console.log(ethers.utils.formatEther(price));
+        if (ethers.utils.parseEther(eth_amount) < price) {
+            console.log("Error");
+            return;
+        }
         const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 500000);
         console.log(tx);
     } catch (e) {
