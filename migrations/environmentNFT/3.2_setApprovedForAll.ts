@@ -2,6 +2,12 @@ import {EnvironmentNFT} from "./environmentNFT";
 
 (async () => {
     try {
+        if (process.env.NETWORK != "local") {
+            console.log("wrong network");
+            return;
+        }
+        
+        
         let contract: any = process.env.ENVIRONMENT_NFT_CONTRACT;
         if (process.argv.length >= 2) {
             contract = process.argv[2];
