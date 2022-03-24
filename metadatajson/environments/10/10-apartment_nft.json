@@ -1,0 +1,59 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://Qmd6F6Soz8XYKAqMJZFm7RvaXBMKYjxgzVQ47mGMd79X7a"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmefVuY3hAQRkizRSFUdBusXUPYK2FGb3V2AgtgV7AgtTG"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://Qmbav4HuKvFzQGtsX9vnjNFezW7ZouxHS4mNzcV3rrfZFh"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmPuF5J4v1vGXeMW47a6FmxxAu8GkVFAVFf4K2Ks3Xn8MN"
+    },
+    {
+      "trait_type": "Wall color",
+      "value": "gray"
+    },
+    {
+      "trait_type": "Table color",
+      "value": "light gray"
+    },
+    {
+      "trait_type": "Wall picture",
+      "value": "ETH"
+    }
+  ],
+  "description": "Meet at your place? This swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: rove.to",
+  "image": "ipfs://QmYozdFHjMvPSbUx5oEiPJGEHhuRi8eKECQxvMVniNf3HR",
+  "name": "The Place to Be-010",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmRRkiB63zPynGeMyLns6esyePzfJGeDrjZfHV8anKQC4L"
+}
+
+ipfs://QmUGjD4MUoENPTjPdfpdqdM3PsXjePJLoY8pJtWgkhDSGi
