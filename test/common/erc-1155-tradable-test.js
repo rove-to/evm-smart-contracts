@@ -10,6 +10,8 @@ const {
   signAnotherContractThenExcuteFunction,
 } = require("../common_libs");
 
+const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+const path = require("path");
 /*
   -TESTCASES:
     - Test admin can change operator
@@ -63,6 +65,8 @@ describe("** NFTs ERC-1155 tradable", () => {
     numberTokenCreate,
     tokenURI,
     "0x00",
+    0,
+    0,
   ];
 
   beforeEach(async function () {
@@ -206,9 +210,13 @@ describe("** NFTs ERC-1155 tradable", () => {
           tokenId,
           numberTokenCreate,
           tokenURI,
-          "0x00"
+          "0x00",
+          0,
+          0
         );
       } catch (error) {
+        console.error(error);
+
         expect(error.toString()).to.include(
           "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
         );
@@ -259,7 +267,9 @@ describe("** NFTs ERC-1155 tradable", () => {
           newTokenId,
           _numberTokenCreate,
           tokenURI,
-          "0x00"
+          "0x00",
+          0,
+          0
         );
       } catch (error) {
         expect(error.toString()).to.include(
@@ -276,6 +286,8 @@ describe("** NFTs ERC-1155 tradable", () => {
         0,
         tokenURI,
         operatorContract,
+        0,
+        0,
       ];
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
@@ -342,6 +354,8 @@ describe("** NFTs ERC-1155 tradable", () => {
         overFlowNumber,
         tokenURI,
         operatorContract,
+        0,
+        0,
       ];
       // Operator sign contract then create token
       try {
@@ -640,7 +654,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       } catch (error) {
         console.log(error);
         expect(error.toString()).to.include(
-          "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED"
+          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
         );
       }
     });
@@ -761,7 +775,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     });
   });
 
-  context("* Whitelist token ID", () => {
+  context.skip("* Whitelist token ID", () => {
     // Everyone can mint if toke id in white list
     // Only creator has MINT_ROLE can mint if token id is not in whitelist
     it("- Test everyone can mint if token id is in whitelsit", async () => {
@@ -807,6 +821,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await erc1155Tradable.changeWhiteListMintTokenIds([tokenId]);
       } catch (error) {
+        console.error(error);
         expect(error.toString()).to.include(
           "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
         );
@@ -919,8 +934,8 @@ describe("** NFTs ERC-1155 tradable", () => {
     });
   });
 
-  context("* Royalty", () => {
-    it.skip("- Test set royalty", async () => {
+  context.skip("* Royalty", () => {
+    it("- Test set royalty", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
@@ -943,6 +958,241 @@ describe("** NFTs ERC-1155 tradable", () => {
       const van = await erc1155Tradable.royaltyInfo(tokenId, 900);
       console.log("van: ", van);
       // await erc1155Tradable.setTokenRoyalty(tokenId, operatorContract, 9999);
+    });
+  });
+
+  context("* Create with price and max token", () => {
+    const maxSupplyToken = 20;
+    const tokenPrice = 1000000000000000; // 0.001 ETH
+    const dataNewCreateToken = [
+      adminContract,
+      tokenId,
+      numberTokenCreate,
+      tokenURI,
+      "0x00",
+      tokenPrice,
+      maxSupplyToken,
+    ];
+    it("- Test create token with price and max token", async () => {
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      // none operator can't change price token
+      const newTokenPrice = 5;
+      try {
+        await erc1155Tradable.changePriceToken(tokenId, newTokenPrice);
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
+        );
+      }
+      // Operator change token price
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "changePriceToken",
+        [tokenId, newTokenPrice],
+        private_keys[1]
+      );
+      const _newTokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("New price of token after changed: ", _newTokenPrice);
+      expect(_newTokenPrice).to.equal(newTokenPrice);
+    });
+
+    it("- Test user mint with value greater than token price", async () => {
+      const userContract = addresses[3];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
+      let contract = require(path.resolve(jsonFile));
+      const web3 = createAlchemyWeb3(
+        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+      );
+      // check balance eth before mint
+      const balanceEthBeforMint = await web3.eth.getBalance(
+        erc1155TradbleAddress
+      );
+      console.log("balance ETH before mint: ", balanceEthBeforMint);
+      expect(balanceEthBeforMint).to.equal("0");
+      const newInstant = new web3.eth.Contract(
+        contract.abi,
+        erc1155TradbleAddress
+      );
+      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
+      const tx = {
+        from: userContract,
+        to: erc1155TradbleAddress,
+        nonce: nonce,
+        gas: 500000,
+        value: 2000000000000000, // 0.002 ETH
+        data: newInstant.methods
+          .userMint(userContract, tokenId, 9, "0x00")
+          .encodeABI(),
+      };
+      const signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        private_keys[3]
+      );
+      if (signedTx.rawTransaction != null) {
+        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      }
+      const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyAfterMint: ", tokenSupplyAfterMint);
+      expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(9));
+      // check balance ETH after user mint
+      const balanceEth = await web3.eth.getBalance(erc1155TradbleAddress);
+      console.log("balance ETH after mint: ", balanceEth);
+      expect(balanceEth).to.equal(tx.value.toString());
+    });
+
+    it("- Test user mint with value smaller than token price", async () => {
+      const userContract = addresses[3];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
+      let contract = require(path.resolve(jsonFile));
+      const web3 = createAlchemyWeb3(
+        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+      );
+      // check balance eth before mint
+      const balanceEthBeforMint = await web3.eth.getBalance(
+        erc1155TradbleAddress
+      );
+      console.log("balance ETH before mint: ", balanceEthBeforMint);
+      expect(balanceEthBeforMint).to.equal("0");
+      const newInstant = new web3.eth.Contract(
+        contract.abi,
+        erc1155TradbleAddress
+      );
+      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
+      const tx = {
+        from: userContract,
+        to: erc1155TradbleAddress,
+        nonce: nonce,
+        gas: 500000,
+        value: 200000000000000, // 0.0002 ETH
+        data: newInstant.methods
+          .userMint(userContract, tokenId, 9, "0x00")
+          .encodeABI(),
+      };
+      const signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        private_keys[3]
+      );
+      if (signedTx.rawTransaction != null) {
+        try {
+          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        } catch (error) {
+          expect(error.toString()).to.include("msg.value < price");
+        }
+      }
+    });
+
+    it("- Test user mint greater than max supply", async () => {
+      const userContract = addresses[3];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      // await erc1155Tradable.userMint(userContract, tokenId, 9, "0x00");
+      let contract = require(path.resolve(jsonFile));
+      const web3 = createAlchemyWeb3(
+        hardhatConfig.networks[hardhatConfig.defaultNetwork].url
+      );
+      // check balance eth before mint
+      const balanceEthBeforMint = await web3.eth.getBalance(
+        erc1155TradbleAddress
+      );
+      console.log("balance ETH before mint: ", balanceEthBeforMint);
+      expect(balanceEthBeforMint).to.equal("0");
+      const newInstant = new web3.eth.Contract(
+        contract.abi,
+        erc1155TradbleAddress
+      );
+      const nonce = await web3.eth.getTransactionCount(userContract, "latest"); //get latest nonce
+      const tx = {
+        from: userContract,
+        to: erc1155TradbleAddress,
+        nonce: nonce,
+        gas: 500000,
+        value: 2000000000000000, // 0.002 ETH
+        data: newInstant.methods
+          .userMint(userContract, tokenId, 20, "0x00")
+          .encodeABI(),
+      };
+      const signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        private_keys[3]
+      );
+      if (signedTx.rawTransaction != null) {
+        try {
+          await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        } catch (error) {
+          expect(error.toString()).to.include("Reach max supply");
+        }
+      }
     });
   });
 });
