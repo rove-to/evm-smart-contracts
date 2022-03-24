@@ -16,6 +16,47 @@ class EnvironmentNFT {
         this.senderPublicKey = senderPublicKey;
     }
 
+    getContract(contractAddress: any) {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+        let API_URL: any;
+        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
+
+        // load contract
+        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
+        const web3 = createAlchemyWeb3(API_URL)
+        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
+        return {web3, nftContract};
+    }
+
+    async signedAndSendTx(web3: any, tx: any) {
+        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
+        if (signedTx.rawTransaction != null) {
+            let sentTx = await web3.eth.sendSignedTransaction(
+                signedTx.rawTransaction,
+                function (err: any, hash: any) {
+                    if (!err) {
+                        console.log(
+                            "The hash of your transaction is: ",
+                            hash,
+                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
+                        )
+                    } else {
+                        console.log(
+                            "Something went wrong when submitting your transaction:",
+                            err
+                        )
+                    }
+                }
+            )
+            return sentTx;
+        }
+        return null;
+    }
+
     async deploy(adminAddress: any, operatorAddress: any) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
@@ -30,20 +71,8 @@ class EnvironmentNFT {
     }
 
     async getAdminAddress(contractAddress: any) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -54,26 +83,14 @@ class EnvironmentNFT {
             // data: null,
         }
 
-        const adminAddress: any = await nftContract.methods.admin().call(tx);
-        const operatorAddress: any = await nftContract.methods.operator().call(tx);
+        const adminAddress: any = await temp?.nftContract.methods.admin().call(tx);
+        const operatorAddress: any = await temp?.nftContract.methods.operator().call(tx);
         return {adminAddress, operatorAddress};
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -81,46 +98,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.safeTransferFrom(this.senderPublicKey, receiver, tokenID, amount, "0x").encodeABI(),
+            data: temp?.nftContract.methods.safeTransferFrom(this.senderPublicKey, receiver, tokenID, amount, "0x").encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-        }
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
     async setCustomTokenUri(contractAddress: any, tokenID: number, newTokenURI: string, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -128,47 +114,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.setCustomURI(tokenID, newTokenURI).encodeABI(),
+            data: temp?.nftContract.methods.setCustomURI(tokenID, newTokenURI).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-        }
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
     async createEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, tokenURI: string, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -176,49 +130,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
+            data: temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            let sentTx = await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-            return sentTx;
-        }
-        return null;
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async whitelistMint(contractAddress: any, tokenIds: number[],  gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+    async changeWhiteListMintTokenIds(contractAddress: any, tokenIds: number[], gas: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -226,49 +146,30 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.changeWhiteListMintTokenIds(tokenIds).encodeABI(),
+            data: temp?.nftContract.methods.changeWhiteListMintTokenIds(tokenIds).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            let sentTx = await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-            return sentTx;
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async getWhiteListMintTokenIds(contractAddress: any, tokenIds: number[], gas: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
         }
-        return null;
+
+        const listItems: any = await temp?.nftContract.methods.whiteListMintTokenIds().call(tx);
+        return listItems;
     }
 
     async mintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -276,48 +177,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
+            data: temp?.nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            let sentTx = await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-            return sentTx;
-        }
-        return null;
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
     async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -325,46 +193,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.setCreator(creatorAddress, ids).encodeABI(),
+            data: temp?.nftContract.methods.setCreator(creatorAddress, ids).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-        }
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
     async getProxyRegisterAddress(contractAddress: any) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -373,26 +210,13 @@ class EnvironmentNFT {
             nonce: nonce,
         }
 
-        const proxyRegistryAddress: any = await nftContract.methods.proxyRegistryAddress().call(tx);
+        const proxyRegistryAddress: any = await temp?.nftContract.methods.proxyRegistryAddress().call(tx);
         return proxyRegistryAddress;
     }
 
     async isApprovedForAll(contractAddress: any, owner: any, operator: any) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        web3.eth.handleRevert = true;
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -403,7 +227,7 @@ class EnvironmentNFT {
             // data: null,
         }
         try {
-            const result: any = await nftContract.methods.isApprovedForAll(owner, operator).call(tx);
+            const result: any = await temp?.nftContract.methods.isApprovedForAll(owner, operator).call(tx);
             console.log(result.hash);
             return result;
         } catch (e) {
@@ -414,20 +238,8 @@ class EnvironmentNFT {
     }
 
     async setProxyRegisterAddress(contractAddress: any, proxyAddress: any, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -435,46 +247,15 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.setProxyRegistryAddress(proxyAddress).encodeABI(),
+            data: temp?.nftContract.methods.setProxyRegistryAddress(proxyAddress).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-        }
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 
     async setApprovalForAll(contractAddress: any, operator: any, gas: number) {
-        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
-        if (this.network == "local") {
-            console.log("not run local");
-            return;
-        }
-        let API_URL: any;
-        API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
-
-        // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/EnvironmentNFT.sol/EnvironmentNFT.json"));
-        const web3 = createAlchemyWeb3(API_URL)
-        const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
-
-        const nonce = await web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
         const tx = {
@@ -482,29 +263,10 @@ class EnvironmentNFT {
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: nftContract.methods.setApprovalForAll(operator, true).encodeABI(),
+            data: temp?.nftContract.methods.setApprovalForAll(operator, true).encodeABI(),
         }
 
-        const signedTx = await web3.eth.accounts.signTransaction(tx, this.senderPrivateKey)
-        if (signedTx.rawTransaction != null) {
-            return await web3.eth.sendSignedTransaction(
-                signedTx.rawTransaction,
-                function (err, hash) {
-                    if (!err) {
-                        console.log(
-                            "The hash of your transaction is: ",
-                            hash,
-                            "\nCheck Alchemy's Mempool to view the status of your transaction!"
-                        )
-                    } else {
-                        console.log(
-                            "Something went wrong when submitting your transaction:",
-                            err
-                        )
-                    }
-                }
-            )
-        }
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 }
 
