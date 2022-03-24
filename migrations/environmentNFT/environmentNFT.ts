@@ -164,7 +164,7 @@ class EnvironmentNFT {
             nonce: nonce,
             gas: gas,
             value: 0,
-            data: temp?.nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
+            data: temp?.nftContract.methods.userMint(to, tokenId, amount, '0x').encodeABI(),
         }
         if (ethAmount != "") {
             const value = ethers.utils.parseEther(ethAmount);

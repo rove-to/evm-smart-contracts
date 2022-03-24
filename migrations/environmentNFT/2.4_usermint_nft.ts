@@ -3,7 +3,7 @@ import {EnvironmentNFT} from "./environmentNFT";
 const {ethers} = require("hardhat");
 (async () => {
     try {
-        if (process.env.NETWORK != "rinkeby") {
+        if (process.env.NETWORK != "local") {
             console.log("wrong network");
             return;
         }
@@ -47,11 +47,7 @@ const {ethers} = require("hardhat");
         console.log(maxSupply);
         const price = await nft.getPriceToken(nftContract, 1);
         console.log(ethers.utils.formatEther(price));
-        if (ethers.utils.parseEther(eth_amount) < price) {
-            console.log("Error");
-            return;
-        }
-        const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 500000);
+        const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 5000000);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
