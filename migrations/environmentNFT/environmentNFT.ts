@@ -79,8 +79,6 @@ class EnvironmentNFT {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
-            // gas: gas,
-            // data: null,
         }
 
         const adminAddress: any = await temp?.nftContract.methods.admin().call(tx);
@@ -125,15 +123,19 @@ class EnvironmentNFT {
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const eth = ethers.utils.parseEther(price);
+        const fun = temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI, eth, max);
+        console.log(gas);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI, eth, max).encodeABI(),
+            data: fun.encodeABI(),
         }
-
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
@@ -141,13 +143,18 @@ class EnvironmentNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
+        const fun = temp?.nftContract.methods.mint(to, tokenId, amount, '0x');
         //the transaction
         const tx = {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.mint(to, tokenId, amount, '0x').encodeABI(),
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
         }
 
         return await this.signedAndSendTx(temp?.web3, tx);
@@ -157,6 +164,7 @@ class EnvironmentNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
+        const fun = temp?.nftContract.methods.userMint(to, tokenId, amount, '0x')
         //the transaction
         let tx = {
             from: this.senderPublicKey,
@@ -164,13 +172,18 @@ class EnvironmentNFT {
             nonce: nonce,
             gas: gas,
             value: 0,
-            data: temp?.nftContract.methods.userMint(to, tokenId, amount, '0x').encodeABI(),
+            data: fun.encodeABI(),
         }
         if (ethAmount != "") {
             const value = ethers.utils.parseEther(ethAmount);
             console.log("value:", value);
             tx.value = value;
         }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
@@ -178,13 +191,18 @@ class EnvironmentNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
+        const fun = temp?.nftContract.methods.setCreator(creatorAddress, ids)
         //the transaction
         const tx = {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.setCreator(creatorAddress, ids).encodeABI(),
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
         }
 
         return await this.signedAndSendTx(temp?.web3, tx);
@@ -214,6 +232,8 @@ class EnvironmentNFT {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
+            gas: 500000,
+            // data: null,
         }
         try {
             const result: any = await temp?.nftContract.methods.isApprovedForAll(owner, operator).call(tx);
