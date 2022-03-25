@@ -214,8 +214,6 @@ class EnvironmentNFT {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
-            gas: 500000,
-            // data: null,
         }
         try {
             const result: any = await temp?.nftContract.methods.isApprovedForAll(owner, operator).call(tx);
