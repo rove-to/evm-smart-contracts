@@ -53,7 +53,7 @@ const path = require("path");
 
 */
 
-describe("** NFTs ERC-1155 tradable", () => {
+describe.only("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -121,9 +121,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           nonAdminPrivateKey
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_ADMIN");
       }
     });
   });
@@ -149,9 +147,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           nonAdminPrivateKey
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_ADMIN");
       }
     });
 
@@ -205,9 +201,8 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await erc1155Tradable.uri(tokenId);
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#uri: NONEXISTENT_TOKEN"
-        );
+        console.error(error);
+        expect(error.toString()).to.include("NONEXISTENT_TOKEN");
       }
     });
 
@@ -225,9 +220,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       } catch (error) {
         console.error(error);
 
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
     });
 
@@ -280,9 +273,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           0
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
     });
 
@@ -432,9 +423,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[1]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#setCreator: INVALID_ADDRESS"
-        );
+        expect(error.toString()).to.include("INVALID_ADDRESS");
       }
       // Verify creator is operator 1
       const creator = await erc1155Tradable.getCreator(tokenId);
@@ -457,9 +446,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[1]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_CREATOR");
       }
     });
 
@@ -489,9 +476,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[0]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
     });
 
@@ -550,9 +535,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[2]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_CREATOR");
       }
     });
 
@@ -661,9 +644,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         );
       } catch (error) {
         console.log(error);
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_CREATOR");
       }
     });
 
@@ -774,9 +755,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[0]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
       expect(tokenSupplyBeforeMint).to.equal(tokenSupplyAfterMint);
@@ -830,9 +809,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         await erc1155Tradable.changeWhiteListMintTokenIds([tokenId]);
       } catch (error) {
         console.error(error);
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
     });
 
@@ -935,9 +912,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[2]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#mint: ONLY_CREATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_CREATOR");
       }
     });
   });
@@ -1008,9 +983,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await erc1155Tradable.changePriceToken(tokenId, newTokenPrice);
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_OPERATOR");
       }
       // Operator change token price
       await signAnotherContractThenExcuteFunction(
@@ -1096,7 +1069,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[3]
         );
       } catch (error) {
-        expect(error.toString()).to.include("msg.value < price");
+        expect(error.toString()).to.include("MISS_PRICE");
       }
     });
 
@@ -1137,7 +1110,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[3]
         );
       } catch (error) {
-        expect(error.toString()).to.include("Reach max supply");
+        expect(error.toString()).to.include("REACH_MAX");
       }
     });
 
@@ -1200,7 +1173,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       try {
         await erc1155Tradable.withdraw(receiver);
       } catch (error) {
-        expect(error.toString()).to.include("not enough balance");
+        expect(error.toString()).to.include("NOT_ENOUGH");
       }
     });
 
@@ -1258,9 +1231,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[1]
         );
       } catch (error) {
-        expect(error.toString()).to.include(
-          "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
-        );
+        expect(error.toString()).to.include("ONLY_ADMIN");
       }
 
       const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
@@ -1359,7 +1330,7 @@ describe("** NFTs ERC-1155 tradable", () => {
           private_keys[1]
         );
       } catch (error) {
-        expect(error.toString()).to.include("Reach max supply");
+        expect(error.toString()).to.include("REACH_MAX");
       }
     });
   });
