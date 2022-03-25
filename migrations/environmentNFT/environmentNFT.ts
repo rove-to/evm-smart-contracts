@@ -64,6 +64,7 @@ class EnvironmentNFT {
             return;
         }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
+        // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
         const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress);
 
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
