@@ -201,14 +201,26 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPercentCreator > 0) {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                address creator = hostContract.getCreator(tokenID);
-                if (creator != address(0x0)) {
+                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(tokenID, _closeOfferingData.originPrice);
+                if (_receiver != address(0x0)) {
                     _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
                     console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
-                    console.log("benefit creator %s: +%s", creator, _benefit.benefitCreator);
-                    _balances[creator] += _benefit.benefitCreator;
+                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
+                    _balances[_receiver] += _benefit.benefitCreator;
+                }
+            }
+        } else {
+            if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
+                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(tokenID, _closeOfferingData.originPrice);
+                if (_receiver != address(0x0)) {
+                    _benefit.benefitCreator = _royaltyAmount;
+                    _closeOfferingData.totalPrice -= _benefit.benefitCreator;
+                    console.log("creator profit %s", _benefit.benefitCreator);
+                    // update balance(on market) of creator erc-1155
+                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
+                    _balances[_receiver] += _benefit.benefitCreator;
                 }
             }
         }
