@@ -917,8 +917,13 @@ describe.only("** NFTs ERC-1155 tradable", () => {
     });
   });
 
-  context.skip("* Royalty", () => {
-    it("- Test set royalty", async () => {
+  context("* Royalty", () => {
+    const percentRecieve = 700; // percent reciever decimals 2
+    const defaultpercentRecieve = 500; // default is 5%
+    const overPercent = 10100; // 101%
+    const salePriceRoyalty = 900;
+    const receiver = "0xab5801a7d398351b8be11c439e05c5b3259aec9b";
+    it("- Test set/get valid royalty", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
@@ -935,20 +940,111 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         erc1155TradbleAddress,
         operatorContract,
         "setTokenRoyalty",
-        [tokenId, operatorContract, 10000],
+        [tokenId, receiver, percentRecieve],
         private_keys[1]
       );
-      const van = await erc1155Tradable.royaltyInfo(tokenId, 900);
-      console.log("van: ", van);
-      // await erc1155Tradable.setTokenRoyalty(tokenId, operatorContract, 9999);
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
+        tokenId,
+        salePriceRoyalty
+      );
+      console.log("Royalty info: ", _royaltyInfo);
+      expect(_royaltyInfo[1]).to.equal(
+        (salePriceRoyalty * percentRecieve) / 10000
+      );
+    });
+
+    it("- Test get royalty without set", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
+        tokenId,
+        salePriceRoyalty
+      );
+      console.log("Royalty info: ", _royaltyInfo);
+      expect(_royaltyInfo[1]).to.equal(
+        (salePriceRoyalty * defaultpercentRecieve) / 10000
+      );
+    });
+
+    it("- Test set percent royalty over 100%", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          "setTokenRoyalty",
+          [tokenId, receiver, overPercent],
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("TOO_HIGH");
+      }
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
+        tokenId,
+        salePriceRoyalty
+      );
+      console.log("Royalty info: ", _royaltyInfo);
+      expect(_royaltyInfo[1]).to.equal(
+        (salePriceRoyalty * defaultpercentRecieve) / 10000
+      );
+    });
+
+    it("- Test non operator role set royalty", async () => {
+      const executeFunc = "create";
+      // Operator sign contract then create token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        executeFunc,
+        dataCreateToken,
+        private_keys[1]
+      );
+      try {
+        await erc1155Tradable.setTokenRoyalty(
+          tokenId,
+          receiver,
+          percentRecieve
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("ONLY_OPERATOR");
+      }
+
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
+        tokenId,
+        salePriceRoyalty
+      );
+      console.log("Royalty info: ", _royaltyInfo);
+      expect(_royaltyInfo[1]).to.equal(
+        (salePriceRoyalty * percentRecieve) / 10000
+      );
     });
   });
 
   context("* Create with price and max token", () => {
+    const tokenQuantity = 9;
     const userContract = addresses[3];
     const maxSupplyToken = 20;
     const tokenPrice = 10; // WEI
-    const ethValue = 20; // WEI
+    const ethValue = 90; // WEI
     const dataNewCreateToken = [
       adminContract,
       tokenId,
@@ -1025,7 +1121,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1037,7 +1133,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       expect(balanceEth).to.equal(ethValue.toString());
     });
 
-    it("- Test user mint with value smaller than token price", async () => {
+    it.only("- Test user mint with value smaller than token price", async () => {
       const userContract = addresses[3];
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -1063,9 +1159,9 @@ describe.only("** NFTs ERC-1155 tradable", () => {
           jsonFile,
           erc1155TradbleAddress,
           userContract,
-          2, // 2 ETH
+          89, // 2 ETH
           "userMint",
-          [userContract, tokenId, 9, "0x00"],
+          [userContract, tokenId, tokenQuantity, "0x00"],
           private_keys[3]
         );
       } catch (error) {
@@ -1140,7 +1236,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1203,7 +1299,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1270,7 +1366,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
