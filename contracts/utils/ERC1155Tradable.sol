@@ -306,8 +306,10 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         bytes memory _data
     ) virtual public payable {
         require(_exists(_id), "NONEXIST_TOKEN");
-        if (price_tokens[_id] != 0) {
+        if (price_tokens[_id] > 0) {
             require(msg.value >= price_tokens[_id] * _quantity, "MISS_PRICE");
+        } else {
+            require(_quantity <= 1, "MAX_QUANTITY");
         }
         if (max_supply_tokens[_id] != 0) {
             require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "REACH_MAX");
