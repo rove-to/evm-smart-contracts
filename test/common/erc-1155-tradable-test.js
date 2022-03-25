@@ -1133,7 +1133,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       expect(balanceEth).to.equal(ethValue.toString());
     });
 
-    it("- Test user mint with value smaller than token price", async () => {
+    it.only("- Test user mint with value smaller than token price", async () => {
       const userContract = addresses[3];
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -1159,7 +1159,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
           jsonFile,
           erc1155TradbleAddress,
           userContract,
-          2, // 2 ETH
+          89, // 2 ETH
           "userMint",
           [userContract, tokenId, tokenQuantity, "0x00"],
           private_keys[3]
@@ -1210,7 +1210,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it.only("- Test withdraw after user mint", async () => {
+    it("- Test withdraw after user mint", async () => {
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
