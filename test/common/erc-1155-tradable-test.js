@@ -41,9 +41,16 @@ const path = require("path");
     - Test mint after set new creator
     - Test batchMint by operator
     - Test batchMint by non operator
-    - Test everyone can mint if token id is in whitelsit
-    - Test Non operator changes whitelist for TokenID
-    - Test mint list whitelist token ID
+    - Test everyone can mint if token id is in whitelsit // not use whitelist
+    - Test Non operator changes whitelist for TokenID // not use whitelist
+    - Test mint list whitelist token ID // not use whitelist
+    - Test create token with price and max token
+    - Test user mint with value greater than token price
+    - Test user mint with value smaller than token price
+    - Test user mint greater than max supply
+    - Test withdraw after user mint
+    - Test mint with token greater than max supply
+
 */
 
 describe("** NFTs ERC-1155 tradable", () => {
@@ -1194,6 +1201,165 @@ describe("** NFTs ERC-1155 tradable", () => {
         await erc1155Tradable.withdraw(receiver);
       } catch (error) {
         expect(error.toString()).to.include("not enough balance");
+      }
+    });
+
+    it("- Test withdraw by non admin after user mint", async () => {
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        erc1155TradbleAddress,
+        userContract,
+        ethValue,
+        "userMint",
+        [userContract, tokenId, 9, "0x00"],
+        private_keys[3]
+      );
+      const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyAfterMint: ", tokenSupplyAfterMint);
+      expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(9));
+      // check balance ETH after user mint
+      const balanceEth = await web3.eth.getBalance(erc1155TradbleAddress);
+      console.log("balance ETH after user mint: ", balanceEth);
+      expect(balanceEth).to.equal(ethValue.toString());
+
+      // process withdraw
+      const receiver = "0xab5801a7d398351b8be11c439e05c5b3259aec9b";
+      const receiverEthBalance = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance before withdraw: ", receiverEthBalance);
+      // check balance eth of receiver before withdraw
+      // expect(receiverEthBalance).to.equal("10000000000000000000000");
+      // withdraw;
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          "withdraw",
+          [receiver],
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "ERC1155Tradable#ownersOnly: ONLY_ADMIN_ALLOWED"
+        );
+      }
+
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
+        receiver
+      );
+      console.log(
+        "Receiver Eth Balance after withdraw: ",
+        receiverEthBalanceAfterWithdraw
+      );
+      expect(receiverEthBalanceAfterWithdraw).to.equal(receiverEthBalance);
+    });
+
+    it("- Test withdraw by new admin after user mint", async () => {
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(tokenPrice);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        erc1155TradbleAddress,
+        userContract,
+        ethValue,
+        "userMint",
+        [userContract, tokenId, 9, "0x00"],
+        private_keys[3]
+      );
+      const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyAfterMint: ", tokenSupplyAfterMint);
+      expect(tokenSupplyAfterMint).to.equal(tokenSupplyBeforeMint.add(9));
+      // check balance ETH after user mint
+      const balanceEth = await web3.eth.getBalance(erc1155TradbleAddress);
+      console.log("balance ETH after user mint: ", balanceEth);
+      expect(balanceEth).to.equal(ethValue.toString());
+
+      // process withdraw
+      const receiver = "0xab5801a7d398351b8be11c439e05c5b3259aec9b";
+      const receiverEthBalance = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance before withdraw: ", receiverEthBalance);
+      // check balance eth of receiver before withdraw
+      // expect(receiverEthBalance).to.equal("10000000000000000000000");
+      // change admin
+      await erc1155Tradable.changeAdmin(newAdmin);
+      // withdraw by new admin;
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        newAdmin,
+        "withdraw",
+        [receiver],
+        private_keys[3]
+      );
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
+        receiver
+      );
+      console.log(
+        "Receiver Eth Balance after withdraw: ",
+        receiverEthBalanceAfterWithdraw
+      );
+      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(
+        parseInt(receiverEthBalance) + ethValue
+      );
+    });
+    it("- Test mint with token greater than max supply", async () => {
+      // call craete token
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateToken,
+        private_keys[1]
+      );
+      // mint
+      try {
+        await signAnotherContractThenExcuteFunction(
+          jsonFile,
+          erc1155TradbleAddress,
+          operatorContract,
+          "mint",
+          [userContract, tokenId, 100, "0x00"],
+          private_keys[1]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("Reach max supply");
       }
     });
   });
