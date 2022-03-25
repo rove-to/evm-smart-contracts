@@ -1040,10 +1040,11 @@ describe.only("** NFTs ERC-1155 tradable", () => {
   });
 
   context("* Create with price and max token", () => {
+    const tokenQuantity = 9;
     const userContract = addresses[3];
     const maxSupplyToken = 20;
     const tokenPrice = 10; // WEI
-    const ethValue = 20; // WEI
+    const ethValue = 90; // WEI
     const dataNewCreateToken = [
       adminContract,
       tokenId,
@@ -1094,7 +1095,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       expect(_newTokenPrice).to.equal(newTokenPrice);
     });
 
-    it.only("- Test user mint with value greater than token price", async () => {
+    it("- Test user mint with value greater than token price", async () => {
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
@@ -1120,7 +1121,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1160,7 +1161,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
           userContract,
           2, // 2 ETH
           "userMint",
-          [userContract, tokenId, 9, "0x00"],
+          [userContract, tokenId, tokenQuantity, "0x00"],
           private_keys[3]
         );
       } catch (error) {
@@ -1209,7 +1210,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       }
     });
 
-    it("- Test withdraw after user mint", async () => {
+    it.only("- Test withdraw after user mint", async () => {
       await signAnotherContractThenExcuteFunction(
         jsonFile,
         erc1155TradbleAddress,
@@ -1235,7 +1236,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1298,7 +1299,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
@@ -1365,7 +1366,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
         userContract,
         ethValue,
         "userMint",
-        [userContract, tokenId, 9, "0x00"],
+        [userContract, tokenId, tokenQuantity, "0x00"],
         private_keys[3]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
