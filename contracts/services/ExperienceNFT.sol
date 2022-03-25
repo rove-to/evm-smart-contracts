@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
+/*
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
@@ -11,6 +12,7 @@ import "../goods/IMetaverseNFT.sol";
 import "../governance/IParameterControl.sol";
 import "../monetary/IRove.sol";
 
+*/
 /*
  * TODO:
  * [x] Minting
@@ -18,7 +20,8 @@ import "../monetary/IRove.sol";
  * [x] Split payment
  * [ ] 
  *
- */
+ *//*
+
 
 contract ExperienceNFT is AccessControl, ERC721URIStorage {
 
@@ -156,9 +159,11 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                 creators.shares[creator] = shares;
         }
 
-        /*
+        */
+/*
          * @dev use pull payment instead of push (safer)
-         */
+         *//*
+
         function collectPayment(
                 uint256 experienceId
         ) 
@@ -215,3 +220,4 @@ contract ExperienceNFT is AccessControl, ERC721URIStorage {
                         super.supportsInterface(interfaceId);
         }
 }
+*/

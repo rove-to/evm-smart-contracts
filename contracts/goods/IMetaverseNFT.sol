@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
-interface IMetaverseNFT {
+/*interface IMetaverseNFT {
 
         struct Revenue {
                 uint256 breedingFee;
@@ -60,4 +60,4 @@ interface IMetaverseNFT {
         // Events
         event NewMetaverse(address owner, uint256 metaverseId, uint256[] rocks, uint256[] rentalFees, string[] rockTokenURIs, string tokenURI);
         event Breed(address owner, uint256 dadId, uint256 momId, uint256 rockId, uint256 metaverseId, uint256 rentalFee);
-}
+}*/
