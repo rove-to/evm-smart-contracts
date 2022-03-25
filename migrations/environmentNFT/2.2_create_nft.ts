@@ -21,22 +21,34 @@ import {EnvironmentNFT} from "./environmentNFT";
         }
         console.log("initSupply:", initSupply);
 
+        let price: any = 0;
+        if (process.argv.length >= 4) {
+            price = process.argv[4];
+        }
+        console.log("price:", price);
+
+        let max: any = 100000;
+        if (process.argv.length >= 5) {
+            max = process.argv[5];
+        }
+        console.log("max:", max);
+
         // set metadata
         let tokenURI: any;
-        if (process.argv.length >= 4) {
-            tokenURI = process.argv[4];
+        if (process.argv.length >= 6) {
+            tokenURI = process.argv[6];
         }
         console.log("tokenUri:", tokenURI);
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 5) {
-            nftContract = process.argv[5];
+        if (process.argv.length > 7) {
+            nftContract = process.argv[7];
         }
         console.log("nftContract:", nftContract);
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.createEnvironmentNFT(initOwnerAddress, nftContract, initSupply, tokenURI, 500000);
+        const tx = await nft.createEnvironmentNFT(initOwnerAddress, nftContract, initSupply, price, max, tokenURI, 500000);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
