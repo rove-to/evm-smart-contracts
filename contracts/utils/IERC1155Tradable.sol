@@ -8,8 +8,4 @@ interface IERC1155Tradable is IERC1155, IERC2981 {
     function getCreator(uint256 id) external view
     virtual
     returns (address sender);
-
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view
-    virtual
-    returns (address receiver, uint256 royaltyAmount);
 }
