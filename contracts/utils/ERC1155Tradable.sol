@@ -22,7 +22,7 @@ contract ProxyRegistry {
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, IERC1155Tradable , ReentrancyGuard {
+contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, ReentrancyGuard, IERC1155Tradable {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
@@ -307,7 +307,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
     ) virtual public payable {
         require(_exists(_id), "NONEXIST_TOKEN");
         if (price_tokens[_id] != 0) {
-            require(msg.value >= price_tokens[_id], "MISS_PRICE");
+            require(msg.value >= price_tokens[_id] * _quantity, "MISS_PRICE");
         }
         if (max_supply_tokens[_id] != 0) {
             require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "REACH_MAX");

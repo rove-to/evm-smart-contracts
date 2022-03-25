@@ -47,7 +47,7 @@ const {ethers} = require("hardhat");
         console.log(maxSupply);
         const price = await nft.getPriceToken(nftContract, tokenId);
         console.log(ethers.utils.formatEther(price));
-        const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 5000000);
+        const tx = await nft.userMintEnvironmentNFT(to, nftContract, tokenId, amount, eth_amount, 500000);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
