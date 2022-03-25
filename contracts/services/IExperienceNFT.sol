@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
+/*
 interface IExperienceNFT {
 
         // Mints a new experience. The host must pay a rental fee to rock owner. 
@@ -43,3 +44,4 @@ interface IExperienceNFT {
         event UpdateTicketPrice(uint256 experienceId, uint256 price);
         event NewTicket(uint256, address, string);
 }
+*/

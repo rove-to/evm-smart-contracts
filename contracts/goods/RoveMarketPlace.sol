@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.12;
 
+/*
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -278,4 +279,4 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
-}
+}*/

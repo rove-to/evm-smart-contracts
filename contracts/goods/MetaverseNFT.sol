@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
+/*
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -8,6 +9,7 @@ import "../governance/IParameterControl.sol";
 import "../monetary/IRove.sol";
 import "../goods/IRockNFT.sol";
 
+*/
 /**
  * @dev Implementation of the Metaverse element in Rove
  *
@@ -20,7 +22,8 @@ import "../goods/IRockNFT.sol";
  * [x] Expenditure
  * [ ] Metaverse DAO
  *
- */
+ *//*
+
 
 contract MetaverseNFT is AccessControl, ERC721URIStorage {
 
@@ -200,3 +203,4 @@ contract MetaverseNFT is AccessControl, ERC721URIStorage {
                         super.supportsInterface(interfaceId);
         }
 }
+*/

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
-interface IRockNFT {
+/*interface IRockNFT {
 
         // // Getters
         // function getCapacity(uint256 rockId) external view returns (uint256);
@@ -54,4 +54,4 @@ interface IRockNFT {
 
         // events
         event UpdateRockFee(address owner, uint256 rockId, uint256 rentalFee);
-}
+}*/
