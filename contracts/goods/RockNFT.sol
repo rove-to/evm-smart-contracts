@@ -3,7 +3,7 @@ pragma solidity 0.8.12;
 
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /*
  * TODO:
@@ -24,7 +24,7 @@ contract RockNFT is ERC1155Tradable {
         "",
         admin, operator
     ) public {
-        console.log("Deploy ObjectNFT");
+        //        console.log("Deploy ObjectNFT");
     }
 
     function createNFT(address recipient, string memory tokenURI, uint256 price, uint256 max)
@@ -36,12 +36,12 @@ contract RockNFT is ERC1155Tradable {
         newItemId = _tokenIds.current();
         create(recipient, newItemId, 1, tokenURI, "0x", price, max);
 
-        console.log(
+        /*console.log(
             "mintNFT erc-1155 %s, owner %s, only 1",
             address(this),
             recipient
         );
-        console.log("tokenid: ", newItemId);
+        console.log("tokenid: ", newItemId);*/
         return newItemId;
     }
 }
