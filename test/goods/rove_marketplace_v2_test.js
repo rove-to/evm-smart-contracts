@@ -7,6 +7,7 @@ const { addresses } = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 const path = require("path");
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
+const { signAnotherContractThenExcuteFunction } = require("../common_libs");
 
 function sleep(second) {
   return new Promise(resolve => {
@@ -14,7 +15,7 @@ function sleep(second) {
   });
 }
 
-describe("Marketplace contract", function () {
+describe.only("Marketplace contract", function () {
   let roveToken;
   let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
   let roveTokenContractAddress;
@@ -40,6 +41,8 @@ describe("Marketplace contract", function () {
   const operator_address = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // default for local
   const operator_privatekey =
     "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
+  const nftPrice = 10;
+  const maxNftNumber = 100;
 
   beforeEach(async function () {
     // deploy rove token
@@ -51,7 +54,6 @@ describe("Marketplace contract", function () {
     decimals = await roveToken.decimals();
     decimals = 10 ** decimals;
     roveToken.transfer(buyer, buyerBalance * decimals); // transfer all 1 bil token to buyer
-
     // deploy nft
     let ObjectNFTContract = await ethers.getContractFactory("ObjectNFT");
     objectNFT = await ObjectNFTContract.deploy(roveTokenAdmin, roveTokenAdmin);
@@ -60,7 +62,13 @@ describe("Marketplace contract", function () {
     // mint nft
     let tokenURI =
       "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-    await objectNFT.createNFT(nftOwner, initSupply, tokenURI);
+    await objectNFT.createNFT(
+      nftOwner,
+      initSupply,
+      tokenURI,
+      nftPrice,
+      maxNftNumber
+    );
     tokenID = await objectNFT.newItemId();
 
     // deploy param
@@ -287,8 +295,10 @@ describe("Marketplace contract", function () {
       console.log("marketBalanceRoveToken: ", marketBalanceRoveToken);
 
       expect(marketBalanceRoveToken).to.equal(priceOffer * amountCloseOffer);
+
       let nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(
-        nftOwner
+        nftOwner,
+        roveTokenContractAddress
       );
       console.log(
         "nftOwnerBalanceRoveTokenOnMarket: ",
@@ -304,6 +314,7 @@ describe("Marketplace contract", function () {
           priceOffer * amountCloseOffer
         );
       }
+
       const buyerBalanceRoveToken = await roveToken.balanceOf(buyer);
       expect(buyerBalanceRoveToken).to.equal(
         buyerBalance * decimals - priceOffer * amountCloseOffer
@@ -316,11 +327,12 @@ describe("Marketplace contract", function () {
       expect(nftOwnerBalanceNFT.add(buyerBalanceNFT)).to.equal(initSupply);
 
       // call withdraw for owner nft for get rove token
-      tx = await roveMarketplace.withdrawBalance();
+      tx = await roveMarketplace.withdrawBalance(roveTokenContractAddress);
       await tx.wait();
       // view balance market place again
       nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(
-        nftOwner
+        nftOwner,
+        roveTokenContractAddress
       );
       expect(nftOwnerBalanceRoveTokenOnMarket).to.equal(0);
       // check erc-20 balance
@@ -332,6 +344,128 @@ describe("Marketplace contract", function () {
         );
       } else {
         expect(nftOwnerWithdrawBalance).to.equal(priceOffer * amountCloseOffer);
+      }
+    });
+
+    it("* Test buyer approve for market smaller than total NFTs price ", async function () {
+      const roveMaketJson =
+        "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
+      const roveTokenJson =
+        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
+
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token
+      const priceOffer = 5 * decimals;
+      const amountPlaceOffer = 3;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer - 1; // 3
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, (priceOffer * amountCloseOffer) / 2],
+        buyerPrivateKey
+      );
+
+      // buyer close order
+      try {
+        await signAnotherContractThenExcuteFunction(
+          roveMaketJson,
+          roveMarketplaceAddress,
+          buyer,
+          "closeOffering",
+          [offeringId, amountCloseOffer],
+          buyerPrivateKey
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "this contract address is not approved for spending erc-20"
+        );
+      }
+    });
+
+    it.only("* Test buyer close offer with amount greater than offered number", async function () {
+      const roveMaketJson =
+        "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
+      const roveTokenJson =
+        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
+
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token
+      const priceOffer = 5 * decimals;
+      const amountPlaceOffer = 3;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer * 2;
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer * amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // buyer close order
+      try {
+        await signAnotherContractThenExcuteFunction(
+          roveMaketJson,
+          roveMarketplaceAddress,
+          buyer,
+          "closeOffering",
+          [offeringId, amountCloseOffer],
+          buyerPrivateKey
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("Amount > offering amount");
       }
     });
   });
