@@ -53,7 +53,7 @@ const path = require("path");
 
 */
 
-describe.only("** NFTs ERC-1155 tradable", () => {
+describe("** NFTs ERC-1155 tradable", () => {
   let erc1155Tradable;
   let erc1155TradbleAddress;
   let adminContract = addresses[0]; // default for local
@@ -1133,7 +1133,7 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       expect(balanceEth).to.equal(ethValue.toString());
     });
 
-    it.only("- Test user mint with value smaller than token price", async () => {
+    it("- Test user mint with value smaller than token price", async () => {
       const userContract = addresses[3];
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -1208,6 +1208,63 @@ describe.only("** NFTs ERC-1155 tradable", () => {
       } catch (error) {
         expect(error.toString()).to.include("REACH_MAX");
       }
+    });
+
+    it("- Test token price is 0", async () => {
+      const userContract = addresses[3];
+      const dataNewCreateTokenPriceOne = [
+        adminContract,
+        tokenId,
+        numberTokenCreate,
+        tokenURI,
+        "0x00",
+        0, // tokenPrice
+        maxSupplyToken,
+      ];
+      await signAnotherContractThenExcuteFunction(
+        jsonFile,
+        erc1155TradbleAddress,
+        operatorContract,
+        "create",
+        dataNewCreateTokenPriceOne,
+        private_keys[1]
+      );
+      // check max supply and price of token
+      const _maxSupplyToken = await erc1155Tradable.getMaxSupplyToken(tokenId);
+      const _tokenPrice = await erc1155Tradable.getPriceToken(tokenId);
+      console.log("Max supply token: ", _maxSupplyToken);
+      console.log("Price of token: ", _tokenPrice);
+      expect(_maxSupplyToken).to.equal(maxSupplyToken);
+      expect(_tokenPrice).to.equal(0);
+      const tokenSupplyBeforeMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
+
+      //user mint
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          erc1155TradbleAddress,
+          userContract,
+          89, // 2 ETH
+          "userMint",
+          [userContract, tokenId, 2, "0x00"], // mint 2 token when price is 0
+          private_keys[3]
+        );
+      } catch (error) {
+        expect(error.toString()).to.include("MAX_QUANTITY");
+      }
+
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        erc1155TradbleAddress,
+        userContract,
+        89, // 2 ETH
+        "userMint",
+        [userContract, tokenId, 1, "0x00"],
+        private_keys[3]
+      );
+      const tokenSupplyafterMint = await erc1155Tradable.tokenSupply(tokenId);
+      console.log("tokenSupplyafterMint: ", tokenSupplyafterMint);
     });
 
     it("- Test withdraw after user mint", async () => {

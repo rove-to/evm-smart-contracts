@@ -10,15 +10,15 @@
     },
     {
       "trait_type": "rove-asset-bundle-web",
-      "value": "ipfs://QmX8PHHFqDcTJ4g9xdBJw3Ga2CZSR3V6SrzWHaUukA3Z1V"
-    },
-    {
-      "trait_type": "rove-asset-bundle-ios",
-      "value": "ipfs://QmdNGvJPNPD1z7qvUrXcWMJbnNo1BdAUKimGQiQAsgC7Ty"
+      "value": "ipfs://QmYQXQ6r7D537svrvYnpf4QQNU8xc3dJG19cgGdoGEmXjR"
     },
     {
       "trait_type": "rove-asset-bundle-android",
-      "value": "ipfs://QmNaxLB2yc887Vu9GGqXpPHZdGzTd94kdnfBGWptYCd8Y9"
+      "value": "ipfs://QmeBo9jr6qF4hvqMZ7ea22he3kfrmkn3d7oxoWyPh4ZVV6"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://Qme8nokbZfReBv8wCostjry2R7FAywP2G6f5RwSBmjTjzN"
     },
     {
       "trait_type": "rove-asset-bundle-window",
@@ -42,11 +42,11 @@
     },
     {
       "trait_type": "Table color",
-      "value": "Purple"
+      "value": "Slate blue"
     },
     {
       "trait_type": "Lounge chair color",
-      "value": "Purple"
+      "value": "Slate blue"
     },
     {
       "trait_type": "Wall picture",
@@ -54,10 +54,10 @@
     }
   ],
   "description": "Meet at your place? This swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: rove.to",
-  "image": "ipfs://QmQ2qR9rYhLpkQCZ599FhV2wngL9N79uUFnn5zW5bEiXDJ",
-  "name": "The Place to Be-001",
+  "image": "ipfs://QmbPPexxHPkWpdU4i1gaD2LHmVsz7BZ5f1DcF8WW3oZPvs",
+  "name": "The Place to Be - Maximum Blue Purple",
   "external_url": "https://rove.to/",
-  "animation_url": "ipfs://QmSWvepuAieMYn7mhcni26L2sumqGLs6LEeNqTv2s25DJm"
+  "animation_url": "ipfs://QmaF4pAYRx9vPWXtfU3oarRvt4CD1bTuR48feMCb5QFNFN"
 }
 
-ipfs://QmVQkJtJRjutHctQrh1dwRR1U9BuwiRakc5S2p3NNktuUy
+ipfs://QmS4BnfX2brU6tL1ncnZY3ALVCkVHd2eS7jbzmm7CUWXFH

@@ -1,0 +1,51 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmSntrc6BkrpJ5pS4eTqJHp5SQxpttZsVmHHmz9gwFBff7"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmRQYevmTM9jxXU2kFAGxZApsAUoYduWvhUtMNvWhvemCk"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmQDdm2Y5n9s4tTtiL4q6GP9RY8H1M9womxpUegFAvmBou"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmPuF5J4v1vGXeMW47a6FmxxAu8GkVFAVFf4K2Ks3Xn8MN"
+    },
+    {
+      "trait_type": "Object",
+      "value": "speaker"
+    }
+  ],
+  "description": "Host your next community meetup in a 3D space you guys can build together and hang out in.",
+  "image": "ipfs://QmNp9GuYYLze95eCbfnt8yG6ha3JQK1x1jCTdABqnsu8iZ",
+  "name": "Atrium",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://Qmc1Jwovdo8DiSSX823TwxTKFo3M23uzb5FzBqdb95hygR"
+}
+
+ipfs://QmWoYGEp4gS6GPBfdX1aJvshp1fDTudzz6RUy9TsHm6HCk

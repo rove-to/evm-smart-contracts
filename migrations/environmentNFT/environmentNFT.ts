@@ -64,6 +64,7 @@ class EnvironmentNFT {
             return;
         }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
+        // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
         const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress);
 
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
@@ -106,13 +107,18 @@ class EnvironmentNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
+        const fun = temp?.nftContract.methods.setCustomURI(tokenID, newTokenURI);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.setCustomURI(tokenID, newTokenURI).encodeABI(),
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
         }
 
         return await this.signedAndSendTx(temp?.web3, tx);
@@ -282,13 +288,18 @@ class EnvironmentNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
+        const fun = temp?.nftContract.methods.withdraw(to);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
             to: contractAddress,
             nonce: nonce,
             gas: gas,
-            data: temp?.nftContract.methods.withdraw(to).encodeABI(),
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
         }
 
         return await this.signedAndSendTx(temp?.web3, tx);
