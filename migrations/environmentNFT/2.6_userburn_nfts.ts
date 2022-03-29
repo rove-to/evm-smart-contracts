@@ -17,8 +17,8 @@ const {ethers} = require("hardhat");
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 5) {
-            nftContract = process.argv[5];
+        if (process.argv.length > 3) {
+            nftContract = process.argv[3];
         }
         console.log("nftContract:", nftContract);
 
