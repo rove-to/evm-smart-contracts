@@ -44,7 +44,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         uint price;
         uint amount;
         bool closed;
-        address erc_20_token;
+        address erc20Token;
     }
 
     struct closeOfferingData {
@@ -131,9 +131,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].price = _price;
         offeringRegistry[offeringId].amount = _amount;
         if (_erc_20_token != address(0x0)) {
-            offeringRegistry[offeringId].erc_20_token = _erc_20_token;
+            offeringRegistry[offeringId].erc20Token = _erc_20_token;
         } else {
-            offeringRegistry[offeringId].erc_20_token = roveToken;
+            offeringRegistry[offeringId].erc20Token = roveToken;
         }
         console.log("init offeringId: %s", toHex(offeringId));
 
@@ -144,7 +144,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
     function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant {
         // buyer is sender
-        ERC20 token = ERC20(offeringRegistry[_offeringId].erc_20_token);
+        ERC20 token = ERC20(offeringRegistry[_offeringId].erc20Token);
 
         closeOfferingData memory _closeOfferingData = closeOfferingData(
             msg.sender,
@@ -153,7 +153,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             offeringRegistry[_offeringId].price * _amount,
             token.balanceOf(msg.sender),
             token.allowance(msg.sender, address(this)),
-            offeringRegistry[_offeringId].erc_20_token
+            offeringRegistry[_offeringId].erc20Token
         );
 
         console.log("get price of offering: %s", _closeOfferingData.price);
