@@ -16,7 +16,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price, string uri);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, string uri);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event OfferingRemain(bytes32 indexed offeringId, address indexed buyer, uint indexed amount);
     event BalanceWithdrawn (address indexed beneficiary, uint amount);
@@ -139,7 +139,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         string memory uri = hostContract.uri(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc_20_token, _price, uri);
     }
 
     function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant {
@@ -197,7 +197,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
-            _balances[operator][_closeOfferingData.erc20Token] += _benefit.benefitOperator;
+            _balances[_closeOfferingData.erc20Token][operator] += _benefit.benefitOperator;
         }
         // benefit of minter nfts here
         _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
@@ -210,7 +210,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
                     console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
                     console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
-                    _balances[_receiver][_closeOfferingData.erc20Token] += _benefit.benefitCreator;
+                    _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
                 }
             }
         } else {
@@ -222,7 +222,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
                     console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
                     console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
-                    _balances[_receiver][_closeOfferingData.erc20Token] += _benefit.benefitCreator;
+                    _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
                 }
             }
         }
@@ -236,7 +236,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.totalPrice);
-        _balances[offerer][_closeOfferingData.erc20Token] += _closeOfferingData.totalPrice;
+        _balances[_closeOfferingData.erc20Token][offerer] += _closeOfferingData.totalPrice;
 
         // close offering
         if (remainAmount == 0) {
@@ -252,26 +252,25 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     function withdrawBalance(address _erc_20_token) external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        console.log("balance of sender: ", _balances[withdrawer][_erc_20_token]);
-        require(_balances[withdrawer][_erc_20_token] > 0, "You don't have any balance to withdraw");
+        console.log("balance of sender: ", _balances[_erc_20_token][withdrawer]);
+        require(_balances[_erc_20_token][withdrawer] > 0, "You don't have any balance to withdraw");
 
         ERC20 token = ERC20(_erc_20_token);
         uint256 balance = token.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
-        require(balance >= _balances[withdrawer][_erc_20_token], "Not enough balance for withdraw");
+        require(balance >= _balances[_erc_20_token][withdrawer], "Not enough balance for withdraw");
 
 
         // tranfer erc-20 token from this market contract to sender
-        uint amount = _balances[withdrawer][_erc_20_token];
+        uint amount = _balances[_erc_20_token][withdrawer];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
         bool success = token.transfer(withdrawer, amount);
         require(success == true, "transfer erc-20 failure");
 
         // reset balance
-        _balances[withdrawer][_erc_20_token] = 0;
-        //        roveToken.approve(withdrawer, _balances[withdrawer]);
+        _balances[_erc_20_token][withdrawer] = 0;
 
         emit BalanceWithdrawn(withdrawer, amount);
     }
@@ -308,7 +307,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     function viewBalances(address _address, address _erc_20_token) external view returns (uint) {
-        return (_balances[_address][_erc_20_token]);
+        return (_balances[_erc_20_token][_address]);
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
