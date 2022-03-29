@@ -216,6 +216,10 @@ class EnvironmentNFT {
     }
 
     async userBurnEnvironmentNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number) {
+        if (tokenIds.length == 0 || amounts.length == 0 || tokenIds.length != amounts.length) {
+            console.log("Data is invalid")
+            return
+        }
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
