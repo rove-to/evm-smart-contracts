@@ -220,7 +220,7 @@ describe("Marketplace contract", function () {
       }
     });
 
-    it.only("* Stop offering", async function () {
+    it("* Stop offering", async function () {
       let contract = require(path.resolve(
         "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json"
       ));
@@ -662,15 +662,12 @@ describe("Marketplace contract", function () {
       }
     });
 
-    it.only("* Test withdraw with difference token", async function () {
+    it("* Test withdraw with difference token", async function () {
       /*
       1. Deploy 2 tokens
       2. Place offer token 1
       3. Buyer close offer and withdraw with token 2
     */
-      const marketplace2Address = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
-      // create new token
-
       // nftOwner approve for market place contract
       let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
       let receipt = await tx.wait();
@@ -683,7 +680,7 @@ describe("Marketplace contract", function () {
       expect(events[0].args[2]).to.equal(true);
 
       // nftOwner place offering with price 5 rove token at marketplace 1
-      const priceOffer = 5 * decimals;
+      const priceOffer = 6 * decimals;
       const amountPlaceOffer = 7;
       tx = await roveMarketplace.placeOffering(
         objectNFTAddress,
@@ -719,6 +716,98 @@ describe("Marketplace contract", function () {
         [offeringId, amountCloseOffer],
         buyerPrivateKey
       );
+      // Offerer withdraw another token
+      try {
+        tx = await roveMarketplace.withdrawBalance(roveToken2ContractAddress);
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "You don't have any balance to withdraw"
+        );
+      }
+    });
+    it.skip("* Test withdraw when not enough balance", async function () {
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token at marketplace 1
+      const priceOffer = 6 * decimals;
+      const amountPlaceOffer = 7;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer;
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer * amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // buyer close order at market
+      await signAnotherContractThenExcuteFunction(
+        roveMaketJson,
+        roveMarketplaceAddress,
+        buyer,
+        "closeOffering",
+        [offeringId, amountCloseOffer],
+        buyerPrivateKey
+      );
+      nftOwnerBalanceRoveTokenOnMarketBeforeWithdraw =
+        await roveMarketplace.viewBalances(nftOwner, roveTokenContractAddress);
+      console.log(
+        "Nft Owner Balance Rove Token On Market before withdraw: ",
+        nftOwnerBalanceRoveTokenOnMarketBeforeWithdraw
+      );
+
+      // Offerer withdraw
+      tx = await roveMarketplace.withdrawBalance(roveTokenContractAddress);
+      await tx.wait();
+      // view balance market place again
+      nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(
+        nftOwner,
+        roveTokenContractAddress
+      );
+      console.log(
+        "Nft Owner Balance Rove Token On Market: ",
+        nftOwnerBalanceRoveTokenOnMarket
+      );
+      expect(nftOwnerBalanceRoveTokenOnMarket).to.equal(0);
+      // check erc-20 balance
+      const nftOwnerWithdrawBalance = await roveToken.balanceOf(nftOwner);
+      console.log("nftOwnerWithdrawBalance: ", nftOwnerWithdrawBalance);
+      if (nftOwner != roveTokenAdmin) {
+        expect(nftOwnerWithdrawBalance).to.equal(
+          priceOffer * amountCloseOffer - creatorBenefit
+        );
+      } else {
+        expect(nftOwnerWithdrawBalance).to.equal(priceOffer * amountCloseOffer);
+      }
+      // offerer continue withdraw
+      // await roveMarketplace.withdrawBalance(roveTokenContractAddress);
+      // const creatorBenefitAmount = await roveToken.balanceOf(operator_address);
+      // console.log("Creator benifit amount: ", creatorBenefitAmount);
     });
   });
 });
