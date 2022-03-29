@@ -15,7 +15,7 @@ function sleep(second) {
   });
 }
 
-describe.only("Marketplace contract", function () {
+describe("Marketplace contract", function () {
   let roveToken;
   let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
   let roveTokenContractAddress;
@@ -43,6 +43,10 @@ describe.only("Marketplace contract", function () {
     "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
   const nftPrice = 10;
   const maxNftNumber = 100;
+  const roveMaketJson =
+    "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
+  const roveTokenJson =
+    "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
 
   beforeEach(async function () {
     // deploy rove token
@@ -348,11 +352,6 @@ describe.only("Marketplace contract", function () {
     });
 
     it("* Test buyer approve for market smaller than total NFTs price ", async function () {
-      const roveMaketJson =
-        "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
-      const roveTokenJson =
-        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
-
       // nftOwner approve for market place contract
       let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
       let receipt = await tx.wait();
@@ -409,12 +408,7 @@ describe.only("Marketplace contract", function () {
       }
     });
 
-    it.only("* Test buyer close offer with amount greater than offered number", async function () {
-      const roveMaketJson =
-        "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
-      const roveTokenJson =
-        "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
-
+    it("* Test buyer close offer with amount greater than offered amount", async function () {
       // nftOwner approve for market place contract
       let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
       let receipt = await tx.wait();
@@ -454,7 +448,7 @@ describe.only("Marketplace contract", function () {
         buyerPrivateKey
       );
 
-      // buyer close order
+      // buyer close order with amount > offered amount
       try {
         await signAnotherContractThenExcuteFunction(
           roveMaketJson,
@@ -466,6 +460,185 @@ describe.only("Marketplace contract", function () {
         );
       } catch (error) {
         expect(error.toString()).to.include("Amount > offering amount");
+      }
+    });
+
+    it("* Test buyer is not enough funds erc-20 to buy", async function () {
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token
+      const priceOffer = 5000000000 * decimals;
+      const amountPlaceOffer = 3;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer;
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer * amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // buyer close order with amount > offered amount
+      try {
+        await signAnotherContractThenExcuteFunction(
+          roveMaketJson,
+          roveMarketplaceAddress,
+          buyer,
+          "closeOffering",
+          [offeringId, amountCloseOffer],
+          buyerPrivateKey
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "Buyer not enough funds erc-20 to buy"
+        );
+      }
+    });
+
+    it("* Test place offering at 2 marketplaces", async function () {
+      const marketplace2Address = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
+      let roveMarketplace2;
+      let marketContract2 = await ethers.getContractFactory(
+        "RoveMarketPlaceV2"
+      );
+      // deploy second
+      roveMarketplace2 = await marketContract2.deploy(
+        marketplace2Address,
+        roveTokenContractAddress,
+        paramControlAddress
+      );
+      roveMarketplace2Address = roveMarketplace2.address;
+      console.log(
+        "Rove Market place 2 contract address",
+        roveMarketplace2Address
+      );
+      // nftOwner approve for market place 1 contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner approve for market place 2 contract
+      let tx2 = await objectNFT.setApprovalForAll(
+        roveMarketplace2Address,
+        true
+      );
+      let receipt2 = await tx2.wait();
+      let events2 = receipt2.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events2.length).to.equal(1);
+      expect(events2[0].args[0]).to.equal(nftOwner);
+      expect(events2[0].args[1]).to.equal(roveMarketplace2Address);
+      expect(events2[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token at marketplace 1
+      const priceOffer = 5 * decimals;
+      const amountPlaceOffer = 7;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // nftOwner place offering with price 5 rove token at marketplace 2
+      const amountPlaceOffer2 = 4;
+      tx2 = await roveMarketplace2.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer2
+      );
+      receipt2 = await tx2.wait();
+      events2 = receipt2.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events2.length).to.equal(1);
+      const offeringId2 = events2[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer;
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer * amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // buyer close order at market 1
+      await signAnotherContractThenExcuteFunction(
+        roveMaketJson,
+        roveMarketplaceAddress,
+        buyer,
+        "closeOffering",
+        [offeringId, amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // buyer close offer at market 2
+      const amountCloseOffer2 = amountPlaceOffer2;
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplace2Address, priceOffer * amountCloseOffer2],
+        buyerPrivateKey
+      );
+      try {
+        await signAnotherContractThenExcuteFunction(
+          roveMaketJson,
+          roveMarketplace2Address,
+          buyer,
+          "closeOffering",
+          [offeringId2, amountCloseOffer2],
+          buyerPrivateKey
+        );
+      } catch (error) {
+        expect(error.toString()).to.include(
+          "Not enough token erc-1155 to sell"
+        );
       }
     });
   });
