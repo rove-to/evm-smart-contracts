@@ -37,6 +37,7 @@
     "hardhat": "^2.8.4",
     "hardhat-contract-sizer": "^2.5.0",
     "hardhat-gas-reporter": "^1.0.8",
+    "thumbor": "^0.1.5",
     "truffle": "^5.4.27"
   },
   "directories": {

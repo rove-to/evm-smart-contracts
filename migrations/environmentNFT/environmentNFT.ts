@@ -193,6 +193,54 @@ class EnvironmentNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
+    async userBurnEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        const fun = temp?.nftContract.methods.burn(to, tokenId, amount)
+        //the transaction
+        let tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            value: 0,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async userBurnEnvironmentNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number) {
+        if (tokenIds.length == 0 || amounts.length == 0 || tokenIds.length != amounts.length) {
+            console.log("Data is invalid")
+            return
+        }
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        const fun = temp?.nftContract.methods.burnBatch(to, tokenIds, amounts)
+        //the transaction
+        let tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            value: 0,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
     async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
