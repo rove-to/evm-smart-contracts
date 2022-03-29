@@ -101,7 +101,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc_20_token, uint _price, uint _amount) external nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant {
         // owner nft is sender
         address nftOwner = msg.sender;
         // get hostContract of erc-1155
@@ -130,8 +130,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
         offeringRegistry[offeringId].amount = _amount;
-        if (_erc_20_token != address(0x0)) {
-            offeringRegistry[offeringId].erc20Token = _erc_20_token;
+        if (_erc20Token != address(0x0)) {
+            offeringRegistry[offeringId].erc20Token = _erc20Token;
         } else {
             offeringRegistry[offeringId].erc20Token = roveToken;
         }
@@ -139,7 +139,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         string memory uri = hostContract.uri(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc_20_token, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
     }
 
     function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant {
@@ -249,28 +249,28 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         }
     }
 
-    function withdrawBalance(address _erc_20_token) external nonReentrant {
+    function withdrawBalance(address _erc20Token) external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        console.log("balance of sender: ", _balances[_erc_20_token][withdrawer]);
-        require(_balances[_erc_20_token][withdrawer] > 0, "You don't have any balance to withdraw");
+        console.log("balance of sender: ", _balances[_erc20Token][withdrawer]);
+        require(_balances[_erc20Token][withdrawer] > 0, "You don't have any balance to withdraw");
 
-        ERC20 token = ERC20(_erc_20_token);
+        ERC20 token = ERC20(_erc20Token);
         uint256 balance = token.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
-        require(balance >= _balances[_erc_20_token][withdrawer], "Not enough balance for withdraw");
+        require(balance >= _balances[_erc20Token][withdrawer], "Not enough balance for withdraw");
 
 
         // tranfer erc-20 token from this market contract to sender
-        uint amount = _balances[_erc_20_token][withdrawer];
+        uint amount = _balances[_erc20Token][withdrawer];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
         bool success = token.transfer(withdrawer, amount);
         require(success == true, "transfer erc-20 failure");
 
         // reset balance
-        _balances[_erc_20_token][withdrawer] = 0;
+        _balances[_erc20Token][withdrawer] = 0;
 
         emit BalanceWithdrawn(withdrawer, amount);
     }
@@ -306,8 +306,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         );
     }
 
-    function viewBalances(address _address, address _erc_20_token) external view returns (uint) {
-        return (_balances[_erc_20_token][_address]);
+    function viewBalances(address _address, address _erc20Token) external view returns (uint) {
+        return (_balances[_erc20Token][_address]);
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
