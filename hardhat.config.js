@@ -48,6 +48,22 @@ module.exports = {
             url: process.env.POLYGON_MUMBAI_API_URL,
             accounts: [`0x${process.env.PRIVATE_KEY}`],
         },
+        fantom: {
+            url: process.env.FANTOM_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        fantom_testnet: {
+            url: process.env.FANTOM_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        harmony: {
+            url: process.env.HARMONY_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        harmony_testnet: {
+            url: process.env.HARMONY_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        }
     },
     mocha: {
         timeout: 4000000,

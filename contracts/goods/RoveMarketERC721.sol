@@ -26,7 +26,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     address public roveToken; // require using this erc-20 token in this market
     address public parameterControl;
 
-    mapping(address => uint) private _balances;
+    mapping(address => mapping(address => uint)) private _balances;
 
     struct benefit {
         uint256 benefitPercentCreator;
@@ -50,6 +50,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         uint originPrice;
         uint256 balanceBuyer;
         uint256 approvalToken;
+        address erc20Token;
     }
 
     mapping(bytes32 => offering) offeringRegistry;
@@ -137,7 +138,8 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
             offeringRegistry[_offeringId].price,
             offeringRegistry[_offeringId].price,
             token.balanceOf(msg.sender),
-            token.allowance(msg.sender, address(this))
+            token.allowance(msg.sender, address(this)),
+            offeringRegistry[_offeringId].erc_20_token
         );
 
         console.log("get price of offering: %s", _closeOfferingData.price);
@@ -180,7 +182,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
             _closeOfferingData.price -= _benefit.benefitOperator;
             console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
-            _balances[operator] += _benefit.benefitOperator;
+            _balances[operator][_closeOfferingData.erc20Token] += _benefit.benefitOperator;
         }
 
         // tranfer erc-20 token to this market contract
@@ -190,7 +192,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
         // update balance(on market) of offerer
         console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.price);
-        _balances[offerer] += _closeOfferingData.price;
+        _balances[offerer][_closeOfferingData.erc20Token] += _closeOfferingData.price;
 
         // close offering
         offeringRegistry[_offeringId].closed = true;
@@ -199,28 +201,28 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
     }
 
-    function withdrawBalance() external nonReentrant {
+    function withdrawBalance(address _erc_20_token) external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        console.log("balance of sender: ", _balances[withdrawer]);
-        require(_balances[withdrawer] > 0, "You don't have any balance to withdraw");
+        console.log("balance of sender: ", _balances[withdrawer][_erc_20_token]);
+        require(_balances[withdrawer][_erc_20_token] > 0, "You don't have any balance to withdraw");
 
-        ERC20 token = ERC20(roveToken);
+        ERC20 token = ERC20(_erc_20_token);
         uint256 balance = token.balanceOf(address(this));
         console.log("balance of market place: ", balance);
         // check require balance of this market contract > sender's withdraw
-        require(balance >= _balances[withdrawer], "Not enough balance for withdraw");
+        require(balance >= _balances[withdrawer][_erc_20_token], "Not enough balance for withdraw");
 
 
         // tranfer erc-20 token from this market contract to sender
-        uint amount = _balances[withdrawer];
+        uint amount = _balances[withdrawer][_erc_20_token];
         //payable(withdrawer).transfer(amount);
         console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
         bool success = token.transfer(withdrawer, amount);
         require(success == true, "transfer erc-20 failure");
 
         // reset balance
-        _balances[withdrawer] = 0;
+        _balances[withdrawer][_erc_20_token] = 0;
         //        roveToken.approve(withdrawer, _balances[withdrawer]);
 
         emit BalanceWithdrawn(withdrawer, amount);
@@ -252,8 +254,8 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         return (offeringRegistry[_offeringId].hostContract, offeringRegistry[_offeringId].tokenId, offeringRegistry[_offeringId].price, offeringRegistry[_offeringId].closed);
     }
 
-    function viewBalances(address _address) external view returns (uint) {
-        return (_balances[_address]);
+    function viewBalances(address _address, address _erc_20_token) external view returns (uint) {
+        return (_balances[_address][_erc_20_token]);
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
