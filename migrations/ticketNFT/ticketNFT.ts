@@ -26,7 +26,7 @@ class TicketNFT {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/services/TicketNFT.sol/Ticket.json"));
+        let contract = require(path.resolve("./artifacts/contracts/services/TicketNFT.sol/TicketNFT.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
         return {web3, nftContract};

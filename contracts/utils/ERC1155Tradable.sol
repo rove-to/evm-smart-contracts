@@ -243,7 +243,7 @@ contract ERC1155Tradable is ContextMixin, ERC1155PresetMinterPauser, NativeMetaT
         bytes memory _data,
         uint256 _price,
         uint256 _max
-    ) public operatorOnly
+    ) virtual public operatorOnly
     returns (uint256) {
         require(hasRole(CREATOR_ROLE, _msgSender()), "NOT_CREATOR");
         require(!_exists(_id), "ALREADY_EXIST");

@@ -10,7 +10,7 @@ import {ParamControl} from "./paramControl";
         }
         const nft = new ParamControl(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         const address = await nft.deploy('');
-        console.log("%s EnvironmentNFT deployed address: %s", process.env.NETWORK, address);
+        console.log("%s Param control deployed address: %s", process.env.NETWORK, address);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);

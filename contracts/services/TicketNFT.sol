@@ -12,7 +12,7 @@ import "../governance/ParameterControl.sol";
  *
  */
 
-contract Ticket is ERC1155Tradable {
+contract TicketNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
 
     using Counters for Counters.Counter;
@@ -39,6 +39,19 @@ contract Ticket is ERC1155Tradable {
         address previousParameterControl = parameterControlAdd;
         parameterControlAdd = _new;
         emit ParameterControlChanged(previousParameterControl, parameterControlAdd);
+    }
+
+    function create(
+        address _initialOwner,
+        uint256 _id,
+        uint256 _initialSupply,
+        string memory _uri,
+        bytes memory _data,
+        uint256 _price,
+        uint256 _max
+    ) public operatorOnly override
+    returns (uint256) {
+        return 0;
     }
 
     function _createTicket(
