@@ -1,0 +1,57 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmWNdhuzPU7kEKakeN8cTEFNp2Hy4asgUm2U2MH1YKR6UV"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmTLRyodvn3A1JBxrqqGNH7Y8KT1tHf8eSbQ3Kodx54Y8m"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmZPp7H9TvkDfMJEZoeQvuPgJ3AJvcuT8rqsjzXb87FfAP"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmPuF5J4v1vGXeMW47a6FmxxAu8GkVFAVFf4K2Ks3Xn8MN"
+    },
+    {
+      "trait_type": "Wall color",
+      "value": ""
+    },
+    {
+      "trait_type": "Table color",
+      "value": ""
+    },
+    {
+      "trait_type": "Wall picture",
+      "value": "MyConstant"
+    }
+  ],
+  "description": "",
+  "image": "ipfs://Qmd3qZcTuxViPkgDU8DNx7NxHqgQ1H5yYHMvC3MfHNcUpT",
+  "name": "The Place to Be - MyConstant",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmUrV6KnSmo9aWK1jrFYQkz3S9xzGU53y3Lb1SZC9fmPAY"
+}
