@@ -38,20 +38,22 @@
     },
     {
       "trait_type": "Wall color",
-      "value": ""
+      "value": "Iceberg"
     },
     {
       "trait_type": "Table color",
-      "value": ""
+      "value": "Celtic Blue"
     },
     {
       "trait_type": "Wall picture",
       "value": "MyConstant"
     }
   ],
-  "description": "",
+  "description": "Meet at your place? Rove x MyConstant to make this swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: https://rove.to",
   "image": "ipfs://Qmd3qZcTuxViPkgDU8DNx7NxHqgQ1H5yYHMvC3MfHNcUpT",
   "name": "The Place to Be - MyConstant",
   "external_url": "https://rove.to/",
   "animation_url": "ipfs://QmUrV6KnSmo9aWK1jrFYQkz3S9xzGU53y3Lb1SZC9fmPAY"
 }
+
+ipfs://QmQ2B2NhSLx6svwhQBdnGtz5eDiCRqiBteGnwdbEoVvJ17
