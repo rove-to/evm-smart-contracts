@@ -13,6 +13,8 @@ import "../governance/ParameterControl.sol";
  */
 
 contract Ticket is ERC1155Tradable {
+    event ParameterControlChanged (address previous, address new_);
+
     using Counters for Counters.Counter;
     using SafeMath for uint256;
     Counters.Counter private _tokenIds;
@@ -27,6 +29,16 @@ contract Ticket is ERC1155Tradable {
     ) public {
         require(_parameterAdd != address(0x0), "ADDRES_INVALID");
         parameterControlAdd = _parameterAdd;
+    }
+
+    function changeParameterControl(address _new) external {
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_new != address(0x0), "ADDRESS_INVALID");
+
+        address previousParameterControl = parameterControlAdd;
+        parameterControlAdd = _new;
+        emit ParameterControlChanged(previousParameterControl, parameterControlAdd);
     }
 
     function _createTicket(
