@@ -12,7 +12,7 @@ import "../governance/ParameterControl.sol";
  *
  */
 
-contract Ticket is ERC1155Tradable {
+contract TicketNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
 
     using Counters for Counters.Counter;
