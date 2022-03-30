@@ -79,10 +79,9 @@ contract Ticket is ERC1155Tradable {
         tokenSupply[_id] = tokenSupply[_id].add(_quantity);
 
         // check purchaseFee
-        ParameterControl _p = ParameterControl(parameterControlAdd);
-        uint256 purchaseFeePercent = _p.getUInt256("TICKET_PUR_FEE");
-        if (purchaseFeePercent > 0) {
-            require(msg.value > 0, "NOT_ENOUGH");
+        if (price_tokens[_id] > 0) {
+            ParameterControl _p = ParameterControl(parameterControlAdd);
+            uint256 purchaseFeePercent = _p.getUInt256("TICKET_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
             (bool success,) = creators[_id].call{value : msg.value - fee}("");
             require(success, "FAIL");
