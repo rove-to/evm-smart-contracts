@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 import "../governance/ParameterControl.sol";
 import "../utils/IERC1155Tradable.sol";
@@ -60,7 +60,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     bytes32[] private _arrayOffering;
 
     constructor (address operator_, address parameterControl_) {
-        console.log("Deploy Rove market place operator %s", operator_);
+        //        console.log("Deploy Rove market place operator %s", operator_);
         require(operator_ != address(0x0), "ADDRESS_INVALID");
         require(parameterControl_ != address(0x0), "ADDRES_INVALID");
 
@@ -172,9 +172,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             );
         }
 
-        console.log("get price of offering: %s", _closeOfferingData.price);
+        /*console.log("get price of offering: %s", _closeOfferingData.price);
         console.log("get total price of offering: %s", _closeOfferingData.totalPrice);
-        console.log("get balance erc-20 token of buyer %s: %s", _closeOfferingData.buyer, _closeOfferingData.balanceBuyer);
+        console.log("get balance erc-20 token of buyer %s: %s", _closeOfferingData.buyer, _closeOfferingData.balanceBuyer);*/
 
 
         // check require
@@ -191,14 +191,14 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         require(!_offer.closed, "OFFERING_CLOSED");
 
         // transfer erc-1155
-        console.log("prepare safeTransferFrom offerer %s by this address %s", _offer.offerer, address(this));
+        //        console.log("prepare safeTransferFrom offerer %s by this address %s", _offer.offerer, address(this));
         // only transfer one in this version
         hostContract.safeTransferFrom(_offer.offerer, _closeOfferingData.buyer, _offer.tokenId, _amount, "0x");
-        console.log("safeTransferFrom erc-1155 tokenID %s from %s to buyer %s",
+        /*console.log("safeTransferFrom erc-1155 tokenID %s from %s to buyer %s",
             _offer.tokenId,
             _offer.offerer,
             _closeOfferingData.buyer
-        );
+        );*/
 
         // logic for 
         // benefit of operator here
@@ -208,7 +208,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         if (_benefit.benefitPercentOperator > 0) {
             _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
-            console.log("market operator profit %s", _benefit.benefitOperator);
+            //            console.log("market operator profit %s", _benefit.benefitOperator);
             // update balance(on market) of operator
             _balances[_closeOfferingData.erc20Token][operator] += _benefit.benefitOperator;
         }
@@ -220,9 +220,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
                 if (_receiver != address(0x0)) {
                     _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-                    console.log("creator profit %s", _benefit.benefitCreator);
+                    //                    console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
-                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
+                    //                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
                     _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
                 }
             }
@@ -232,9 +232,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
                 if (_receiver != address(0x0)) {
                     _benefit.benefitCreator = _royaltyAmount;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-                    console.log("creator profit %s", _benefit.benefitCreator);
+                    //                    console.log("creator profit %s", _benefit.benefitCreator);
                     // update balance(on market) of creator erc-1155
-                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
+                    //                    console.log("benefit creator %s: +%s", _receiver, _benefit.benefitCreator);
                     _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
                 }
             }
@@ -242,7 +242,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         if (isERC20) {
             // tranfer erc-20 token to this market contract
-            console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+            //            console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
             bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
             require(success == true, "TRANSFER_FAIL");
             _offer.amount -= _amount;
@@ -255,10 +255,10 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // close offering
         if (remainAmount == 0) {
             _offer.closed = true;
-            console.log("close offering: ", toHex(_offeringId));
+            //            console.log("close offering: ", toHex(_offeringId));
             emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
         } else {
-            console.log("remain amount of offering %s:%s", toHex(_offeringId), remainAmount);
+            //            console.log("remain amount of offering %s:%s", toHex(_offeringId), remainAmount);
             emit OfferingRemain(_offeringId, _closeOfferingData.buyer, remainAmount);
         }
     }
@@ -266,19 +266,19 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     function withdrawBalance(address _erc20Token) external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        console.log("balance of sender: ", _balances[_erc20Token][withdrawer]);
+        //        console.log("balance of sender: ", _balances[_erc20Token][withdrawer]);
         uint _withdrawAvailable = _balances[_erc20Token][withdrawer];
         require(_withdrawAvailable > 0, "WITHDRAW_UNAVAILABLE");
 
         if (_erc20Token != address(0x0)) {
             ERC20 token = ERC20(_erc20Token);
             uint256 balanceErc20 = token.balanceOf(address(this));
-            console.log("balance of market place: ", balanceErc20);
+            //            console.log("balance of market place: ", balanceErc20);
             // check require balance of this market contract > sender's withdraw
             require(balanceErc20 >= _balances[_erc20Token][withdrawer], "INVALID_FUND");
 
             // tranfer erc-20 token from this market contract to sender
-            console.log("tranfer erc-20 %s from this market contract %s to sender %s", _erc20Token, address(this), withdrawer);
+            //            console.log("tranfer erc-20 %s from this market contract %s to sender %s", _erc20Token, address(this), withdrawer);
             bool success = token.transfer(withdrawer, _withdrawAvailable);
             require(success == true, "TRANSFER_FAIL");
         } else {
