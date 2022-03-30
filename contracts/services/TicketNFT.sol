@@ -32,8 +32,8 @@ contract Ticket is ERC1155Tradable {
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "OPERATOR_ONLY");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(msg.sender == admin, "ADMIN_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "ADMIN_ONLY");
         require(_new != address(0x0), "ADDRESS_INVALID");
 
         address previousParameterControl = parameterControlAdd;
