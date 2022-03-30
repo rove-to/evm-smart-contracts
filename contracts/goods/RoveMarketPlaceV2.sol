@@ -25,7 +25,6 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     event ApprovalForAll(address owner, address operator, bool approved);
 
     address public operator; // is a mutil sig address when deploy
-    address public roveToken; // require using this erc-20 token in this market
     address public parameterControl;
 
     mapping(address => mapping(address => uint)) private _balances;
@@ -60,10 +59,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
-    constructor (address operator_, address roveToken_, address parameterControl_) {
-        console.log("Deploy Rove market place operator %s, rove token %s", operator_, roveToken_);
+    constructor (address operator_, address parameterControl_) {
+        console.log("Deploy Rove market place operator %s", operator_);
         require(operator_ != address(0x0), "operator is zero address");
-        require(roveToken_ != address(0x0), "rove token is zero address");
         require(parameterControl_ != address(0x0), "parametercontrol is zero address");
 
         operator = operator_;
@@ -71,7 +69,6 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         if (operator != _msgSender()) {
             _revokeRole(DEFAULT_ADMIN_ROLE, _msgSender());
         }
-        roveToken = roveToken_;
         parameterControl = parameterControl_;
     }
 
@@ -133,7 +130,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         if (_erc20Token != address(0x0)) {
             offeringRegistry[offeringId].erc20Token = _erc20Token;
         } else {
-            offeringRegistry[offeringId].erc20Token = roveToken;
+            offeringRegistry[offeringId].erc20Token = address(0x0);
         }
         console.log("init offeringId: %s", toHex(offeringId));
 
@@ -142,48 +139,65 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
     }
 
-    function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant {
-        // buyer is sender
-        ERC20 token = ERC20(offeringRegistry[_offeringId].erc20Token);
+    function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant payable {
+        // get offer
+        offering memory _offer = offeringRegistry[_offeringId];
+        IERC1155Tradable hostContract = IERC1155Tradable(_offer.hostContract);
+        uint remainAmount = _offer.amount;
+        bool approvalErc1155 = hostContract.isApprovedForAll(_offer.offerer, address(this));
+        bool isERC20 = _offer.erc20Token != address(0x0);
 
-        closeOfferingData memory _closeOfferingData = closeOfferingData(
-            msg.sender,
-            offeringRegistry[_offeringId].price,
-            offeringRegistry[_offeringId].price * _amount,
-            offeringRegistry[_offeringId].price * _amount,
-            token.balanceOf(msg.sender),
-            token.allowance(msg.sender, address(this)),
-            offeringRegistry[_offeringId].erc20Token
-        );
+        // buyer is sender
+        closeOfferingData memory _closeOfferingData;
+        ERC20 token;
+        if (isERC20) {
+            token = ERC20(_offer.erc20Token);
+            _closeOfferingData = closeOfferingData(
+                msg.sender,
+                _offer.price,
+                _offer.price * _amount,
+                _offer.price * _amount,
+                token.balanceOf(msg.sender),
+                token.allowance(msg.sender, address(this)),
+                _offer.erc20Token
+            );
+        } else {
+            _closeOfferingData = closeOfferingData(
+                msg.sender,
+                _offer.price,
+                _offer.price * _amount,
+                _offer.price * _amount,
+                0,
+                0,
+                address(0x0) // is ETH
+            );
+        }
 
         console.log("get price of offering: %s", _closeOfferingData.price);
         console.log("get total price of offering: %s", _closeOfferingData.totalPrice);
         console.log("get balance erc-20 token of buyer %s: %s", _closeOfferingData.buyer, _closeOfferingData.balanceBuyer);
 
-        // get offer
-        address hostContractOffering = offeringRegistry[_offeringId].hostContract;
-        IERC1155Tradable hostContract = IERC1155Tradable(hostContractOffering);
-        uint tokenID = offeringRegistry[_offeringId].tokenId;
-        address offerer = offeringRegistry[_offeringId].offerer;
-        uint remainAmount = offeringRegistry[_offeringId].amount;
-        bool approval = hostContract.isApprovedForAll(offerer, address(this));
 
         // check require
         // check approval of erc-1155 on this contract
-        require(approval == true, "this contract address is not approved");
+        require(approvalErc1155 == true, "this contract address is not approved erc-1155");
         require(remainAmount >= _amount, "Amount > offering amount");
-        require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
-        require(hostContract.balanceOf(offerer, tokenID) >= _amount, "Not enough token erc-1155 to sell");
-        require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer not enough funds erc-20 to buy");
-        require(!offeringRegistry[_offeringId].closed, "Offering is closed");
+        if (isERC20) {
+            require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
+        } else {
+            require(msg.value >= _closeOfferingData.totalPrice, "Buyer INVALID_FUNDs ETH to buy");
+        }
+        require(hostContract.balanceOf(_offer.offerer, _offer.tokenId) >= _amount, "Not enough token erc-1155 to sell");
+        require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer INVALID_FUNDs erc-20 to buy");
+        require(!_offer.closed, "Offering is closed");
 
         // transfer erc-1155
-        console.log("prepare safeTransferFrom offerer %s by this address %s", offerer, address(this));
+        console.log("prepare safeTransferFrom offerer %s by this address %s", _offer.offerer, address(this));
         // only transfer one in this version
-        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID, _amount, "0x");
+        hostContract.safeTransferFrom(_offer.offerer, _closeOfferingData.buyer, _offer.tokenId, _amount, "0x");
         console.log("safeTransferFrom erc-1155 tokenID %s from %s to buyer %s",
-            tokenID,
-            offerer,
+            _offer.tokenId,
+            _offer.offerer,
             _closeOfferingData.buyer
         );
 
@@ -203,7 +217,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
         if (_benefit.benefitPercentCreator > 0) {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(tokenID, _closeOfferingData.originPrice);
+                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(_offer.tokenId, _closeOfferingData.originPrice);
                 if (_receiver != address(0x0)) {
                     _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
@@ -215,7 +229,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             }
         } else {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(tokenID, _closeOfferingData.originPrice);
+                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(_offer.tokenId, _closeOfferingData.originPrice);
                 if (_receiver != address(0x0)) {
                     _benefit.benefitCreator = _royaltyAmount;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
@@ -227,20 +241,21 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             }
         }
 
-        // tranfer erc-20 token to this market contract
-        console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-        bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-        require(success == true, "transfer erc-20 failure");
-        offeringRegistry[_offeringId].amount -= _amount;
-        remainAmount = offeringRegistry[_offeringId].amount;
-
+        if (isERC20) {
+            // tranfer erc-20 token to this market contract
+            console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+            bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+            require(success == true, "transfer erc-20 failure");
+            _offer.amount -= _amount;
+            remainAmount = _offer.amount;
+        }
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", offerer, _closeOfferingData.totalPrice);
-        _balances[_closeOfferingData.erc20Token][offerer] += _closeOfferingData.totalPrice;
+        console.log("update balance of offerer: %s +%s", _offer.offerer, _closeOfferingData.totalPrice);
+        _balances[_closeOfferingData.erc20Token][_offer.offerer] += _closeOfferingData.totalPrice;
 
         // close offering
         if (remainAmount == 0) {
-            offeringRegistry[_offeringId].closed = true;
+            _offer.closed = true;
             console.log("close offering: ", toHex(_offeringId));
             emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
         } else {
@@ -253,26 +268,30 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
         console.log("balance of sender: ", _balances[_erc20Token][withdrawer]);
-        require(_balances[_erc20Token][withdrawer] > 0, "You don't have any balance to withdraw");
+        uint _withdrawAvailable = _balances[_erc20Token][withdrawer];
+        require(_withdrawAvailable > 0, "WITHDRAW_UNAVAILABLE");
 
-        ERC20 token = ERC20(_erc20Token);
-        uint256 balance = token.balanceOf(address(this));
-        console.log("balance of market place: ", balance);
-        // check require balance of this market contract > sender's withdraw
-        require(balance >= _balances[_erc20Token][withdrawer], "Not enough balance for withdraw");
+        if (_erc20Token != address(0x0)) {
+            ERC20 token = ERC20(_erc20Token);
+            uint256 balanceErc20 = token.balanceOf(address(this));
+            console.log("balance of market place: ", balanceErc20);
+            // check require balance of this market contract > sender's withdraw
+            require(balanceErc20 >= _balances[_erc20Token][withdrawer], "INVALID_FUND");
 
-
-        // tranfer erc-20 token from this market contract to sender
-        uint amount = _balances[_erc20Token][withdrawer];
-        //payable(withdrawer).transfer(amount);
-        console.log("tranfer erc-20 %s from this market contract %s to sender %s", roveToken, address(this), withdrawer);
-        bool success = token.transfer(withdrawer, amount);
-        require(success == true, "transfer erc-20 failure");
+            // tranfer erc-20 token from this market contract to sender
+            console.log("tranfer erc-20 %s from this market contract %s to sender %s", _erc20Token, address(this), withdrawer);
+            bool success = token.transfer(withdrawer, _withdrawAvailable);
+            require(success == true, "TRANSFER_FAIL");
+        } else {
+            require(address(this).balance > 0, "INVALID_FUND");
+            (bool success,) = withdrawer.call{value : _withdrawAvailable}("");
+            require(success, "TRANSFER_FAIL");
+        }
 
         // reset balance
         _balances[_erc20Token][withdrawer] = 0;
 
-        emit BalanceWithdrawn(withdrawer, _erc20Token, amount);
+        emit BalanceWithdrawn(withdrawer, _erc20Token, _withdrawAvailable);
     }
 
     function changeOperator(address _newOperator) external {
