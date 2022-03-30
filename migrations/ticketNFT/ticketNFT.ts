@@ -125,12 +125,12 @@ class TicketNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async createEnvironmentNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, price: string, max: number, tokenURI: string, gas: number) {
+    async publishTicketNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, price: string, max: number, tokenURI: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const eth = ethers.utils.parseEther(price);
-        const fun = temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenURI, eth, max);
+        const fun = temp?.nftContract.methods.publishTicket(initOwnerAddress, initSupply, tokenURI, eth, max);
         console.log(gas);
         //the transaction
         const tx = {
@@ -146,7 +146,7 @@ class TicketNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
+    async mintTicketNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
@@ -167,7 +167,7 @@ class TicketNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async userMintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, ethAmount: string, gas: number) {
+    async userMintTicketNFT(to: any, contractAddress: any, tokenId: number, amount: number, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
@@ -194,7 +194,7 @@ class TicketNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async userBurnEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
+    async userBurnTicketNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
@@ -216,7 +216,7 @@ class TicketNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async userBurnEnvironmentNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number) {
+    async userBurnTicketNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number) {
         if (tokenIds.length == 0 || amounts.length == 0 || tokenIds.length != amounts.length) {
             console.log("Data is invalid")
             return

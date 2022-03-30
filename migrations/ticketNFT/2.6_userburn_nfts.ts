@@ -23,7 +23,7 @@ const {ethers} = require("hardhat");
         console.log("nftContract:", nftContract);
 
         const nft = new TicketNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.userBurnEnvironmentNFTs(to, nftContract, [], [], 0);
+        const tx = await nft.userBurnTicketNFTs(to, nftContract, [], [], 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed

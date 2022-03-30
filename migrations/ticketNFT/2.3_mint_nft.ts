@@ -36,7 +36,7 @@ import {TicketNFT} from "./ticketNFT";
         console.log("nftContract:", nftContract);
 
         const nft = new TicketNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.mintEnvironmentNFT(to, nftContract, tokenId, amount, 500000);
+        const tx = await nft.mintTicketNFT(to, nftContract, tokenId, amount, 500000);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
