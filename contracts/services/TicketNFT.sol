@@ -36,9 +36,9 @@ contract Ticket is ERC1155Tradable {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
         require(_new != address(0x0), "ADDRESS_INVALID");
 
-        address previousParameterControl = parameterControl;
-        parameterControl = _new;
-        emit ParameterControlChanged(previousParameterControl, parameterControl);
+        address previousParameterControl = parameterControlAdd;
+        parameterControlAdd = _new;
+        emit ParameterControlChanged(previousParameterControl, parameterControlAdd);
     }
 
     function _createTicket(
