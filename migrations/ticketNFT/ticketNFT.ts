@@ -84,7 +84,8 @@ class TicketNFT {
 
         const adminAddress: any = await temp?.nftContract.methods.admin().call(tx);
         const operatorAddress: any = await temp?.nftContract.methods.operator().call(tx);
-        return {adminAddress, operatorAddress};
+        const paramControl: any = await temp?.nftContract.methods.parameterControlAdd().call(tx);
+        return {adminAddress, operatorAddress, paramControl};
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
