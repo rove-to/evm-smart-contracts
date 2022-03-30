@@ -331,15 +331,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     function operatorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == operator, "OPERATOR_ONLY");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
-        address hostContractOffering = offeringRegistry[_offeringId].hostContract;
-        ERC1155 hostContract = ERC1155(hostContractOffering);
-        uint tokenID = offeringRegistry[_offeringId].tokenId;
-        address offerer = offeringRegistry[_offeringId].offerer;
-        uint amount = offeringRegistry[_offeringId].amount;
-
-        if (hostContract.balanceOf(offerer, tokenID) <= amount) {
-            offeringRegistry[_offeringId].closed = true;
-            emit OfferingClosed(_offeringId, address(0));
-        }
+        offeringRegistry[_offeringId].closed = true;
+        emit OfferingClosed(_offeringId, address(0));
     }
 }
