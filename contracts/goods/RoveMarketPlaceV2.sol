@@ -19,7 +19,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, string uri);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event OfferingRemain(bytes32 indexed offeringId, address indexed buyer, uint indexed amount);
-    event BalanceWithdrawn (address indexed beneficiary, uint amount);
+    event BalanceWithdrawn (address indexed beneficiary, address erc20, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
     event ParameterControlChanged (address previousOperator, address newOperator);
     event ApprovalForAll(address owner, address operator, bool approved);
@@ -272,7 +272,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // reset balance
         _balances[_erc20Token][withdrawer] = 0;
 
-        emit BalanceWithdrawn(withdrawer, amount);
+        emit BalanceWithdrawn(withdrawer, _erc20Token, amount);
     }
 
     function changeOperator(address _newOperator) external {
