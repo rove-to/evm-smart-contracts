@@ -76,7 +76,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         return _arrayOffering;
     }
 
-    function toHex16(bytes16 data) internal pure returns (bytes32 result) {
+    /*function toHex16(bytes16 data) internal pure returns (bytes32 result) {
         result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000 |
         (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
         result = result & 0xFFFFFFFF000000000000000000000000FFFFFFFF000000000000000000000000 |
@@ -93,9 +93,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F) * 7);
     }
 
-    function toHex(bytes32 data) private pure returns (string memory) {
+    function toHtoHexex(bytes32 data) private pure returns (string memory) {
         return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
-    }
+    }*/
 
     // NFTs's owner place offering
     function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant {
@@ -104,7 +104,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // get hostContract of erc-1155
         ERC1155 hostContract = ERC1155(_hostContract);
         uint256 nftBalance = hostContract.balanceOf(nftOwner, _tokenId);
-        console.log("nftOwner balance: ", nftBalance);
+        //        console.log("nftOwner balance: ", nftBalance);
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
 
         /// check require
@@ -116,7 +116,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         // create offering nonce by counter
         _offeringNonces.increment();
         uint256 newItemId = _offeringNonces.current();
-        console.log("create offering nonce by counter: ", newItemId);
+        //        console.log("create offering nonce by counter: ", newItemId);
 
         // init offering id
         bytes32 offeringId = keccak256(abi.encodePacked(newItemId, _hostContract, _tokenId));
@@ -131,7 +131,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         } else {
             offeringRegistry[offeringId].erc20Token = address(0x0);
         }
-        console.log("init offeringId: %s", toHex(offeringId));
+        //        console.log("init offeringId: %s", toHex(offeringId));
 
         string memory uri = hostContract.uri(_tokenId);
         _arrayOffering.push(offeringId);
@@ -249,7 +249,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             remainAmount = _offer.amount;
         }
         // update balance(on market) of offerer
-        console.log("update balance of offerer: %s +%s", _offer.offerer, _closeOfferingData.totalPrice);
+        //        console.log("update balance of offerer: %s +%s", _offer.offerer, _closeOfferingData.totalPrice);
         _balances[_closeOfferingData.erc20Token][_offer.offerer] += _closeOfferingData.totalPrice;
 
         // close offering
