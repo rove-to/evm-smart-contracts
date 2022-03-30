@@ -61,8 +61,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
     constructor (address operator_, address parameterControl_) {
         console.log("Deploy Rove market place operator %s", operator_);
-        require(operator_ != address(0x0), "operator is zero address");
-        require(parameterControl_ != address(0x0), "parametercontrol is zero address");
+        require(operator_ != address(0x0), "ADDRESS_INVALID");
+        require(parameterControl_ != address(0x0), "ADDRES_INVALID");
 
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
@@ -108,11 +108,10 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
         bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
 
         /// check require
-        // require(msg.sender == _operator, "Only operator dApp can create offerings");
         // check available amount of erc-1155
-        require(nftBalance >= _amount, "NFT owner not enough balance erc-1155");
+        require(nftBalance >= _amount, "BALANCE_INVALID");
         // check approval of erc-1155 on this contract
-        require(approval == true, "this contract address is not approved");
+        require(approval == true, "ERC-1155_NOT_APPROVED");
 
         // create offering nonce by counter
         _offeringNonces.increment();
@@ -180,16 +179,16 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
 
         // check require
         // check approval of erc-1155 on this contract
-        require(approvalErc1155 == true, "this contract address is not approved erc-1155");
-        require(remainAmount >= _amount, "Amount > offering amount");
+        require(approvalErc1155 == true, "ERC-1155_NOT_APPROVED");
+        require(remainAmount >= _amount, "ERC-1155-AMOUNT_INVALID");
+        require(hostContract.balanceOf(_offer.offerer, _offer.tokenId) >= _amount, "ERC-1155_BALANCE_INVALID");
         if (isERC20) {
-            require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "this contract address is not approved for spending erc-20");
+            require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "ERC-20_NOT_APPROVED");
+            require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "ERC-20_BALANCE_INVALID");
         } else {
-            require(msg.value >= _closeOfferingData.totalPrice, "Buyer INVALID_FUNDs ETH to buy");
+            require(msg.value >= _closeOfferingData.totalPrice, "VALUE_INVALID");
         }
-        require(hostContract.balanceOf(_offer.offerer, _offer.tokenId) >= _amount, "Not enough token erc-1155 to sell");
-        require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "Buyer INVALID_FUNDs erc-20 to buy");
-        require(!_offer.closed, "Offering is closed");
+        require(!_offer.closed, "OFFERING_CLOSED");
 
         // transfer erc-1155
         console.log("prepare safeTransferFrom offerer %s by this address %s", _offer.offerer, address(this));
@@ -245,7 +244,7 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
             // tranfer erc-20 token to this market contract
             console.log("tranfer erc-20 token %s to this market contract %s with amount: %s", _closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
             bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-            require(success == true, "transfer erc-20 failure");
+            require(success == true, "TRANSFER_FAIL");
             _offer.amount -= _amount;
             remainAmount = _offer.amount;
         }
@@ -295,9 +294,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     function changeOperator(address _newOperator) external {
-        require(msg.sender == operator, "only the operator can change the current operator");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
-        require(_newOperator != address(0x0), "new operator is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_newOperator != address(0x0), "ADDRESS_INVALID");
 
         address previousOperator = operator;
         operator = _newOperator;
@@ -307,9 +306,9 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "only the operator can change the current operator");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
-        require(_new != address(0x0), "new parametercontrol is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_new != address(0x0), "ADDRESS_INVALID");
 
         address previousParameterControl = parameterControl;
         parameterControl = _new;
@@ -330,8 +329,8 @@ contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
-        require(msg.sender == operator, "Only operator dApp can close offerings");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
         address hostContractOffering = offeringRegistry[_offeringId].hostContract;
         ERC1155 hostContract = ERC1155(hostContractOffering);
         uint tokenID = offeringRegistry[_offeringId].tokenId;
