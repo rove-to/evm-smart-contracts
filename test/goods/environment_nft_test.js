@@ -19,7 +19,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("nft_owner_address", nft_owner_address);
 
         let EnvironmentNFTContract = await ethers.getContractFactory("EnvironmentNFT");
-        environmentNFT = await EnvironmentNFTContract.deploy(nft_owner_address, nft_owner_address);
+        environmentNFT = await EnvironmentNFTContract.deploy(nft_owner_address, nft_owner_address, 'Rove Environments', 'REs');
         console.log("EnvironmentNFTDeploy address", environmentNFT.address);
     });
     describe("* Mint NFT erc-1155", function () {
