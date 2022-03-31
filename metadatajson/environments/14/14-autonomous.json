@@ -1,0 +1,59 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://Qmb7T6GV1QnJo7jq9LU4FhyW5LM99WtYPHn893ihk3HRWN"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmR8DTfq4whiCF7fa4rEaoXFTtPDP1XLk4RdQsQSK7j3Y6"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmP4Q4BMGxwMPVxgQ8m6A4cnKc9gPwQ8WEngPtgUzu7AAa"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": ""
+    },
+    {
+      "trait_type": "Wall color",
+      "value": "Gray"
+    },
+    {
+      "trait_type": "Table color",
+      "value": "White"
+    },
+    {
+      "trait_type": "Wall picture",
+      "value": "Autonomous"
+    }
+  ],
+  "description": "Meet at your place? Rove x Autonomous to make this swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: https://rove.to",
+  "image": "ipfs://QmQBDZFb5MNYpsyzbJMvCNfoE6SZd67FTUuQK6ryswAs7u",
+  "name": "Autonomous x Rove - The Place to Be",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmZWUiQnGT2Aa2MJvqCNzymVPnoV11XnnL3rLTu1HpFeWn"
+}
+
+ipfs://QmWvKULMmV6pg4hvnYA2K6W81wk5dvPanuYcxx5HNh31is
