@@ -81,10 +81,11 @@ contract TicketNFTFor721 is ERC1155Tradable {
         ERC721 _erc721 = ERC721(_erc721Add);
         // get token erc721 id from _data
         uint256 _erc721Id = sliceUint(_data, 0);
-        // check token not minted 
-        require(!minted[_erc721Add][_erc721Id], "MINTED");
         // check owner token id
         require(_erc721.ownerOf(_erc721Id) == msgSender(), "NOT_OWNER_ERC721");
+        // check token not minted 
+        require(!minted[_erc721Add][_erc721Id], "MINTED");
+        
         // marked this erc721 token id is minted ticket
         minted[_erc721Add][_erc721Id] = true;
 
