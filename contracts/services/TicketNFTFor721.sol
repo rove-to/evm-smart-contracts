@@ -3,7 +3,6 @@ pragma solidity 0.8.12;
 
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "../governance/ParameterControl.sol";
@@ -17,12 +16,12 @@ contract TicketNFTFor721 is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
 
     using Counters for Counters.Counter;
-    using SafeMath for uint256;
     Counters.Counter private _tokenIds;
     uint256 public newItemId;
     address public parameterControlAdd;
     mapping(address => bool) whiteList;
     mapping(uint256 => address) whiteListToken;
+    mapping(uint256 => bool) minted;
 
     constructor(address admin, address operator, address _parameterAdd)
     ERC1155Tradable(
@@ -49,6 +48,18 @@ contract TicketNFTFor721 is ERC1155Tradable {
         emit ParameterControlChanged(previousParameterControl, parameterControlAdd);
     }
 
+    function sliceUint(bytes memory bs, uint start)
+    internal pure
+    returns (uint256)
+    {
+        require(bs.length >= start + 32, "OUT_OF_RANGE");
+        uint256 x;
+        assembly {
+            x := mload(add(bs, add(0x20, start)))
+        }
+        return x;
+    }
+
     function userMint(address _to,
         uint256 _id,
         uint256 _quantity,
@@ -57,19 +68,28 @@ contract TicketNFTFor721 is ERC1155Tradable {
         require(_exists(_id), "NONEXIST_TOKEN");
         require(_quantity == 1, "MAX_QUANTITY");
         if (price_tokens[_id] > 0) {
-            require(msg.value >= price_tokens[_id] * _quantity, "MISS_PRICE");
+            require(msg.value >= price_tokens[_id], "MISS_PRICE");
         }
         if (max_supply_tokens[_id] != 0) {
-            require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "REACH_MAX");
+            require(tokenSupply[_id] + _quantity <= max_supply_tokens[_id], "REACH_MAX");
         }
+
+        /* check erc-721 */
         // check whitelist erc721
         address _erc721Add = whiteListToken[_id];
         require(whiteList[_erc721Add], "APPROVED_ERC721");
         ERC721 _erc721 = ERC721(_erc721Add);
-        require(_erc721.balanceOf(msgSender()) >= 1, "NOT_OWNER_ERC721");
+        // get token erc721 id from _data
+        uint256 _erc721Id = sliceUint(_data, 0);
+        // check token not minted 
+        require(!minted[_erc721Id], "MINTED");
+        // check owner token id
+        require(_erc721.ownerOf(_erc721Id) == msgSender(), "NOT_OWNER_ERC721");
+        // marked this erc721 token id is minted ticket
+        minted[_erc721Id] = true;
 
         _mint(_to, _id, _quantity, _data);
-        tokenSupply[_id] = tokenSupply[_id].add(_quantity);
+        tokenSupply[_id] = tokenSupply[_id] + _quantity;
 
         emit MintEvent(_to, _id, _quantity);
     }
@@ -81,8 +101,11 @@ contract TicketNFTFor721 is ERC1155Tradable {
         require(!whiteList[erc721], "IS_EXISTEd");
         _tokenIds.increment();
         newItemId = _tokenIds.current();
+        // marked whitelist for this erc721 contract
         whiteList[erc721] = true;
+        // marked token id ticket for erc721 contract
         whiteListToken[newItemId] = erc721;
+        // create token ticket
         create(recipient, newItemId, initialSupply, tokenURI, "0x", price, max);
         return newItemId;
     }
