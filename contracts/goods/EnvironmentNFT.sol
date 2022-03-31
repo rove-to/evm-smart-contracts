@@ -17,10 +17,10 @@ contract EnvironmentNFT is ERC1155Tradable {
     Counters.Counter private _tokenIds;
     uint256 public newItemId;
 
-    constructor(address admin, address operator)
+    constructor(address admin, address operator, string memory name, string memory symbol)
     ERC1155Tradable(
-        "Rove Environments",
-        "REs",
+        name,
+        symbol,
         "", admin, operator
     ) public {
         //        console.log("Deploy ObjectNFT");

@@ -57,7 +57,11 @@ class EnvironmentNFT {
         return null;
     }
 
-    async deploy(adminAddress: any, operatorAddress: any) {
+    async deploy(adminAddress: any, operatorAddress: any, name: string, symbol: string) {
+        if (name.length == 0 || symbol.length == 0) {
+            console.log("Name or Symbol is empty");
+            return;
+        }
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
@@ -65,7 +69,7 @@ class EnvironmentNFT {
         }
         const EnvironmentNFT = await ethers.getContractFactory("EnvironmentNFT");
         // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
-        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress);
+        const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, name, symbol);
 
         console.log("Rove Environment NFT deployed:", EnvironmentNFTDeploy.address);
         return EnvironmentNFTDeploy.address;
