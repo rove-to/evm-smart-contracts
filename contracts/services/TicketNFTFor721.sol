@@ -21,7 +21,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
     address public parameterControlAdd;
     mapping(address => bool) whiteList;
     mapping(uint256 => address) whiteListToken;
-    mapping(uint256 => bool) minted;
+    mapping(address => mapping(uint256 => bool)) minted;
 
     constructor(address admin, address operator, address _parameterAdd)
     ERC1155Tradable(
@@ -71,7 +71,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
             require(msg.value >= price_tokens[_id], "MISS_PRICE");
         }
         if (max_supply_tokens[_id] != 0) {
-            require(tokenSupply[_id] + _quantity <= max_supply_tokens[_id], "REACH_MAX");
+            require(tokenSupply[_id] + 1 <= max_supply_tokens[_id], "REACH_MAX");
         }
 
         /* check erc-721 */
@@ -82,16 +82,16 @@ contract TicketNFTFor721 is ERC1155Tradable {
         // get token erc721 id from _data
         uint256 _erc721Id = sliceUint(_data, 0);
         // check token not minted 
-        require(!minted[_erc721Id], "MINTED");
+        require(!minted[_erc721Add][_erc721Id], "MINTED");
         // check owner token id
         require(_erc721.ownerOf(_erc721Id) == msgSender(), "NOT_OWNER_ERC721");
         // marked this erc721 token id is minted ticket
-        minted[_erc721Id] = true;
+        minted[_erc721Add][_erc721Id] = true;
 
-        _mint(_to, _id, _quantity, _data);
-        tokenSupply[_id] = tokenSupply[_id] + _quantity;
+        _mint(_to, _id, 1, _data);
+        tokenSupply[_id] = tokenSupply[_id] + 1;
 
-        emit MintEvent(_to, _id, _quantity);
+        emit MintEvent(_to, _id, 1);
     }
 
     function publishTicket(address recipient, address erc721, uint256 initialSupply, string memory tokenURI, uint256 price, uint256 max)
