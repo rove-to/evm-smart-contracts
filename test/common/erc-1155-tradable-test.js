@@ -61,34 +61,16 @@ describe("** NFTs ERC-1155 tradable", () => {
   let newOperatorContract = addresses[2];
   let newAdmin = addresses[3];
   const overFlowNumber = 9999999999999999999999999999;
-  const jsonFile =
-    "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
+  const jsonFile = "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
   const tokenId = 1;
-  const tokenURI =
-    "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+  const tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
   const numberTokenCreate = 10;
-  const dataCreateToken = [
-    adminContract,
-    tokenId,
-    numberTokenCreate,
-    tokenURI,
-    "0x00",
-    0,
-    0,
-  ];
+  const dataCreateToken = [adminContract, tokenId, numberTokenCreate, tokenURI, "0x00", 0, 0];
 
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
-    let Erc1155TradableContract = await ethers.getContractFactory(
-      "ERC1155Tradable"
-    );
-    erc1155Tradable = await Erc1155TradableContract.deploy(
-      "test",
-      "test",
-      { a: "b" },
-      adminContract,
-      operatorContract
-    );
+    let Erc1155TradableContract = await ethers.getContractFactory("ERC1155Tradable");
+    erc1155Tradable = await Erc1155TradableContract.deploy("test", "test", { a: "b" }, adminContract, operatorContract);
     erc1155TradbleAddress = erc1155Tradable.address;
     console.log("erc1155Tradable deploy address", erc1155TradbleAddress);
     const admin = await erc1155Tradable.admin();
@@ -101,9 +83,7 @@ describe("** NFTs ERC-1155 tradable", () => {
     it("- Test admin can change operator", async () => {
       await erc1155Tradable.changeOperator(newOperatorContract);
       const newOperator = await erc1155Tradable.operator();
-      expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
-      );
+      expect(newOperator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
     });
 
     it("- Test non admin can't change operator", async () => {
@@ -171,15 +151,12 @@ describe("** NFTs ERC-1155 tradable", () => {
       await sleep(3);
       // Check new operator is changed success
       const newOperator = await erc1155Tradable.operator();
-      expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
-      );
+      expect(newOperator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
     });
   });
   context("** Create token", () => {
     // Tests create token type by operator
-    const newTokenURI =
-      "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
+    const newTokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbK";
     // data to create token
     it("- Test get Creator", async () => {
       const expectedResult = "0x0000000000000000000000000000000000000000";
@@ -208,15 +185,7 @@ describe("** NFTs ERC-1155 tradable", () => {
 
     it("- Test admin can't create token without operator role", async () => {
       try {
-        await erc1155Tradable.create(
-          adminContract,
-          tokenId,
-          numberTokenCreate,
-          tokenURI,
-          "0x00",
-          0,
-          0
-        );
+        await erc1155Tradable.create(adminContract, tokenId, numberTokenCreate, tokenURI, "0x00", 0, 0);
       } catch (error) {
         console.error(error);
 
@@ -263,15 +232,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       const newTokenId = 2;
       const _numberTokenCreate = 1991;
       try {
-        await erc1155Tradable.create(
-          adminContract,
-          newTokenId,
-          _numberTokenCreate,
-          tokenURI,
-          "0x00",
-          0,
-          0
-        );
+        await erc1155Tradable.create(adminContract, newTokenId, _numberTokenCreate, tokenURI, "0x00", 0, 0);
       } catch (error) {
         expect(error.toString()).to.include("ONLY_OPERATOR");
       }
@@ -279,15 +240,7 @@ describe("** NFTs ERC-1155 tradable", () => {
 
     it("- Test operator can create token with supply is zero", async () => {
       const executeFunc = "create";
-      const dataCreateZeroToken = [
-        adminContract,
-        tokenId,
-        0,
-        tokenURI,
-        operatorContract,
-        0,
-        0,
-      ];
+      const dataCreateZeroToken = [adminContract, tokenId, 0, tokenURI, operatorContract, 0, 0];
       // Operator sign contract then create token
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -338,24 +291,14 @@ describe("** NFTs ERC-1155 tradable", () => {
       // Check after change creator for given token
       const newCreator = await erc1155Tradable.getCreator(tokenId);
       console.log("New creator: ", newCreator);
-      expect(newCreator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
-      );
+      expect(newCreator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
       // Check token URI after create token
       const uri = await erc1155Tradable.uri(tokenId);
       expect(uri).to.equal(tokenURI);
     });
     it("- Test create token with overflow number", async () => {
       const executeFunc = "create";
-      const dataCreateToken = [
-        adminContract,
-        tokenId,
-        overFlowNumber,
-        tokenURI,
-        operatorContract,
-        0,
-        0,
-      ];
+      const dataCreateToken = [adminContract, tokenId, overFlowNumber, tokenURI, operatorContract, 0, 0];
       // Operator sign contract then create token
       try {
         await signAnotherContractThenExcuteFunction(
@@ -376,9 +319,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       // Change new creator
       await erc1155Tradable.changeOperator(newOperatorContract);
       const newOperator = await erc1155Tradable.operator();
-      expect(newOperator.toLowerCase()).to.equal(
-        newOperatorContract.toLowerCase()
-      );
+      expect(newOperator.toLowerCase()).to.equal(newOperatorContract.toLowerCase());
       // Create token with new creator
       await signAnotherContractThenExcuteFunction(
         jsonFile,
@@ -601,9 +542,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[1]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
-      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
-      );
+      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(tokenSupplyAfterMint);
     });
 
     it("- Test non creator can't mint", async () => {
@@ -684,21 +623,14 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[2]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
-      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
-      );
+      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(tokenSupplyAfterMint);
     });
   });
 
   context("* BatchMint", () => {
     const executeFuncBatchMint = "batchMint";
     const numberTokenMint = 1;
-    const dataBatchMint = [
-      adminContract,
-      [tokenId],
-      [numberTokenMint],
-      private_keys[0],
-    ];
+    const dataBatchMint = [adminContract, [tokenId], [numberTokenMint], private_keys[0]];
     it("- Test batchMint by operator", async () => {
       const executeFunc = "create";
       // Operator sign contract then create token
@@ -726,9 +658,7 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[1]
       );
       const tokenSupplyAfterMint = await erc1155Tradable.tokenSupply(tokenId);
-      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(
-        tokenSupplyAfterMint
-      );
+      expect(parseFloat(tokenSupplyBeforeMint) + numberTokenMint).to.equal(tokenSupplyAfterMint);
     });
 
     it("- Test batchMint by non operator", async () => {
@@ -748,12 +678,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       expect(isTokenExists).to.equal(true);
       // Mint by non operator
       try {
-        await erc1155Tradable.batchMint(
-          adminContract,
-          [tokenId],
-          [numberTokenMint],
-          private_keys[0]
-        );
+        await erc1155Tradable.batchMint(adminContract, [tokenId], [numberTokenMint], private_keys[0]);
       } catch (error) {
         expect(error.toString()).to.include("ONLY_OPERATOR");
       }
@@ -852,14 +777,8 @@ describe("** NFTs ERC-1155 tradable", () => {
       const isToken2Exists = await erc1155Tradable.exists(tokenId2);
       expect(isToken1Exists).to.equal(true);
       expect(isToken2Exists).to.equal(true);
-      const balanceOfToken1 = await erc1155Tradable.balanceOf(
-        adminContract,
-        tokenId
-      );
-      const balanceOfToken2 = await erc1155Tradable.balanceOf(
-        adminContract,
-        tokenId2
-      );
+      const balanceOfToken1 = await erc1155Tradable.balanceOf(adminContract, tokenId);
+      const balanceOfToken2 = await erc1155Tradable.balanceOf(adminContract, tokenId2);
       expect(balanceOfToken1).to.equal(numberTokenCreate);
       expect(balanceOfToken2).to.equal(numberToken2Create);
 
@@ -891,14 +810,8 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[2]
       );
       // check balance after mint
-      const balanceOfToken1AfterMint = await erc1155Tradable.balanceOf(
-        adminContract,
-        tokenId
-      );
-      const balanceOfToken2AfterMint = await erc1155Tradable.balanceOf(
-        adminContract,
-        tokenId2
-      );
+      const balanceOfToken1AfterMint = await erc1155Tradable.balanceOf(adminContract, tokenId);
+      const balanceOfToken2AfterMint = await erc1155Tradable.balanceOf(adminContract, tokenId2);
       expect(balanceOfToken1.add(5)).to.equal(balanceOfToken1AfterMint);
       expect(balanceOfToken2.add(5)).to.equal(balanceOfToken2AfterMint);
       // non creator without mint role mint token is not in whitelist
@@ -943,14 +856,9 @@ describe("** NFTs ERC-1155 tradable", () => {
         [tokenId, receiver, percentRecieve],
         private_keys[1]
       );
-      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
-        tokenId,
-        salePriceRoyalty
-      );
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal(
-        (salePriceRoyalty * percentRecieve) / 10000
-      );
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * percentRecieve) / 10000);
     });
 
     it("- Test get royalty without set", async () => {
@@ -964,14 +872,9 @@ describe("** NFTs ERC-1155 tradable", () => {
         dataCreateToken,
         private_keys[1]
       );
-      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
-        tokenId,
-        salePriceRoyalty
-      );
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal(
-        (salePriceRoyalty * defaultpercentRecieve) / 10000
-      );
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * defaultpercentRecieve) / 10000);
     });
 
     it("- Test set percent royalty over 100%", async () => {
@@ -997,14 +900,9 @@ describe("** NFTs ERC-1155 tradable", () => {
       } catch (error) {
         expect(error.toString()).to.include("TOO_HIGH");
       }
-      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
-        tokenId,
-        salePriceRoyalty
-      );
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal(
-        (salePriceRoyalty * defaultpercentRecieve) / 10000
-      );
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * defaultpercentRecieve) / 10000);
     });
 
     it("- Test non operator role set royalty", async () => {
@@ -1019,23 +917,14 @@ describe("** NFTs ERC-1155 tradable", () => {
         private_keys[1]
       );
       try {
-        await erc1155Tradable.setTokenRoyalty(
-          tokenId,
-          receiver,
-          percentRecieve
-        );
+        await erc1155Tradable.setTokenRoyalty(tokenId, receiver, percentRecieve);
       } catch (error) {
         expect(error.toString()).to.include("ONLY_OPERATOR");
       }
 
-      const _royaltyInfo = await erc1155Tradable.royaltyInfo(
-        tokenId,
-        salePriceRoyalty
-      );
+      const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal(
-        (salePriceRoyalty * percentRecieve) / 10000
-      );
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * percentRecieve) / 10000);
     });
   });
 
@@ -1054,9 +943,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       tokenPrice,
       maxSupplyToken,
     ];
-    const web3 = createAlchemyWeb3(
-      hardhatConfig.networks[hardhatConfig.defaultNetwork].url
-    );
+    const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
 
     it("- Test create token with price and max token", async () => {
       await signAnotherContractThenExcuteFunction(
@@ -1190,9 +1077,7 @@ describe("** NFTs ERC-1155 tradable", () => {
       console.log("tokenSupplyBeforeMint: ", tokenSupplyBeforeMint);
 
       // check balance eth before mint
-      const balanceEthBeforMint = await web3.eth.getBalance(
-        erc1155TradbleAddress
-      );
+      const balanceEthBeforMint = await web3.eth.getBalance(erc1155TradbleAddress);
       console.log("balance ETH before mint: ", balanceEthBeforMint);
       expect(balanceEthBeforMint).to.equal("0");
       try {
@@ -1312,16 +1197,9 @@ describe("** NFTs ERC-1155 tradable", () => {
       // expect(receiverEthBalance).to.equal("10000000000000000000000");
       // withdraw;
       await erc1155Tradable.withdraw(receiver);
-      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
-        receiver
-      );
-      console.log(
-        "Receiver Eth Balance after withdraw: ",
-        receiverEthBalanceAfterWithdraw
-      );
-      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(
-        parseInt(receiverEthBalance) + ethValue
-      );
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance after withdraw: ", receiverEthBalanceAfterWithdraw);
+      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(parseInt(receiverEthBalance) + ethValue);
       // continue withdraw
       try {
         await erc1155Tradable.withdraw(receiver);
@@ -1387,13 +1265,8 @@ describe("** NFTs ERC-1155 tradable", () => {
         expect(error.toString()).to.include("ONLY_ADMIN");
       }
 
-      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
-        receiver
-      );
-      console.log(
-        "Receiver Eth Balance after withdraw: ",
-        receiverEthBalanceAfterWithdraw
-      );
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance after withdraw: ", receiverEthBalanceAfterWithdraw);
       expect(receiverEthBalanceAfterWithdraw).to.equal(receiverEthBalance);
     });
 
@@ -1451,16 +1324,9 @@ describe("** NFTs ERC-1155 tradable", () => {
         [receiver],
         private_keys[3]
       );
-      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(
-        receiver
-      );
-      console.log(
-        "Receiver Eth Balance after withdraw: ",
-        receiverEthBalanceAfterWithdraw
-      );
-      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(
-        parseInt(receiverEthBalance) + ethValue
-      );
+      const receiverEthBalanceAfterWithdraw = await web3.eth.getBalance(receiver);
+      console.log("Receiver Eth Balance after withdraw: ", receiverEthBalanceAfterWithdraw);
+      expect(parseInt(receiverEthBalanceAfterWithdraw)).to.equal(parseInt(receiverEthBalance) + ethValue);
     });
     it("- Test mint with token greater than max supply", async () => {
       // call craete token
