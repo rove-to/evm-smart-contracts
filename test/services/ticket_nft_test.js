@@ -34,7 +34,7 @@ describe.only("** Ticket NFT", () => {
   const INIT_SUPPLY_TOKEN = 100;
   const MAX_SUPPLY = 1000; // max supply = init + total mint
   const PRICE_PER_TOKEN = ETH("0.03");
-  const ETH_VALUE = ETH("0.1");
+  const ETH_VALUE = ETH("0.5");
 
   const userOwnerTicket = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
   const userOwnerTicketPrivateKey = "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
@@ -178,7 +178,7 @@ describe.only("** Ticket NFT", () => {
       userOwnerTicket,
       ETH_VALUE,
       "publishTicket",
-      [adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
       userOwnerTicketPrivateKey
     );
 
@@ -209,7 +209,7 @@ describe.only("** Ticket NFT", () => {
       userOwnerTicket,
       ETH_VALUE,
       "publishTicket",
-      [adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
       userOwnerTicketPrivateKey
     );
 
@@ -238,6 +238,62 @@ describe.only("** Ticket NFT", () => {
       userMintPrivateKey
     );
     const totalTokenAfterMint = await ticketNFT.totalSupply(tokenId);
+    const balanceTokenOfOwner = await ticketNFT.balanceOf(userOwnerTicket, tokenId);
+    const balanceTokenOfMinter = await ticketNFT.balanceOf(userMintContract, tokenId);
     expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + 1);
+    expect(balanceTokenOfOwner).to.equal(INIT_SUPPLY_TOKEN);
+    expect(balanceTokenOfMinter).to.equal(1);
+  });
+
+  it.only("- Test user mint with ETH balance", async () => {
+    const TICKET_PUR_FEE = 3; // 3%
+    const TICKET_PUB_FEE = ETH("0");
+    const NUMBER_MINT = 3;
+    const ETH_VALUE = ETH("0");
+    const ETH_VALUE_MINT = ETH("300");
+    const PRICE_PER_TOKEN = ETH("100");
+    await parameterControl.setUInt256("TICKET_PUR_FEE", TICKET_PUR_FEE);
+    await parameterControl.setUInt256("TICKET_PUB_FEE", TICKET_PUB_FEE);
+    const balanceETHOfticketOwner1 = await getEthBalance(userOwnerTicket);
+    console.log("Balance eth of ticket owner: ", balanceETHOfticketOwner1);
+    // user create ticket
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFile,
+      ticketNFTAddress,
+      userOwnerTicket,
+      ETH_VALUE,
+      "publishTicket",
+      [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      userOwnerTicketPrivateKey
+    );
+    const balanceETHOfticketOwner = await getEthBalance(userOwnerTicket);
+    console.log("Balance eth of ticket owner: ", balanceETHOfticketOwner);
+
+    const balanceETHOfMinterBefore = await getEthBalance(userMintContract);
+    console.log("Balance eth of minter before mint: ", balanceETHOfMinterBefore);
+
+    // mint 1 token
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFile,
+      ticketNFTAddress,
+      userMintContract,
+      ETH_VALUE_MINT,
+      "userMint",
+      [userMintContract, tokenId, NUMBER_MINT, "0x00"],
+      userMintPrivateKey
+    );
+    const totalTokenAfterMint = await ticketNFT.totalSupply(tokenId);
+    const balanceTicketOfOwner = await ticketNFT.balanceOf(userOwnerTicket, tokenId);
+    const balanceTokenOfMinter = await ticketNFT.balanceOf(userMintContract, tokenId);
+    expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + NUMBER_MINT);
+    expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
+    expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
+
+    const balanceETHOfMinterAfter = await getEthBalance(userMintContract);
+    console.log("Balance eth of minter after mint: ", balanceETHOfMinterAfter);
+
+    const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
+    console.log("Balance eth of ticket owner after: ", balanceETHOfticketOwnerAfter);
+    console.log("--------: ", balanceETHOfticketOwnerAfter - balanceETHOfticketOwner);
   });
 });

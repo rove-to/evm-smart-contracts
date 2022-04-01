@@ -64,6 +64,7 @@ let signAnotherContractThenExcuteFunctionWithValue = async (
 
 let getEthBalance = async address => {
   let balance = await web3.eth.getBalance(address);
+  balance = convertWeiToEth(balance);
   return balance;
 };
 
