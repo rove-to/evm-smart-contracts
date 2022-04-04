@@ -70,7 +70,7 @@ describe("** NFTs ERC-1155 tradable", () => {
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
     let Erc1155TradableContract = await ethers.getContractFactory("ERC1155Tradable");
-    erc1155Tradable = await Erc1155TradableContract.deploy("test", "test", { a: "b" }, adminContract, operatorContract);
+    erc1155Tradable = await Erc1155TradableContract.deploy("ROVE", "RVE", tokenURI, adminContract, operatorContract);
     erc1155TradbleAddress = erc1155Tradable.address;
     console.log("erc1155Tradable deploy address", erc1155TradbleAddress);
     const admin = await erc1155Tradable.admin();

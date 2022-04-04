@@ -13,21 +13,21 @@ const {
   signAnotherContractThenExcuteFunctionWithValue,
 } = require("../common_libs");
 
-describe.only("** Ticket NFT", () => {
+describe.only("** Ticket NFT721", () => {
   let ticketNFT721;
   let parameterControl;
-  let erc721Tradable;
+  let erc1155Tradable;
   let ticketNFT721Address;
   let parameterControlAddress;
-  let erc721TradableAddress;
+  let erc1155TradableAddress;
   let adminContract = addresses[0]; // default for local
   let adminPrivateKey = private_keys[0];
   let operatorContract = addresses[1];
   let operatorPrivateKey = private_keys[1];
   const jsonFileTicket721NFT = "./artifacts/contracts/services/TicketNFTFor721.sol/TicketNFTFor721.json";
-  const jsonFileErc721Tradable = "./artifacts/contracts/utils/ERC721Tradable.sol/ERC721Tradable.json";
-  const TOKEN_URI = "abcxyz";
-  const tokenId = 1;
+  const jsonFileErc1155Tradable = "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
+  const TOKEN_URI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+  const TOKEN_ID = 1;
   // percent for ticket public free
   const INIT_SUPPLY_TOKEN = 100;
   const MAX_SUPPLY = 1000; // max supply = init + total mint
@@ -38,14 +38,14 @@ describe.only("** Ticket NFT", () => {
   const userOwnerTicketPrivateKey = "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
   const userMintContract = addresses[3];
   const userMintPrivateKey = private_keys[3];
-  const ADDRESS0 = "0x0000000000000000000000000000000000000000";
+  const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 
   // setup before every test
   beforeEach(async () => {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
     let TicketNFT721Contract = await ethers.getContractFactory("TicketNFTFor721");
     let ParameterControlContract = await ethers.getContractFactory("ParameterControl");
-    let Erc721Tradable = await ethers.getContractFactory("ERC721Tradable");
+    let Erc1155Tradable = await ethers.getContractFactory("ERC1155Tradable");
 
     // deploy parameter control
     parameterControl = await ParameterControlContract.deploy(adminContract);
@@ -57,30 +57,47 @@ describe.only("** Ticket NFT", () => {
     ticketNFT721Address = ticketNFT721.address;
     console.log("Ticket NFT deployed address: ", ticketNFT721Address);
 
-    // deploy ERC721 tradalbe
-    erc721Tradable = await Erc721Tradable.deploy("Rove", "RVE", TOKEN_URI, adminContract, operatorContract);
-    erc721TradableAddress = erc721Tradable.address;
-    console.log("ERC721 Tradable deployed address: ", erc721TradableAddress);
+    // deploy ERC1155 tradalbe
+    erc1155Tradable = await Erc1155Tradable.deploy("Rove", "RVE", TOKEN_URI, adminContract, operatorContract);
+    erc1155TradableAddress = erc1155Tradable.address;
+    console.log("ERC1155 Tradable deployed address: ", erc1155TradableAddress);
   });
 
-  it.only("- Test publish ticket when creator is not owns erc721 token", async () => {
+  it("- Test publish ticket twice", async () => {
+    // create ticket
     await signAnotherContractThenExcuteFunction(
       jsonFileTicket721NFT,
       ticketNFT721Address,
       operatorContract,
       "publishTicket",
-      [userOwnerTicket, ADDRESS0, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      [userOwnerTicket, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
       operatorPrivateKey
     );
 
-    await signAnotherContractThenExcuteFunction(
-      jsonFileTicket721NFT,
-      ticketNFT721Address,
-      operatorContract,
-      "publishTicket",
-      [userOwnerTicket, ADDRESS0, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-      operatorPrivateKey
-    );
+    const isTokenExists = await ticketNFT721.exists(TOKEN_ID);
+    const tokenSupply = await ticketNFT721.totalSupply(TOKEN_ID);
+    const maxSupplyToken = await ticketNFT721.getMaxSupplyToken(TOKEN_ID);
+    const ticketCreator = await ticketNFT721.getCreator(TOKEN_ID);
+    const balanceOfTicketOwner = await ticketNFT721.balanceOf(userOwnerTicket, TOKEN_ID);
+    expect(isTokenExists).to.equal(true);
+    expect(tokenSupply).to.equal(INIT_SUPPLY_TOKEN);
+    expect(maxSupplyToken).to.equal(MAX_SUPPLY);
+    expect(ticketCreator.toLowerCase()).to.equal(operatorContract.toLowerCase());
+    expect(balanceOfTicketOwner).to.equal(INIT_SUPPLY_TOKEN);
+
+    // continue create ticket
+    try {
+      await signAnotherContractThenExcuteFunction(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        operatorContract,
+        "publishTicket",
+        [userOwnerTicket, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+        operatorPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("IS_EXISTEd");
+    }
   });
 
   // it("- Test publish ticket with publish free > 0 without ETH", async () => {
