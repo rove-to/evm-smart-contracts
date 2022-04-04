@@ -100,6 +100,32 @@ describe.only("** Ticket NFT721", () => {
     }
   });
 
+  it("- Test user mint without own erc721 token", async () => {
+    // create ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
+
+    // continue create ticket
+    try {
+      await signAnotherContractThenExcuteFunction(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        "userMint",
+        [userMintContract, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("IS_EXISTEd");
+    }
+  });
+
   // it("- Test publish ticket with publish free > 0 without ETH", async () => {
   //   try {
   //     await ticketNFT721.publishTicket(adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY);
