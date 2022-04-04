@@ -17,7 +17,7 @@ const {
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 
-describe.only("** Ticket NFT", () => {
+describe("** Ticket NFT", () => {
   let ticketNFT;
   let parameterControl;
   let ticketNFTAddress;
@@ -302,7 +302,7 @@ describe.only("** Ticket NFT", () => {
     expect(deployerBalance).to.equal(convertWeiToEth(purChaseFee));
   });
 
-  it.only("- Test user mint with 0% purchase fee", async () => {
+  it("- Test user mint with 0% purchase fee", async () => {
     const TICKET_PUR_FEE = 0; // 0%
     const TICKET_PUB_FEE = ETH("0");
     const NUMBER_MINT = 3;
