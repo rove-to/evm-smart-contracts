@@ -10,15 +10,15 @@
     },
     {
       "trait_type": "rove-asset-bundle-web",
-      "value": "ipfs://Qmb7T6GV1QnJo7jq9LU4FhyW5LM99WtYPHn893ihk3HRWN"
+      "value": "ipfs://QmUpEdRb2STkJJkx6vrK91gFsP7s2JDjwTb6Paz8Q1uFVT"
     },
     {
       "trait_type": "rove-asset-bundle-android",
-      "value": "ipfs://QmR8DTfq4whiCF7fa4rEaoXFTtPDP1XLk4RdQsQSK7j3Y6"
+      "value": "ipfs://QmXcnch5xHYS2RccxGA9TTvFMLg72Aavp6ffFAPMSyqdve"
     },
     {
       "trait_type": "rove-asset-bundle-ios",
-      "value": "ipfs://QmP4Q4BMGxwMPVxgQ8m6A4cnKc9gPwQ8WEngPtgUzu7AAa"
+      "value": "ipfs://QmUS9xgCQ2PnK5nvsYJJe5GDCD9TYR2drf1xUHGNdDPQpJ"
     },
     {
       "trait_type": "rove-asset-bundle-window",
@@ -50,10 +50,10 @@
     }
   ],
   "description": "Meet at your place? Rove x Autonomous to make this swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: https://rove.to",
-  "image": "ipfs://QmQBDZFb5MNYpsyzbJMvCNfoE6SZd67FTUuQK6ryswAs7u",
+  "image": "ipfs://QmfJEzpot2fA9MxY9qzfFZU6MeH2deyVJJ9BpJLnhqbsHu",
   "name": "Autonomous x Rove - The Place to Be",
   "external_url": "https://rove.to/",
-  "animation_url": "ipfs://QmZWUiQnGT2Aa2MJvqCNzymVPnoV11XnnL3rLTu1HpFeWn"
+  "animation_url": "ipfs://Qmf5HmLYDtBba988tkCKQQ35BVu82b7tARnmAYh75HH6oC"
 }
 
-ipfs://QmWvKULMmV6pg4hvnYA2K6W81wk5dvPanuYcxx5HNh31is
+ipfs://QmRUKcwz6QCw4Ed3fYSH4HiHx1pXW9x31EikeSywQovJXt
