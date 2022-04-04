@@ -65,12 +65,12 @@ let signAnotherContractThenExcuteFunctionWithValue = async (
 let getEthBalance = async address => {
   let balance = await web3.eth.getBalance(address);
   balance = convertWeiToEth(balance);
-  return balance;
+  return Number(balance);
 };
 
 let convertWeiToEth = wei => {
   let _eth = web3.utils.fromWei(wei.toString(), "ether");
-  return _eth;
+  return Number(_eth);
 };
 
 // generate ETH

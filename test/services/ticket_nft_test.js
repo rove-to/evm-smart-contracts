@@ -245,17 +245,16 @@ describe.only("** Ticket NFT", () => {
     expect(balanceTokenOfMinter).to.equal(1);
   });
 
-  it.only("- Test user mint with ETH balance", async () => {
-    const TICKET_PUR_FEE = 3; // 3%
+  it("- Test user mint with 5% purchase fee", async () => {
+    const TICKET_PUR_FEE = 500; // 5%
     const TICKET_PUB_FEE = ETH("0");
     const NUMBER_MINT = 3;
     const ETH_VALUE = ETH("0");
     const ETH_VALUE_MINT = ETH("300");
     const PRICE_PER_TOKEN = ETH("100");
+    const purChaseFee = (TICKET_PUR_FEE * ETH_VALUE_MINT) / 10000;
     await parameterControl.setUInt256("TICKET_PUR_FEE", TICKET_PUR_FEE);
     await parameterControl.setUInt256("TICKET_PUB_FEE", TICKET_PUB_FEE);
-    const balanceETHOfticketOwner1 = await getEthBalance(userOwnerTicket);
-    console.log("Balance eth of ticket owner: ", balanceETHOfticketOwner1);
     // user create ticket
     await signAnotherContractThenExcuteFunctionWithValue(
       jsonFile,
@@ -267,12 +266,9 @@ describe.only("** Ticket NFT", () => {
       userOwnerTicketPrivateKey
     );
     const balanceETHOfticketOwner = await getEthBalance(userOwnerTicket);
-    console.log("Balance eth of ticket owner: ", balanceETHOfticketOwner);
+    const balanceETHOfMinterBeforeMint = await getEthBalance(userMintContract);
 
-    const balanceETHOfMinterBefore = await getEthBalance(userMintContract);
-    console.log("Balance eth of minter before mint: ", balanceETHOfMinterBefore);
-
-    // mint 1 token
+    // user mint
     await signAnotherContractThenExcuteFunctionWithValue(
       jsonFile,
       ticketNFTAddress,
@@ -289,11 +285,77 @@ describe.only("** Ticket NFT", () => {
     expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
     expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
 
-    const balanceETHOfMinterAfter = await getEthBalance(userMintContract);
-    console.log("Balance eth of minter after mint: ", balanceETHOfMinterAfter);
-
+    // check ticket owner receiced correct eth after mint
     const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
-    console.log("Balance eth of ticket owner after: ", balanceETHOfticketOwnerAfter);
-    console.log("--------: ", balanceETHOfticketOwnerAfter - balanceETHOfticketOwner);
+    expect(balanceETHOfticketOwnerAfter).to.equal(
+      balanceETHOfticketOwner + convertWeiToEth(ETH_VALUE_MINT) - convertWeiToEth(purChaseFee)
+    );
+
+    // check balance of minter
+    const balanceETHOfMinterAfterMint = await getEthBalance(userMintContract);
+    expect(balanceETHOfMinterAfterMint).to.lessThanOrEqual(
+      balanceETHOfMinterBeforeMint - convertWeiToEth(ETH_VALUE_MINT)
+    );
+
+    // check deployer received 5% purchase fee
+    const deployerBalance = await getEthBalance(ticketNFTAddress);
+    expect(deployerBalance).to.equal(convertWeiToEth(purChaseFee));
+  });
+
+  it.only("- Test user mint with 0% purchase fee", async () => {
+    const TICKET_PUR_FEE = 0; // 0%
+    const TICKET_PUB_FEE = ETH("0");
+    const NUMBER_MINT = 3;
+    const ETH_VALUE = ETH("0");
+    const ETH_VALUE_MINT = ETH("300");
+    const PRICE_PER_TOKEN = ETH("100");
+    const purChaseFee = (TICKET_PUR_FEE * ETH_VALUE_MINT) / 10000;
+    await parameterControl.setUInt256("TICKET_PUR_FEE", TICKET_PUR_FEE);
+    await parameterControl.setUInt256("TICKET_PUB_FEE", TICKET_PUB_FEE);
+    // user create ticket
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFile,
+      ticketNFTAddress,
+      userOwnerTicket,
+      ETH_VALUE,
+      "publishTicket",
+      [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      userOwnerTicketPrivateKey
+    );
+    const balanceETHOfticketOwner = await getEthBalance(userOwnerTicket);
+    const balanceETHOfMinterBeforeMint = await getEthBalance(userMintContract);
+
+    // user mint
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFile,
+      ticketNFTAddress,
+      userMintContract,
+      ETH_VALUE_MINT,
+      "userMint",
+      [userMintContract, tokenId, NUMBER_MINT, "0x00"],
+      userMintPrivateKey
+    );
+    const totalTokenAfterMint = await ticketNFT.totalSupply(tokenId);
+    const balanceTicketOfOwner = await ticketNFT.balanceOf(userOwnerTicket, tokenId);
+    const balanceTokenOfMinter = await ticketNFT.balanceOf(userMintContract, tokenId);
+    expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + NUMBER_MINT);
+    expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
+    expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
+
+    // check ticket owner receiced correct eth after mint
+    const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
+    expect(balanceETHOfticketOwnerAfter).to.equal(
+      balanceETHOfticketOwner + convertWeiToEth(ETH_VALUE_MINT) - convertWeiToEth(purChaseFee)
+    );
+
+    // check balance of minter
+    const balanceETHOfMinterAfterMint = await getEthBalance(userMintContract);
+    expect(balanceETHOfMinterAfterMint).to.lessThanOrEqual(
+      balanceETHOfMinterBeforeMint - convertWeiToEth(ETH_VALUE_MINT)
+    );
+
+    // check deployer received 0% purchase fee
+    const deployerBalance = await getEthBalance(ticketNFTAddress);
+    expect(deployerBalance).to.equal(0);
   });
 });
