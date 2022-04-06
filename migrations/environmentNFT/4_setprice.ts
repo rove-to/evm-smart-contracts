@@ -22,11 +22,11 @@ import {EnvironmentNFT} from "./environmentNFT";
         let price: any;
         if (process.argv.length >= 4) {
             price = process.argv[4];
-            console.log("tokenUri", price)
+            console.log("price", price)
         }
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        await nft.changePriceToken(contract, tokenID, price, 500000);
+        await nft.changePriceToken(contract, tokenID, price, 5000);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
