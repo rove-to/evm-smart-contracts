@@ -63,6 +63,14 @@ module.exports = {
         harmony_testnet: {
             url: process.env.HARMONY_TESTNET_API_URL,
             accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        kardia: {
+            url: process.env.KARDIA_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        kardia_testnet: {
+            url: process.env.KARDIA_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
         }
     },
     mocha: {
