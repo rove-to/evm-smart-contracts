@@ -368,7 +368,7 @@ describe.only("** Ticket NFT721", () => {
     }
   });
 
-  it.only("- Test balance of all contract", async () => {
+  it("- Test balance of all contract", async () => {
     // user 1 publish erc 721 ticket
     await signAnotherContractThenExcuteFunction(
       jsonFileTicket721NFT,
