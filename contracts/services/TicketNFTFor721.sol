@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "../governance/ParameterControl.sol";
 /*
@@ -85,7 +86,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
         require(_erc721.ownerOf(_erc721Id) == msgSender(), "NOT_OWNER_ERC721");
         // check token not minted 
         require(!minted[_erc721Add][_erc721Id], "MINTED");
-        
+
         // marked this erc721 token id is minted ticket
         minted[_erc721Add][_erc721Id] = true;
 
@@ -99,6 +100,8 @@ contract TicketNFTFor721 is ERC1155Tradable {
     external
     returns (uint256)
     {
+        ERC721 _erc721Token = ERC721(erc721);
+        require(_erc721Token.supportsInterface(type(IERC721).interfaceId), "NOT_ERC721");
         require(!whiteList[erc721], "IS_EXISTEd");
         _tokenIds.increment();
         newItemId = _tokenIds.current();
