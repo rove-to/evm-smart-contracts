@@ -14,7 +14,7 @@ const {
   generateBytes,
 } = require("../common_libs");
 
-describe("** Ticket NFT721", () => {
+describe.only("** Ticket NFT721", () => {
   let ticketNFT721;
   let parameterControl;
   let erc1155Tradable;
@@ -29,20 +29,24 @@ describe("** Ticket NFT721", () => {
   let operatorPrivateKey = private_keys[1];
   const jsonFileTicket721NFT = "./artifacts/contracts/services/TicketNFTFor721.sol/TicketNFTFor721.json";
   const jsonFileErc1155Tradable = "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
-  const jsonFieErc721Tradable = "./artifacts/contracts/utils/ERC721Tradable.sol/ERC721Tradable.json";
+  const jsonFileErc721Tradable = "./artifacts/contracts/utils/ERC721Tradable.sol/ERC721Tradable.json";
   const TOKEN_URI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-  const TOKEN_ID = 1;
-  const TOKEN_ID_721 = 999;
+  const TOKEN_ID = 2; // erc1155 , erc721
+  const TICKET_ID = 1;
+  const DATA = generateBytes(TOKEN_ID);
   // percent for ticket public free
-  const INIT_SUPPLY_TOKEN = 100;
-  const MAX_SUPPLY = 1000; // max supply = init + total mint
+  const INIT_SUPPLY_TOKEN = 1;
+  const MAX_SUPPLY = 2; // max supply = init + total mint
   const PRICE_PER_TOKEN = ETH("100");
-  const ETH_VALUE = ETH("0.5");
+  const ETH_VALUE_MINT = ETH("100");
+  const QTY_MINT_721 = 1;
 
   const userOwnerTicket = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
   const userOwnerTicketPrivateKey = "0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e";
   const userMintContract = addresses[3];
   const userMintPrivateKey = private_keys[3];
+  const userMint2Contract = "0xdd2fd4581271e230360230f9337d5c0430bf44c0";
+  const userMint2PrivateKey = "0xde9be858da4a475276426320d5e9262ecfc3ba460bfac56360bfa6c4c28b4ee0";
   const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 
   // setup before every test
@@ -71,17 +75,52 @@ describe("** Ticket NFT721", () => {
     // deploy ERC721 tradalbe
     erc721Tradable = await Erc721Tradable.deploy("Rove", "RVE", TOKEN_URI, adminContract, operatorContract);
     erc721TradableAddress = erc721Tradable.address;
-    console.log("ERC1155 Tradable deployed address: ", erc721TradableAddress);
+    console.log("ERC721 Tradable deployed address: ", erc721TradableAddress);
+
+    // create erc 1155 token
+    await signAnotherContractThenExcuteFunction(
+      jsonFileErc1155Tradable,
+      erc1155TradableAddress,
+      operatorContract,
+      "create",
+      [userMintContract, TOKEN_ID, INIT_SUPPLY_TOKEN, TOKEN_URI, "0x00", PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
+
+    // create erc 721 token
+    await signAnotherContractThenExcuteFunction(
+      jsonFileErc721Tradable,
+      erc721TradableAddress,
+      operatorContract,
+      "mintTo",
+      [userMintContract, TOKEN_URI],
+      operatorPrivateKey
+    );
+  });
+  it("- Test publish ticket with contract address is not ERC721", async () => {
+    // publist ticket with erc1155 address
+    try {
+      await signAnotherContractThenExcuteFunction(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        operatorContract,
+        "publishTicket",
+        [userOwnerTicket, erc1155TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+        operatorPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("NOT_ERC721");
+    }
   });
 
-  it("- Test publish ticket twice", async () => {
+  it("- Test publish ticket Erc721 twice", async () => {
     // create ticket
     await signAnotherContractThenExcuteFunction(
       jsonFileTicket721NFT,
       ticketNFT721Address,
       operatorContract,
       "publishTicket",
-      [userOwnerTicket, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
       operatorPrivateKey
     );
 
@@ -103,7 +142,7 @@ describe("** Ticket NFT721", () => {
         ticketNFT721Address,
         operatorContract,
         "publishTicket",
-        [userOwnerTicket, ADDRESS_ZERO, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+        [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
         operatorPrivateKey
       );
     } catch (e) {
@@ -111,322 +150,271 @@ describe("** Ticket NFT721", () => {
     }
   });
 
-  it.only("- Test user mint without own erc721 token", async () => {
-    // create erc721 token
-    await signAnotherContractThenExcuteFunction(
-      jsonFileErc1155Tradable,
-      erc1155TradableAddress,
-      operatorContract,
-      "create",
-      [userMintContract, 2, INIT_SUPPLY_TOKEN, TOKEN_URI, "0x00", PRICE_PER_TOKEN, MAX_SUPPLY],
-      operatorPrivateKey
-    );
-
-    // create ticket
-    const ETH_VALUE_MINT = ETH("300");
-
+  it("- Test user mint without own erc721 token", async () => {
     await signAnotherContractThenExcuteFunction(
       jsonFileTicket721NFT,
       ticketNFT721Address,
       operatorContract,
       "publishTicket",
-      [userOwnerTicket, userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
       operatorPrivateKey
     );
-    const _data = generateBytes(TOKEN_ID_721);
-    // continue create ticket
+    // user mint ticket without own erc 721 token
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        adminContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [adminContract, TICKET_ID, QTY_MINT_721, DATA],
+        adminPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("NOT_OWNER_ERC721");
+    }
+  });
+
+  it("- Test minted token can't mint again", async () => {
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
+
+    // user 2 mint ticket
     await signAnotherContractThenExcuteFunctionWithValue(
       jsonFileTicket721NFT,
       ticketNFT721Address,
       userMintContract,
       ETH_VALUE_MINT,
       "userMint",
-      [userMintContract, TOKEN_ID, 1, _data],
+      [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
       userMintPrivateKey
     );
+    // user 2 mint same ticket
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("MINTED");
+    }
   });
 
-  // it("- Test publish ticket with publish free > 0 without ETH", async () => {
-  //   try {
-  //     await ticketNFT721.publishTicket(adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY);
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("MISS_PUBLISH_FEE");
-  //   }
-  // });
+  it("- Test mint with quantity greater than 1", async () => {
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
 
-  // it("- Test publish ticket with publish free > 0 without ETH", async () => {
-  //   try {
-  //     await ticketNFT721.publishTicket(adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY);
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("MISS_PUBLISH_FEE");
-  //   }
-  // });
+    // user 2 mint 2 tickets
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMintContract, TICKET_ID, 2, DATA], // quantity mint is 2
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("MAX_QUANTITY");
+    }
+  });
 
-  // it("- Test publish ticket with publish free > 0 with ETH_VALUE", async () => {
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
-  //   const isTokenExists = await ticketNFT721.exists(tokenId);
-  //   const tokenSupply = await ticketNFT721.totalSupply(tokenId);
-  //   const maxSupplyToken = await ticketNFT721.getMaxSupplyToken(tokenId);
-  //   const ticketCreator = await ticketNFT721.getCreator(tokenId);
-  //   const balanceOfTicketOwner = await ticketNFT721.balanceOf(userOwnerTicket, tokenId);
-  //   expect(isTokenExists).to.equal(true);
-  //   expect(tokenSupply).to.equal(INIT_SUPPLY_TOKEN);
-  //   expect(maxSupplyToken).to.equal(MAX_SUPPLY);
-  //   expect(ticketCreator.toLowerCase()).to.equal(userOwnerTicket.toLowerCase());
-  //   expect(balanceOfTicketOwner).to.equal(INIT_SUPPLY_TOKEN);
-  // });
+  it("- Test mint ticket is not existed", async () => {
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
 
-  // it("- Test publish ticket with publish free > 0 with ETH_VALUE < PUBLISH FEE", async () => {
-  //   const ETH_VALUE = ETH("0.001");
-  //   try {
-  //     await signAnotherContractThenExcuteFunctionWithValue(
-  //       jsonFile,
-  //       ticketNFT721Address,
-  //       adminContract,
-  //       ETH_VALUE,
-  //       "publishTicket",
-  //       [adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //       adminPrivateKey
-  //     );
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("MISS_PUBLISH_FEE");
-  //   }
-  // });
+    // user 2 mint
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMintContract, 100, QTY_MINT_721, DATA], // ticket id 100 is not existed
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("NONEXIST_TOKEN");
+    }
+  });
 
-  // it("- Test user mint non-existed token", async () => {
-  //   try {
-  //     await ticketNFT721.userMint(userMintContract, tokenId, 100, "0x00");
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("NONEXIST_TOKEN");
-  //   }
-  // });
+  it("- Test minter doesn't enough ETH", async () => {
+    const ETH_VALUE_MINT = ETH("99");
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
 
-  // it("- Test user mint with not enought ETH value", async () => {
-  //   const MINT_ETH_VALUE = ETH("0.05");
-  //   const NUMBER_MINT = 3;
-  //   // user create ticket
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [adminContract, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
+    // user 2 mint
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("MISS_PRICE");
+    }
+  });
 
-  //   // another user mint ticket with value < price * total ticket
-  //   try {
-  //     await signAnotherContractThenExcuteFunctionWithValue(
-  //       jsonFile,
-  //       ticketNFT721Address,
-  //       userMintContract,
-  //       MINT_ETH_VALUE,
-  //       "userMint",
-  //       [userMintContract, tokenId, NUMBER_MINT, "0x00"],
-  //       userMintPrivateKey
-  //     );
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("MISS_PRICE");
-  //   }
-  // });
+  it("- Test mint when reach max supply", async () => {
+    // create second erc 721 token
+    await signAnotherContractThenExcuteFunction(
+      jsonFileErc721Tradable,
+      erc721TradableAddress,
+      operatorContract,
+      "mintTo",
+      [userMint2Contract, TOKEN_URI],
+      operatorPrivateKey
+    );
 
-  // it("- Test user mint reach max token", async () => {
-  //   const MINT_ETH_VALUE = ETH("30");
-  //   const NUMBER_MINT = 901;
-  //   // user create ticket
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
+    // user 2 mint
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      userMintContract,
+      ETH_VALUE_MINT,
+      "userMint",
+      [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
+      userMintPrivateKey
+    );
+    // user 3 mint
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMint2Contract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMint2Contract, TICKET_ID, QTY_MINT_721, DATA],
+        userMint2PrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("REACH_MAX");
+    }
+  });
 
-  //   // another user mint ticket with value < price * total ticket
-  //   try {
-  //     await signAnotherContractThenExcuteFunctionWithValue(
-  //       jsonFile,
-  //       ticketNFT721Address,
-  //       userMintContract,
-  //       MINT_ETH_VALUE,
-  //       "userMint",
-  //       [userMintContract, tokenId, NUMBER_MINT, "0x00"],
-  //       userMintPrivateKey
-  //     );
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("REACH_MAX");
-  //   }
-  // });
+  it("- Test mint non eixsted erc721 token ", async () => {
+    const DATA = generateBytes(999); // erc 721 token id 999
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
 
-  // it("- Test user mint with price is 0", async () => {
-  //   const MINT_ETH_VALUE = ETH("0.05");
-  //   const PRICE_PER_TOKEN = ETH("0");
-  //   const NUMBER_MINT = 3;
-  //   // user create ticket
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
+    // user 2 mint
+    try {
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFileTicket721NFT,
+        ticketNFT721Address,
+        userMintContract,
+        ETH_VALUE_MINT,
+        "userMint",
+        [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
+        userMintPrivateKey
+      );
+    } catch (e) {
+      expect(e.toString()).to.include("ERC721: owner query for nonexistent token");
+    }
+  });
 
-  //   // can only mint 1 ticket when price is 0
-  //   try {
-  //     await signAnotherContractThenExcuteFunctionWithValue(
-  //       jsonFile,
-  //       ticketNFT721Address,
-  //       userMintContract,
-  //       MINT_ETH_VALUE,
-  //       "userMint",
-  //       [userMintContract, tokenId, NUMBER_MINT, "0x00"],
-  //       userMintPrivateKey
-  //     );
-  //   } catch (error) {
-  //     expect(error.toString()).to.include("MAX_QUANTITY");
-  //   }
-  //   // mint 1 token
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userMintContract,
-  //     MINT_ETH_VALUE,
-  //     "userMint",
-  //     [userMintContract, tokenId, 1, "0x00"],
-  //     userMintPrivateKey
-  //   );
-  //   const totalTokenAfterMint = await ticketNFT721.totalSupply(tokenId);
-  //   const balanceTokenOfOwner = await ticketNFT721.balanceOf(userOwnerTicket, tokenId);
-  //   const balanceTokenOfMinter = await ticketNFT721.balanceOf(userMintContract, tokenId);
-  //   expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + 1);
-  //   expect(balanceTokenOfOwner).to.equal(INIT_SUPPLY_TOKEN);
-  //   expect(balanceTokenOfMinter).to.equal(1);
-  // });
+  it.only("- Test balance of all contract", async () => {
+    // user 1 publish erc 721 ticket
+    await signAnotherContractThenExcuteFunction(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      operatorContract,
+      "publishTicket",
+      [userOwnerTicket, erc721TradableAddress, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
+      operatorPrivateKey
+    );
+    const balanceETHOfOperator = await getEthBalance(operatorContract);
+    const balanceETHOfMinterBeforeMint = await getEthBalance(userMintContract);
+    // user 2 mint
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      userMintContract,
+      ETH_VALUE_MINT,
+      "userMint",
+      [userMintContract, TICKET_ID, QTY_MINT_721, DATA],
+      userMintPrivateKey
+    );
 
-  // it("- Test user mint with 5% purchase fee", async () => {
-  //   const TICKET_PUR_FEE = 500; // 5%
-  //   const TICKET_PUB_FEE = ETH("0");
-  //   const NUMBER_MINT = 3;
-  //   const ETH_VALUE = ETH("0");
-  //   const ETH_VALUE_MINT = ETH("300");
-  //   const PRICE_PER_TOKEN = ETH("100");
-  //   const purChaseFee = (TICKET_PUR_FEE * ETH_VALUE_MINT) / 10000;
-  //   await parameterControl.setUInt256("TICKET_PUR_FEE", TICKET_PUR_FEE);
-  //   await parameterControl.setUInt256("TICKET_PUB_FEE", TICKET_PUB_FEE);
-  //   // user create ticket
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
-  //   const balanceETHOfticketOwner = await getEthBalance(userOwnerTicket);
-  //   const balanceETHOfMinterBeforeMint = await getEthBalance(userMintContract);
+    const totalTokenAfterMint = await ticketNFT721.totalSupply(TICKET_ID);
+    const balanceTicketOfOwner = await ticketNFT721.balanceOf(userOwnerTicket, TICKET_ID);
+    const balanceTokenOfMinter = await ticketNFT721.balanceOf(userMintContract, TICKET_ID);
+    expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + QTY_MINT_721);
+    expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
+    expect(balanceTokenOfMinter).to.equal(QTY_MINT_721);
 
-  //   // user mint
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userMintContract,
-  //     ETH_VALUE_MINT,
-  //     "userMint",
-  //     [userMintContract, tokenId, NUMBER_MINT, "0x00"],
-  //     userMintPrivateKey
-  //   );
-  //   const totalTokenAfterMint = await ticketNFT721.totalSupply(tokenId);
-  //   const balanceTicketOfOwner = await ticketNFT721.balanceOf(userOwnerTicket, tokenId);
-  //   const balanceTokenOfMinter = await ticketNFT721.balanceOf(userMintContract, tokenId);
-  //   expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + NUMBER_MINT);
-  //   expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
-  //   expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
+    // check balane eth of ticket nft 721 contract
+    const balanceTicketNFT721 = await getEthBalance(ticketNFT721Address);
+    expect(balanceTicketNFT721).to.equal(convertWeiToEth(ETH_VALUE_MINT));
 
-  //   // check ticket owner receiced correct eth after mint
-  //   const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
-  //   expect(balanceETHOfticketOwnerAfter).to.equal(
-  //     balanceETHOfticketOwner + convertWeiToEth(ETH_VALUE_MINT) - convertWeiToEth(purChaseFee)
-  //   );
+    // check operator receiced correct eth after mint then withdraw
+    await ticketNFT721.withdraw(operatorContract);
+    const balanceETHOfOperatorAfter = await getEthBalance(operatorContract);
+    expect(balanceETHOfOperatorAfter).to.equal(balanceETHOfOperator + convertWeiToEth(ETH_VALUE_MINT));
 
-  //   // check balance of minter
-  //   const balanceETHOfMinterAfterMint = await getEthBalance(userMintContract);
-  //   expect(balanceETHOfMinterAfterMint).to.lessThanOrEqual(
-  //     balanceETHOfMinterBeforeMint - convertWeiToEth(ETH_VALUE_MINT)
-  //   );
+    // check balane eth of ticket nft 721 contract after withdraw
+    const balanceTicketNFT721After = await getEthBalance(ticketNFT721Address);
+    expect(balanceTicketNFT721After).to.equal(0);
 
-  //   // check deployer received 5% purchase fee
-  //   const deployerBalance = await getEthBalance(ticketNFT721Address);
-  //   expect(deployerBalance).to.equal(convertWeiToEth(purChaseFee));
-  // });
-
-  // it("- Test user mint with 0% purchase fee", async () => {
-  //   const TICKET_PUR_FEE = 0; // 0%
-  //   const TICKET_PUB_FEE = ETH("0");
-  //   const NUMBER_MINT = 3;
-  //   const ETH_VALUE = ETH("0");
-  //   const ETH_VALUE_MINT = ETH("300");
-  //   const PRICE_PER_TOKEN = ETH("100");
-  //   const purChaseFee = (TICKET_PUR_FEE * ETH_VALUE_MINT) / 10000;
-  //   await parameterControl.setUInt256("TICKET_PUR_FEE", TICKET_PUR_FEE);
-  //   await parameterControl.setUInt256("TICKET_PUB_FEE", TICKET_PUB_FEE);
-  //   // user create ticket
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userOwnerTicket,
-  //     ETH_VALUE,
-  //     "publishTicket",
-  //     [userOwnerTicket, INIT_SUPPLY_TOKEN, TOKEN_URI, PRICE_PER_TOKEN, MAX_SUPPLY],
-  //     userOwnerTicketPrivateKey
-  //   );
-  //   const balanceETHOfticketOwner = await getEthBalance(userOwnerTicket);
-  //   const balanceETHOfMinterBeforeMint = await getEthBalance(userMintContract);
-
-  //   // user mint
-  //   await signAnotherContractThenExcuteFunctionWithValue(
-  //     jsonFile,
-  //     ticketNFT721Address,
-  //     userMintContract,
-  //     ETH_VALUE_MINT,
-  //     "userMint",
-  //     [userMintContract, tokenId, NUMBER_MINT, "0x00"],
-  //     userMintPrivateKey
-  //   );
-  //   const totalTokenAfterMint = await ticketNFT721.totalSupply(tokenId);
-  //   const balanceTicketOfOwner = await ticketNFT721.balanceOf(userOwnerTicket, tokenId);
-  //   const balanceTokenOfMinter = await ticketNFT721.balanceOf(userMintContract, tokenId);
-  //   expect(totalTokenAfterMint).to.equal(INIT_SUPPLY_TOKEN + NUMBER_MINT);
-  //   expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
-  //   expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
-
-  //   // check ticket owner receiced correct eth after mint
-  //   const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
-  //   expect(balanceETHOfticketOwnerAfter).to.equal(
-  //     balanceETHOfticketOwner + convertWeiToEth(ETH_VALUE_MINT) - convertWeiToEth(purChaseFee)
-  //   );
-
-  //   // check balance of minter
-  //   const balanceETHOfMinterAfterMint = await getEthBalance(userMintContract);
-  //   expect(balanceETHOfMinterAfterMint).to.lessThanOrEqual(
-  //     balanceETHOfMinterBeforeMint - convertWeiToEth(ETH_VALUE_MINT)
-  //   );
-
-  //   // check deployer received 0% purchase fee
-  //   const deployerBalance = await getEthBalance(ticketNFT721Address);
-  //   expect(deployerBalance).to.equal(0);
-  // });
+    // check balance of minter
+    const balanceETHOfMinterAfterMint = await getEthBalance(userMintContract);
+    expect(balanceETHOfMinterAfterMint).to.lessThanOrEqual(
+      balanceETHOfMinterBeforeMint - convertWeiToEth(ETH_VALUE_MINT)
+    );
+  });
 });
