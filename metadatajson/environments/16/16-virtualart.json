@@ -1,0 +1,45 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://Qmf2AnrgM5JUzAqgN5YnZCWLdDyKgGAA7vSw9nWWUrHBEx"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmSsFWutzH1c8zaPSikqZRLrKW21uaR5RGYsvGbXk6nFRs"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmWnt1baSNmdp9qUGNPAp7Pjyk8PpFxUfpZKHDXAhEAwhR"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": ""
+    }
+  ],
+  "description": "Bring life to your art collections. Curate and display your arts in this immersive two-storey gallery. Add your personal touch and elevate viewers experience. Welcome people to your unique world.",
+  "image": "ipfs://Qma9wT5TFgVFmXmNym58BkV2dx7VCtXq4ptvBzUpkrRkAY",
+  "name": "Rove - Virtual Art Exhibition",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmWUF3fKauBz8bBXECuYzmnnH9dCeLwjkjZn1zfn38mujS"
+}
