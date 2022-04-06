@@ -1,0 +1,45 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmUPWNEcRyHgciK8CKa93YxuGGLiQcPPs6k4mnp8Kj4gwJ"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmXBPgcdamA8hN7xc8z9XqGJT2a3K4EW4ST9EESY8EcGjV"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmPas4ws2zBQbx2YZbpGKxdp7nhKiZs5QCg5wUofhb5d61"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": ""
+    }
+  ],
+  "description": "Bring life to your art collections. Curate and display your arts in this immersive gallery. Add your personal touch and elevate viewers experience. Welcome people to your unique world.",
+  "image": "ipfs://QmZFKoiiQgJt8tfWfsTs6Wk3R4NX6RVAqAJfZaXscvJdo6",
+  "name": "Rove - Your Art Space",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://Qme6WApRYGNoKgZfvEr1uZ7svrgXtmJRVR8wSfKTkMGLYA"
+}
