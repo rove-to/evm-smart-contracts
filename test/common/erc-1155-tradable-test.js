@@ -924,7 +924,7 @@ describe("** NFTs ERC-1155 tradable", () => {
 
       const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * percentRecieve) / 10000);
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * defaultpercentRecieve) / 10000);
     });
   });
 
@@ -1085,12 +1085,13 @@ describe("** NFTs ERC-1155 tradable", () => {
           jsonFile,
           erc1155TradbleAddress,
           userContract,
-          ethValue, // 0.0002 ETH
+          200, // 200 wei
           "userMint",
           [userContract, tokenId, 20, "0x00"],
           private_keys[3]
         );
       } catch (error) {
+        console.error(error);
         expect(error.toString()).to.include("REACH_MAX");
       }
     });
