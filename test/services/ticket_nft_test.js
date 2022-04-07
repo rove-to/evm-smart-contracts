@@ -17,7 +17,7 @@ const {
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const PrivateKeyProvider = require("truffle-privatekey-provider");
 
-describe.only("** Ticket NFT", () => {
+describe("** Ticket NFT", () => {
   let ticketNFT;
   let parameterControl;
   let ticketNFTAddress;
@@ -27,7 +27,7 @@ describe.only("** Ticket NFT", () => {
   let operatorContract = addresses[1];
   let operatorPrivateKey = private_keys[1];
   const jsonFile = "./artifacts/contracts/services/TicketNFT.sol/TicketNFT.json";
-  const TOKEN_URI = "abcxyz";
+  const TOKEN_URI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
   const tokenId = 1;
   // percent for ticket public free
   const TICKET_PUB_FEE = ETH("0.01");
@@ -302,7 +302,7 @@ describe.only("** Ticket NFT", () => {
     expect(deployerBalance).to.equal(convertWeiToEth(purChaseFee));
   });
 
-  it.only("- Test user mint with 0% purchase fee", async () => {
+  it("- Test user mint with 0% purchase fee", async () => {
     const TICKET_PUR_FEE = 0; // 0%
     const TICKET_PUB_FEE = ETH("0");
     const NUMBER_MINT = 3;
@@ -342,7 +342,7 @@ describe.only("** Ticket NFT", () => {
     expect(balanceTicketOfOwner).to.equal(INIT_SUPPLY_TOKEN);
     expect(balanceTokenOfMinter).to.equal(NUMBER_MINT);
 
-    // check ticket owner receiced correct eth after mint
+    // check ticket owner received correct eth after mint
     const balanceETHOfticketOwnerAfter = await getEthBalance(userOwnerTicket);
     expect(balanceETHOfticketOwnerAfter).to.equal(
       balanceETHOfticketOwner + convertWeiToEth(ETH_VALUE_MINT) - convertWeiToEth(purChaseFee)
