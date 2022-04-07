@@ -67,7 +67,6 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
         address _operator
     ) ERC721PresetMinterPauserAutoId(_name, _symbol, _uri) {
         // nextTokenId is initialized to 1, since starting at 0 leads to higher gas cost for the first minter
-        _nextTokenId.increment();
         _initializeEIP712(_name);
 
         admin = _admin;
