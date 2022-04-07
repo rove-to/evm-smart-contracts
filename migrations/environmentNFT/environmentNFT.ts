@@ -148,6 +148,21 @@ class EnvironmentNFT {
         }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
+    
+    async newItemId(contractAddress: any) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const newItemId: any = await temp?.nftContract.methods.newItemId().call(tx);
+        return newItemId;
+    }
 
     async mintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
         let temp = this.getContract(contractAddress);
