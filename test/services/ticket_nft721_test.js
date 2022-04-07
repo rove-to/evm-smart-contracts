@@ -14,7 +14,7 @@ const {
   generateBytes,
 } = require("../common_libs");
 
-describe.only("** Ticket NFT721", () => {
+describe("** Ticket NFT721", () => {
   let ticketNFT721;
   let parameterControl;
   let erc1155Tradable;
