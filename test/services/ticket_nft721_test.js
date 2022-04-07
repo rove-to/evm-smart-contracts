@@ -31,12 +31,12 @@ describe.only("** Ticket NFT721", () => {
   const jsonFileErc1155Tradable = "./artifacts/contracts/utils/ERC1155Tradable.sol/ERC1155Tradable.json";
   const jsonFileErc721Tradable = "./artifacts/contracts/utils/ERC721Tradable.sol/ERC721Tradable.json";
   const TOKEN_URI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
-  const TOKEN_ID = 2; // erc1155 , erc721
+  const TOKEN_ID = 1; // erc1155 , erc721
   const TICKET_ID = 1;
   const DATA = generateBytes(TOKEN_ID);
   // percent for ticket public free
   const INIT_SUPPLY_TOKEN = 1;
-  const MAX_SUPPLY = 2; // max supply = init + total mint
+  const MAX_SUPPLY = 3; // max supply = init + total mint
   const PRICE_PER_TOKEN = ETH("100");
   const ETH_VALUE_MINT = ETH("100");
   const QTY_MINT_721 = 1;
@@ -304,7 +304,6 @@ describe.only("** Ticket NFT721", () => {
       [userMint2Contract, TOKEN_URI],
       operatorPrivateKey
     );
-
     // user 1 publish erc 721 ticket
     await signAnotherContractThenExcuteFunction(
       jsonFileTicket721NFT,
@@ -325,6 +324,16 @@ describe.only("** Ticket NFT721", () => {
       userMintPrivateKey
     );
     // user 3 mint
+    await signAnotherContractThenExcuteFunctionWithValue(
+      jsonFileTicket721NFT,
+      ticketNFT721Address,
+      userMint2Contract,
+      ETH_VALUE_MINT,
+      "userMint",
+      [userMint2Contract, TICKET_ID, QTY_MINT_721, generateBytes(2)],
+      userMint2PrivateKey
+    );
+    // user 3 continue mint
     try {
       await signAnotherContractThenExcuteFunctionWithValue(
         jsonFileTicket721NFT,
@@ -332,10 +341,11 @@ describe.only("** Ticket NFT721", () => {
         userMint2Contract,
         ETH_VALUE_MINT,
         "userMint",
-        [userMint2Contract, TICKET_ID, QTY_MINT_721, DATA],
+        [userMint2Contract, TICKET_ID, QTY_MINT_721, generateBytes(2)],
         userMint2PrivateKey
       );
     } catch (e) {
+      console.error(e);
       expect(e.toString()).to.include("REACH_MAX");
     }
   });
