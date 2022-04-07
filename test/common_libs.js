@@ -79,6 +79,11 @@ let ETH = eth => {
   return _eth;
 };
 
+let generateBytes = number => {
+  const _bytes = web3.utils.padLeft(web3.utils.toHex(number), 64);
+  return _bytes;
+};
+
 module.exports = {
   sleep,
   getEthBalance,
@@ -86,4 +91,5 @@ module.exports = {
   ETH,
   signAnotherContractThenExcuteFunction,
   signAnotherContractThenExcuteFunctionWithValue,
+  generateBytes,
 };
