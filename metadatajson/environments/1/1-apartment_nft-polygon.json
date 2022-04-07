@@ -1,0 +1,48 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmUtwNohEhDk7svg2yYn7kZaRDtmmsjUVTcBUpFem36HMs"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmXndunUPd2D148G57XAEcNA17aPZ6fJNP5ynZRkzQji2L"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmS8zcZXnyTudz1ufdc62yLnwqQ4DdGeAmuykQBzdJsjkB"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmPuF5J4v1vGXeMW47a6FmxxAu8GkVFAVFf4K2Ks3Xn8MN"
+    }, {
+      "trait_type": "Wall picture",
+      "value": "Polygon"
+    }
+  ],
+  "description": "Meet at your place? Polygon x Rove to make this swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: https://rove.to",
+  "image": "ipfs://QmYhGgYHDzKSTvv6A69k18gHqMqrCLVwq4w8J36c6n1qjF",
+  "name": "Polygon x Rove - The Place to Be",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://Qmew7doBYMVSG3dMCpwLkFyU18dK2mGUQ88LVGkT3ifys6"
+}

@@ -1,0 +1,45 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmYQXQ6r7D537svrvYnpf4QQNU8xc3dJG19cgGdoGEmXjR"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmeBo9jr6qF4hvqMZ7ea22he3kfrmkn3d7oxoWyPh4ZVV6"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://Qme8nokbZfReBv8wCostjry2R7FAywP2G6f5RwSBmjTjzN"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmdvcEESTVekMC62cqtuXJYaDrdR5xA9SC1qsqb73c8REF"
+    }
+  ],
+  "description": "Meet at your place? This swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: rove.to",
+  "image": "ipfs://QmbPPexxHPkWpdU4i1gaD2LHmVsz7BZ5f1DcF8WW3oZPvs",
+  "name": "Kardia x Rove: The Place to Be",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmaF4pAYRx9vPWXtfU3oarRvt4CD1bTuR48feMCb5QFNFN"
+}
