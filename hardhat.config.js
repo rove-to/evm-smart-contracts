@@ -5,6 +5,7 @@ require("dotenv").config();
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-gas-reporter");
 require('hardhat-contract-sizer');
+require("@nomiclabs/hardhat-etherscan");
 
 module.exports = {
     solidity: {
@@ -17,6 +18,9 @@ module.exports = {
         }
     },
     defaultNetwork: process.env.NETWORK,
+    etherscan: {
+        apiKey: "xxx"
+    },
     networks: {
         hardhat: {
             allowUnlimitedContractSize: true,
@@ -62,6 +66,14 @@ module.exports = {
         },
         harmony_testnet: {
             url: process.env.HARMONY_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        kardia: {
+            url: process.env.KARDIA_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        kardia_testnet: {
+            url: process.env.KARDIA_TESTNET_API_URL,
             accounts: [`0x${process.env.PRIVATE_KEY}`],
         }
     },

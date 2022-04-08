@@ -70,7 +70,7 @@ describe("** NFTs ERC-1155 tradable", () => {
   beforeEach(async function () {
     console.log("Hardhat network", hardhatConfig.defaultNetwork);
     let Erc1155TradableContract = await ethers.getContractFactory("ERC1155Tradable");
-    erc1155Tradable = await Erc1155TradableContract.deploy("test", "test", { a: "b" }, adminContract, operatorContract);
+    erc1155Tradable = await Erc1155TradableContract.deploy("ROVE", "RVE", tokenURI, adminContract, operatorContract);
     erc1155TradbleAddress = erc1155Tradable.address;
     console.log("erc1155Tradable deploy address", erc1155TradbleAddress);
     const admin = await erc1155Tradable.admin();
@@ -924,7 +924,7 @@ describe("** NFTs ERC-1155 tradable", () => {
 
       const _royaltyInfo = await erc1155Tradable.royaltyInfo(tokenId, salePriceRoyalty);
       console.log("Royalty info: ", _royaltyInfo);
-      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * percentRecieve) / 10000);
+      expect(_royaltyInfo[1]).to.equal((salePriceRoyalty * defaultpercentRecieve) / 10000);
     });
   });
 
@@ -1085,12 +1085,13 @@ describe("** NFTs ERC-1155 tradable", () => {
           jsonFile,
           erc1155TradbleAddress,
           userContract,
-          ethValue, // 0.0002 ETH
+          200, // 200 wei
           "userMint",
           [userContract, tokenId, 20, "0x00"],
           private_keys[3]
         );
       } catch (error) {
+        console.error(error);
         expect(error.toString()).to.include("REACH_MAX");
       }
     });

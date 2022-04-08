@@ -1,0 +1,45 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmdeRmWwsBsBHkP8cDX96LstDf7p2S5juaUzJ8cqvo4PET"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmXvvtiVdLVsUTJS4FNUrnYbHE9FXgfdEkamJZdDiRqtxx"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://Qmepau9wZFKdnDVQRkxKabwgWsDo9dmWqgGxEjZcGqJhaK"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-room-state",
+      "value": "ipfs://QmPuF5J4v1vGXeMW47a6FmxxAu8GkVFAVFf4K2Ks3Xn8MN"
+    }
+  ],
+  "description": "Get the key to own this beautiful stretch of beach. Who said you need a vacation to enjoy beach time? Hang out at the beach with your group of friends, co-workers and your community. ",
+  "image": "ipfs://QmQHVXNZwUijvjzYFu3L5ExFi4TjRMz5wuJAHdzzsf7yN1",
+  "name": "Island Before Time",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmdkZERW2pvSFtk9JcD5ppYP3rhEKWeAgnnFbCj98D48uN"
+}

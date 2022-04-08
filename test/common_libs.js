@@ -64,18 +64,24 @@ let signAnotherContractThenExcuteFunctionWithValue = async (
 
 let getEthBalance = async address => {
   let balance = await web3.eth.getBalance(address);
-  return balance;
+  balance = convertWeiToEth(balance);
+  return Number(balance);
 };
 
 let convertWeiToEth = wei => {
   let _eth = web3.utils.fromWei(wei.toString(), "ether");
-  return _eth;
+  return Number(_eth);
 };
 
 // generate ETH
 let ETH = eth => {
   let _eth = ethers.utils.parseEther(eth);
   return _eth;
+};
+
+let generateBytes = number => {
+  const _bytes = web3.utils.padLeft(web3.utils.toHex(number), 64);
+  return _bytes;
 };
 
 module.exports = {
@@ -85,4 +91,5 @@ module.exports = {
   ETH,
   signAnotherContractThenExcuteFunction,
   signAnotherContractThenExcuteFunctionWithValue,
+  generateBytes,
 };

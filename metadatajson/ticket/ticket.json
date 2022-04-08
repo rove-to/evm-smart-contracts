@@ -1,0 +1,8 @@
+{
+  "name": "{{name}}",
+  "description": "{{description}}",
+  "attributes": [],
+  "external_url": "https://rove-stag.moshwithme.io/{{rock}}",
+  "image": "ipfs://QmX9ZKqSeawdVL47vaHH2o3tpoFDhDMCqYRMrSmtHb3Lgt",
+  "animation_url": "ipfs://QmVWPCVygc7EwPvkAojURPzAxyxiSm2XbcXhU4N31nHDqv"
+}

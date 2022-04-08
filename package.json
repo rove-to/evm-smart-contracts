@@ -26,6 +26,7 @@
   "devDependencies": {
     "@alch/alchemy-web3": "^1.2.4",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@openzeppelin/contracts": "^4.4.1",
     "axios": "^0.26.0",
     "big-number": "^2.0.0",

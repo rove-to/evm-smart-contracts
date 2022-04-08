@@ -148,6 +148,21 @@ class EnvironmentNFT {
         }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
+    
+    async newItemId(contractAddress: any) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const newItemId: any = await temp?.nftContract.methods.newItemId().call(tx);
+        return newItemId;
+    }
 
     async mintEnvironmentNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
         let temp = this.getContract(contractAddress);
@@ -385,6 +400,28 @@ class EnvironmentNFT {
 
         const price: any = await temp?.nftContract.methods.getPriceToken(tokenId).call(tx);
         return price;
+    }
+
+    async changePriceToken(contractAddress: any, id: number, price: string, gas: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        
+        const eth = ethers.utils.parseEther(price);
+        const fun = temp?.nftContract.methods.changePriceToken(id, eth)
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 }
 
