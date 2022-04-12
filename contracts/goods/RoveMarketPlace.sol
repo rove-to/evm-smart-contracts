@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../governance/ParameterControl.sol";
 import "../utils/IERC1155Tradable.sol";
 
-contract RoveMarketPlaceV2 is ReentrancyGuard, AccessControl {
+contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
