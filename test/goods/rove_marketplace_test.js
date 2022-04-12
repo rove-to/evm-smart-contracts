@@ -79,7 +79,7 @@ describe("Marketplace contract", function () {
     await paramControl.setUInt256("CREATOR_BENEFIT", CREATOR_BENEFIT);
 
     // deploy market
-    let marketContract = await ethers.getContractFactory("RoveMarketPlaceV2");
+    let marketContract = await ethers.getContractFactory("RoveMarketPlace");
     roveMarketplace = await marketContract.deploy(operator_address, paramControlAddress);
     rove2Marketplace = await marketContract.deploy(operator_address, paramControlAddress);
     roveMarketplaceAddress = roveMarketplace.address;
