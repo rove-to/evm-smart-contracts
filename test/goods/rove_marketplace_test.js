@@ -44,7 +44,7 @@ describe("Marketplace contract", function () {
   const operator_privatekey = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
   const nftPrice = 10;
   const maxNftNumber = 100;
-  const roveMaketJson = "./artifacts/contracts/goods/RoveMarketPlace.sol/RoveMarketPlace.json";
+  const roveMaketJson = "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
   const roveTokenJson = "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
 
   beforeEach(async function () {
@@ -195,7 +195,7 @@ describe("Marketplace contract", function () {
     });
 
     it("* Stop offering", async function () {
-      let contract = require(path.resolve("./artifacts/contracts/goods/RoveMarketPlace.sol/RoveMarketPlace.json"));
+      let contract = require(path.resolve("./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json"));
       let contractToken = require(path.resolve("./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json"));
       const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
       const marketplace1 = new web3.eth.Contract(contract.abi, roveMarketplaceAddress);
@@ -474,7 +474,7 @@ describe("Marketplace contract", function () {
       */
       const marketplace2Address = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
       let roveMarketplace2;
-      let marketContract2 = await ethers.getContractFactory("RoveMarketPlace");
+      let marketContract2 = await ethers.getContractFactory("RoveMarketPlaceV2");
       // deploy second
       roveMarketplace2 = await marketContract2.deploy(marketplace2Address, paramControlAddress);
       roveMarketplace2Address = roveMarketplace2.address;
