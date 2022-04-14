@@ -6,6 +6,7 @@ const expect = chai.expect;
 const { addresses, private_keys } = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 const {
+  sleep,
   signAnotherContractThenExcuteFunction,
   signAnotherContractThenExcuteFunctionWithValue,
 } = require("../common_libs");
@@ -111,7 +112,7 @@ describe("Marketplace contract erc-721", function () {
       const price = events[0].args[4];
       const uri = events[0].args[5];
       expect(hostContract).to.equal(objectNFTAddress);
-      expect(offerer).to.equal(nftOwner);
+      expect(offerer.toLowerCase()).to.equal(nftOwner.toLowerCase());
       expect(tokenId1).to.equal(tokenID);
       expect(price).to.equal(priceOffer);
 
@@ -155,13 +156,10 @@ describe("Marketplace contract erc-721", function () {
       let events = receipt.events?.filter(x => {
         return x.event == "ApprovalForAll";
       });
-      // console.log("evenddddd: ", events);
       expect(events.length).to.equal(1);
-      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[0].toLowerCase()).to.equal(nftOwner.toLowerCase());
       expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
       expect(events[0].args[2]).to.equal(true);
-      const isapproveall___ = await objectNFT.isApprovedForAll(nftOwner, roveMarketplaceAddress);
-      console.log("dddddddd", isapproveall___);
       // nftOwner place offering with price 5 rove token
       const priceOffer = 5 * decimals;
       tx = await roveMarketplace.placeOffering(objectNFTAddress, tokenID, roveTokenContractAddress, priceOffer);
@@ -169,7 +167,6 @@ describe("Marketplace contract erc-721", function () {
       events = receipt.events?.filter(x => {
         return x.event == "OfferingPlaced";
       });
-      console.log("events: ", events);
       expect(events.length).to.equal(1);
       const offeringId = events[0].args[0];
       // buyer approve for market place contract as spender
@@ -178,7 +175,7 @@ describe("Marketplace contract erc-721", function () {
         roveTokenContractAddress,
         buyer,
         "approve",
-        [roveMarketplaceAddress, priceOffer * 2],
+        [roveMarketplaceAddress, priceOffer],
         buyerPrivateKey
       );
 
@@ -198,8 +195,10 @@ describe("Marketplace contract erc-721", function () {
       // check balance
       const marketBalanceRoveToken = await roveToken.balanceOf(roveMarketplaceAddress);
       expect(marketBalanceRoveToken).to.equal(priceOffer);
-      let nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(nftOwner);
+
+      let nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(nftOwner, roveTokenContractAddress);
       expect(nftOwnerBalanceRoveTokenOnMarket).to.equal(priceOffer - marketBenefit);
+
       const buyerBalanceRoveToken = await roveToken.balanceOf(buyer);
       expect(buyerBalanceRoveToken).to.equal(buyerBalance * decimals - priceOffer);
 
@@ -208,10 +207,10 @@ describe("Marketplace contract erc-721", function () {
       expect(nftOwnerBalanceNFT.add(buyerBalanceNFT)).to.equal(initSupply);
 
       // call withdraw for owner nft for get rove token
-      tx = await roveMarketplace.withdrawBalance();
+      tx = await roveMarketplace.withdrawBalance(roveTokenContractAddress);
       await tx.wait();
       // view balance market place again
-      nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(nftOwner);
+      nftOwnerBalanceRoveTokenOnMarket = await roveMarketplace.viewBalances(nftOwner, roveTokenContractAddress);
       expect(nftOwnerBalanceRoveTokenOnMarket).to.equal(0);
       // check erc-20 balance
       const nftOwnerWithdrawBalance = await roveToken.balanceOf(nftOwner);
