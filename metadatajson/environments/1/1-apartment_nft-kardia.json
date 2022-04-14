@@ -10,15 +10,15 @@
     },
     {
       "trait_type": "rove-asset-bundle-web",
-      "value": "ipfs://QmYQXQ6r7D537svrvYnpf4QQNU8xc3dJG19cgGdoGEmXjR"
+      "value": "ipfs://"
     },
     {
       "trait_type": "rove-asset-bundle-android",
-      "value": "ipfs://QmeBo9jr6qF4hvqMZ7ea22he3kfrmkn3d7oxoWyPh4ZVV6"
+      "value": "ipfs://"
     },
     {
       "trait_type": "rove-asset-bundle-ios",
-      "value": "ipfs://Qme8nokbZfReBv8wCostjry2R7FAywP2G6f5RwSBmjTjzN"
+      "value": "ipfs://"
     },
     {
       "trait_type": "rove-asset-bundle-window",
@@ -34,12 +34,12 @@
     },
     {
       "trait_type": "rove-room-state",
-      "value": "ipfs://QmdvcEESTVekMC62cqtuXJYaDrdR5xA9SC1qsqb73c8REF"
+      "value": ""
     }
   ],
-  "description": "Meet at your place? This swanky apartment in the 3D web comes equipped for parties and movie nights and is spacious enough for all your friends, their pets, and your favorite NFT art collections. Visit one here: rove.to",
-  "image": "ipfs://QmbPPexxHPkWpdU4i1gaD2LHmVsz7BZ5f1DcF8WW3oZPvs",
+  "description": "Rove x KardiaChain to make this swanky 3D space equipped for meeting, learning and spacious enough for all your friends, your pets, and your favorite NFT art collections. Visit one here: https://rove.to",
+  "image": "ipfs://",
   "name": "Kardia x Rove: The Place to Be",
   "external_url": "https://rove.to/",
-  "animation_url": "ipfs://QmaF4pAYRx9vPWXtfU3oarRvt4CD1bTuR48feMCb5QFNFN"
+  "animation_url": "ipfs://"
 }
