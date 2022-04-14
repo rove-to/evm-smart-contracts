@@ -186,7 +186,7 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
             }
         }
 
-        return super.isApprovedForAll(_owner, operator);
+        return super.isApprovedForAll(_owner, _operator);
     }
 
     /**
