@@ -3,10 +3,8 @@ var chai = require("chai");
 chai.use(solidity);
 const { ethers } = require("hardhat");
 const expect = chai.expect;
-const { addresses } = require("../constants");
+const { addresses, private_keys } = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
-const path = require("path");
-const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const {
   signAnotherContractThenExcuteFunction,
   signAnotherContractThenExcuteFunctionWithValue,
@@ -14,7 +12,7 @@ const {
 
 describe("Marketplace contract erc-721", function () {
   let roveToken;
-  let roveTokenAdmin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+  let roveTokenAdmin = addresses[0];
   let roveTokenContractAddress;
   let decimals;
 
@@ -22,9 +20,9 @@ describe("Marketplace contract erc-721", function () {
   let objectNFTAddress;
   let tokenID;
   const initSupply = 1; // erc-721 => 1
-  const nftOwner = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
-  const buyer = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"; // default for local
-  const buyerPrivateKey = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+  const nftOwner = addresses[0];
+  const buyer = addresses[1]; // default for local
+  const buyerPrivateKey = private_keys[1];
   const buyerBalance = 1000000000; // transfer all 1 bil token to buyer
 
   let paramControl;
@@ -34,25 +32,19 @@ describe("Marketplace contract erc-721", function () {
 
   let roveMarketplace;
   let roveMarketplaceAddress;
-  const operator_address = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"; // default for local
-  const operator_privatekey = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
+  const operator_address = addresses[2]; // default for local
+  const operator_privatekey = private_keys[2];
   const marketPlaceJson = "./artifacts/contracts/goods/RoveMarketPlaceERC721.sol/RoveMarketPlaceERC721.json";
   const roveTokenJson = "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
   const tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
   beforeEach(async function () {
     // deploy rove token
-    // [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
     let roveTokenContract = await ethers.getContractFactory("RoveToken");
     roveToken = await roveTokenContract.deploy(roveTokenAdmin);
     let totalSupply = await roveToken.totalSupply();
     roveTokenContractAddress = roveToken.address;
-    console.log(
-      "Rove token contract address",
-      roveTokenContractAddress,
-      totalSupply,
-      await roveToken.balanceOf(roveTokenAdmin)
-    );
+    console.log("Rove token contract address", roveTokenContractAddress);
     decimals = await roveToken.decimals();
     decimals = 10 ** decimals;
     await roveToken.transfer(buyer, buyerBalance * decimals); // transfer all 1 bil token to buyer
@@ -68,7 +60,7 @@ describe("Marketplace contract erc-721", function () {
     // mint nft
     await objectNFT.mintTo(nftOwner, tokenURI);
     tokenID = await objectNFT.nextTokenId();
-    // console.log("****", tokenID);
+    console.log("****Token ID: ", tokenID);
 
     // deploy param
     let param = await ethers.getContractFactory("ParameterControl");
@@ -89,10 +81,6 @@ describe("Marketplace contract erc-721", function () {
       let operator = await roveMarketplace.operator();
       expect(operator).to.equal(operator_address);
     });
-
-    // it.only("* Should set the right rove token", async function () {
-    //   expect(await roveMarketplace.roveToken()).to.equal(roveTokenContractAddress);
-    // });
   });
 
   describe("** Offering", function () {

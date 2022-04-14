@@ -96,10 +96,10 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
 
         // get hostContract of erc-721
         ERC721 hostContract = ERC721(_hostContract);
-        require(hostContract.ownerOf(_tokenId) == nftOwner, "Invalid NFT owner");
+        require(hostContract.ownerOf(_tokenId) == nftOwner, "INVALID_ERC721_OWNER");
         // check approval of erc-721 on this contract
-        //        bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
-        //        require(approval == true, "this contract address is not approved");
+        bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
+        require(approval == true, "ERC-721_NOT_APPROVED");
 
         // create offering nonce by counter
         _offeringNonces.increment();
@@ -137,7 +137,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         ERC20 token;
         if (isERC20) {
             token = ERC20(_offer.erc20Token);
-            closeOfferingData memory _closeOfferingData = closeOfferingData(
+            _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
                 _offer.price,
@@ -146,7 +146,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
                 _offer.erc20Token
             );
         } else {
-            closeOfferingData memory _closeOfferingData = closeOfferingData(
+            _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
                 _offer.price,
