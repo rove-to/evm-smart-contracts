@@ -137,7 +137,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         ERC20 token;
         if (isERC20) {
             token = ERC20(_offer.erc20Token);
-            closeOfferingData memory _closeOfferingData = closeOfferingData(
+            _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
                 _offer.price,
@@ -146,7 +146,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
                 _offer.erc20Token
             );
         } else {
-            closeOfferingData memory _closeOfferingData = closeOfferingData(
+            _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
                 _offer.price,
