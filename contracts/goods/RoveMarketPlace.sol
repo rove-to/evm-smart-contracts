@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "../governance/ParameterControl.sol";
 import "../utils/IERC1155Tradable.sol";
@@ -33,6 +34,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         uint256 benefitCreator;
         uint256 benefitPercentOperator;
         uint256 benefitOperator;
+        address roveToken;
+        uint256 discountRoveToken;
     }
 
     struct offering {
@@ -187,10 +190,22 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0);
+        benefit memory _benefit = benefit(0, 0, 0, 0, address(0x0), 0);
         _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPercentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
+            _benefit.benefitOperator = _closeOfferingData.originPrice * _benefit.benefitPercentOperator / 10000;
+            if (isERC20) {
+                // check for erc-20
+                string memory _roveTokenAdd = parameterController.get("ROVE_TOKEN");
+                // using param control rove token for market
+                if (bytes(_roveTokenAdd).length != 0) {
+                    // erc-20 is rove token
+                    if (keccak256(abi.encodePacked(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20))) == keccak256(abi.encodePacked(_roveTokenAdd))) {
+                        _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
+                        _benefit.benefitOperator = _benefit.benefitOperator - _benefit.benefitOperator * _benefit.discountRoveToken / 10000;
+                    }
+                }
+            }
             _closeOfferingData.totalPrice -= _benefit.benefitOperator;
             // update balance(on market) of operator
             _balances[_closeOfferingData.erc20Token][operator] += _benefit.benefitOperator;
@@ -201,7 +216,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
             if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
                 (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(_offer.tokenId, _closeOfferingData.originPrice);
                 if (_receiver != address(0x0)) {
-                    _benefit.benefitCreator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentCreator;
+                    _benefit.benefitCreator = _closeOfferingData.originPrice * _benefit.benefitPercentCreator / 10000;
                     _closeOfferingData.totalPrice -= _benefit.benefitCreator;
                     // update balance(on market) of creator erc-1155
                     _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
