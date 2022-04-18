@@ -34,7 +34,6 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         uint256 benefitCreator;
         uint256 benefitPercentOperator;
         uint256 benefitOperator;
-        address roveToken;
         uint256 discountRoveToken;
     }
 
@@ -190,7 +189,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0, address(0x0), 0);
+        benefit memory _benefit = benefit(0, 0, 0, 0, 0);
         _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPercentOperator > 0) {
             _benefit.benefitOperator = _closeOfferingData.originPrice * _benefit.benefitPercentOperator / 10000;
@@ -202,7 +201,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
                     // erc-20 is rove token
                     if (keccak256(abi.encodePacked(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20))) == keccak256(abi.encodePacked(_roveTokenAdd))) {
                         _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
-                        _benefit.benefitOperator = _benefit.benefitOperator - _benefit.benefitOperator * _benefit.discountRoveToken / 10000;
+                        if (_benefit.discountRoveToken > 0) {
+                            _benefit.benefitOperator = _benefit.benefitOperator - _benefit.benefitOperator * _benefit.discountRoveToken / 10000;
+                        }
                     }
                 }
             }
