@@ -201,6 +201,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
                     // erc-20 is rove token
                     if (keccak256(abi.encodePacked(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20))) == keccak256(abi.encodePacked(_roveTokenAdd))) {
                         _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
+                        // discount > 0
                         if (_benefit.discountRoveToken > 0) {
                             _benefit.benefitOperator = _benefit.benefitOperator - _benefit.benefitOperator * _benefit.discountRoveToken / 10000;
                         }
