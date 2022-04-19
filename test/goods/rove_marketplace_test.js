@@ -760,9 +760,9 @@ describe("Marketplace contract", function () {
     });
 
     it.only("* Test benifit of market when sell/buy by Rove token", async function () {
-      const MARKET_BENEFIT = 1000; // 3%
+      const MARKET_BENEFIT = 1000; // 10%
       const ROVE_TOKEN_ADD = roveTokenContractAddress;
-      const DISCOUNT_ROVE_TOKEN = 200; // Operator benifit = 3 %
+      const DISCOUNT_ROVE_TOKEN = 200; // Operator benifit = 8 %
       const CREATOR_BENEFIT = 0;
       // set parameter control when use rove token to trade
       await paramControl.set("ROVE_TOKEN", ROVE_TOKEN_ADD);
@@ -800,7 +800,8 @@ describe("Marketplace contract", function () {
 
       // buyer approve for market place contract as spender
       const amountCloseOffer = amountPlaceOffer;
-      const benifitOfOperator = (priceOffer * amountCloseOffer * 3) / 100; // operator of market place
+      let benifitOfOperator = priceOffer * amountCloseOffer * 0.1; // operator of market place
+      benifitOfOperatorAfterDiscount = benifitOfOperator - benifitOfOperator * 0.02;
 
       await signAnotherContractThenExcuteFunction(
         roveTokenJson,
@@ -847,15 +848,17 @@ describe("Marketplace contract", function () {
       // check balance rove token of seller
       await roveMarketplace.withdrawBalance(roveTokenContractAddress);
       const balanceRoveTokenofSellerAfterWithdraw = await roveToken.balanceOf(nftOwner);
-      // expect(balanceRoveTokenofSellerAfterWithdraw).to.equal(priceOffer * amountCloseOffer - benifitOfOperator);
+      expect(balanceRoveTokenofSellerAfterWithdraw).to.equal(
+        priceOffer * amountCloseOffer - benifitOfOperatorAfterDiscount
+      );
 
       // check balance rove token of buyer
       const balanceRoveTokenofBuyerAfter = await roveToken.balanceOf(buyer);
-      // expect(balanceRoveTokenofBuyerAfter).to.equal(balanceRoveTokenofBuyerBefore - priceOffer * amountCloseOffer);
+      expect(balanceRoveTokenofBuyerAfter).to.equal(balanceRoveTokenofBuyerBefore - priceOffer * amountCloseOffer);
 
       // check balance rove token of market place
       const balanceRoveTokenofMarketAfterWithdraw = await roveToken.balanceOf(roveMarketplaceAddress);
-      // expect(balanceRoveTokenofMarketAfterWithdraw).to.equal(benifitOfOperator);
+      expect(balanceRoveTokenofMarketAfterWithdraw).to.equal(benifitOfOperatorAfterDiscount);
 
       console.log(
         "Balance after: ",
