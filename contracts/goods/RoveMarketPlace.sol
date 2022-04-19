@@ -149,17 +149,17 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         }
         return string(bLower);
     }
-    
+
     function hashCompareWithLengthCheck(string memory a, string memory b) internal returns (bool) {
         a = _toLower(a);
-        a = _toLower(b);
-        if(bytes(a).length != bytes(b).length) {
+        b = _toLower(b);
+        if (bytes(a).length != bytes(b).length) {
             return false;
         } else {
             return keccak256(bytes(a)) == keccak256(bytes(b));
         }
     }
-    
+
     function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant payable {
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
