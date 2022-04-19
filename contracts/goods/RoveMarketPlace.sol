@@ -135,6 +135,14 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
     }
 
+    function hashCompareWithLengthCheck(string memory a, string memory b) internal returns (bool) {
+        if(bytes(a).length != bytes(b).length) {
+            return false;
+        } else {
+            return keccak256(bytes(a)) == keccak256(bytes(b));
+        }
+    }
+    
     function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant payable {
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
@@ -199,7 +207,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
                 // using param control rove token for market
                 if (bytes(_roveTokenAdd).length != 0) {
                     // erc-20 is rove token
-                    if (keccak256(abi.encodePacked(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20))) == keccak256(abi.encodePacked(_roveTokenAdd))) {
+                    if (hashCompareWithLengthCheck(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20), _roveTokenAdd)) {
                         _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
                         // discount > 0
                         if (_benefit.discountRoveToken > 0) {
