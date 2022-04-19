@@ -759,7 +759,7 @@ describe("Marketplace contract", function () {
       }
     });
 
-    it.only("* Test benifit of market when sell/buy by Rove token", async function () {
+    it("* Test benifit of market when sell/buy by Rove token", async function () {
       const MARKET_BENEFIT = 1000; // 10%
       const ROVE_TOKEN_ADD = roveTokenContractAddress;
       const DISCOUNT_ROVE_TOKEN = 200; // Operator benifit = 8 %
