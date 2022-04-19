@@ -135,7 +135,24 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
     }
 
+    function _toLower(string memory str) internal pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint i = 0; i < bStr.length; i++) {
+            // Uppercase character...
+            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+                // So we add 32 to make it lowercase
+                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+            } else {
+                bLower[i] = bStr[i];
+            }
+        }
+        return string(bLower);
+    }
+    
     function hashCompareWithLengthCheck(string memory a, string memory b) internal returns (bool) {
+        a = _toLower(a);
+        a = _toLower(b);
         if(bytes(a).length != bytes(b).length) {
             return false;
         } else {
