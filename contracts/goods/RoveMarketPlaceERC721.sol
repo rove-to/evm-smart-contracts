@@ -125,6 +125,31 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
+    function _toLower(string memory str) internal pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint i = 0; i < bStr.length; i++) {
+            // Uppercase character...
+            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+                // So we add 32 to make it lowercase
+                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+            } else {
+                bLower[i] = bStr[i];
+            }
+        }
+        return string(bLower);
+    }
+
+    function hashCompareWithLengthCheck(string memory a, string memory b) internal returns (bool) {
+        a = _toLower(a);
+        b = _toLower(b);
+        if (bytes(a).length != bytes(b).length) {
+            return false;
+        } else {
+            return keccak256(bytes(a)) == keccak256(bytes(b));
+        }
+    }
+
     function closeOffering(bytes32 _offeringId) external nonReentrant payable {
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
@@ -185,7 +210,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
                 // using param control rove token for market
                 if (bytes(_roveTokenAdd).length != 0) {
                     // erc-20 is rove token
-                    if (keccak256(abi.encodePacked(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20))) == keccak256(abi.encodePacked(_roveTokenAdd))) {
+                    if (hashCompareWithLengthCheck(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20), _roveTokenAdd)) {
                         _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
                         // discount > 0
                         if (_benefit.discountRoveToken > 0) {
