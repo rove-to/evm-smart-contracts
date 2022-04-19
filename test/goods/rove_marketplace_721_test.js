@@ -52,8 +52,6 @@ describe("Marketplace contract erc-721", function () {
     decimals = await roveToken.decimals();
     decimals = 10 ** decimals;
     await roveToken.transfer(buyer, buyerBalance * decimals); // transfer all 1 bil token to buyer
-    const buyerBalanceRoveToken_1 = await roveToken.balanceOf(buyer);
-    console.log("buyerBalanceRoveToken_1 address", buyerBalanceRoveToken_1);
 
     // deploy nft
     let ObjectNFTContract = await ethers.getContractFactory("ERC721Tradable");
@@ -525,6 +523,105 @@ describe("Marketplace contract erc-721", function () {
       } catch (e) {
         expect(e.toString()).to.include("Only operator dApp can close offerings");
       }
+    });
+
+    it("* Test benifit of market when sell/buy by Rove token", async function () {
+      const MARKET_BENEFIT = 1000; // 10%
+      const ROVE_TOKEN_ADD = roveTokenContractAddress;
+      const DISCOUNT_ROVE_TOKEN = 200; // Operator benifit = 8 %
+      // set parameter control when use rove token to trade
+      await paramControl.set("ROVE_TOKEN", ROVE_TOKEN_ADD);
+      await paramControl.setUInt256("DISCOUNT_ROVE_TOKEN", DISCOUNT_ROVE_TOKEN);
+      await paramControl.setUInt256("MARKET_BENEFIT", MARKET_BENEFIT);
+
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0].toLowerCase()).to.equal(nftOwner.toLowerCase());
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token
+      const priceOffer = 5 * decimals;
+      tx = await roveMarketplace.placeOffering(objectNFTAddress, tokenID, roveTokenContractAddress, priceOffer);
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      let benifitOfOperator = priceOffer * 0.1; // operator of market place
+      benifitOfOperatorAfterDiscount = benifitOfOperator - benifitOfOperator * 0.02;
+
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer],
+        buyerPrivateKey
+      );
+
+      // Balance of rovemarketpace, buyer, seller before close oferring
+      const balanceNFTofSellerBefore = await objectNFT.balanceOf(nftOwner);
+      const balanceNFTofBuyerBefore = await objectNFT.balanceOf(buyer);
+      const balanceRoveTokenofSellerBefore = await roveToken.balanceOf(nftOwner);
+      const balanceRoveTokenofBuyerBefore = await roveToken.balanceOf(buyer);
+      const balanceRoveTokenofMarketBefore = await roveToken.balanceOf(roveMarketplaceAddress);
+      console.log(
+        "Balance before: ",
+        balanceNFTofSellerBefore,
+        balanceNFTofBuyerBefore,
+        balanceRoveTokenofSellerBefore,
+        balanceRoveTokenofBuyerBefore,
+        balanceRoveTokenofMarketBefore
+      );
+
+      // buyer close offering
+      await signAnotherContractThenExcuteFunction(
+        marketPlaceJson,
+        roveMarketplaceAddress,
+        buyer,
+        "closeOffering",
+        [offeringId],
+        buyerPrivateKey
+      );
+
+      // check balance nft of seller
+      const balanceNFTofSellerAfter = await objectNFT.balanceOf(nftOwner);
+      expect(balanceNFTofSellerAfter).to.equal(0);
+
+      // check balance nft of buyer
+      const balanceNFTofBuyerAfter = await objectNFT.balanceOf(buyer);
+      expect(balanceNFTofBuyerAfter).to.equal(1);
+
+      // check balance rove token of seller
+      await roveMarketplace.withdrawBalance(roveTokenContractAddress);
+      const balanceRoveTokenofSellerAfterWithdraw = await roveToken.balanceOf(nftOwner);
+      expect(balanceRoveTokenofSellerAfterWithdraw).to.equal(priceOffer - benifitOfOperatorAfterDiscount);
+
+      // check balance rove token of buyer
+      const balanceRoveTokenofBuyerAfter = await roveToken.balanceOf(buyer);
+      expect(balanceRoveTokenofBuyerAfter).to.equal(balanceRoveTokenofBuyerBefore - priceOffer);
+
+      // check balance rove token of market place
+      const balanceRoveTokenofMarketAfterWithdraw = await roveToken.balanceOf(roveMarketplaceAddress);
+      expect(balanceRoveTokenofMarketAfterWithdraw).to.equal(benifitOfOperatorAfterDiscount);
+
+      console.log(
+        "Balance after: ",
+        balanceNFTofSellerAfter,
+        balanceNFTofBuyerAfter,
+        balanceRoveTokenofSellerAfterWithdraw,
+        balanceRoveTokenofBuyerAfter,
+        balanceRoveTokenofMarketAfterWithdraw
+      );
     });
   });
 });
