@@ -44,7 +44,7 @@ describe("Marketplace contract", function () {
   const operator_privatekey = "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a";
   const nftPrice = 10;
   const maxNftNumber = 100;
-  const roveMaketJson = "./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json";
+  const roveMaketJson = "./artifacts/contracts/goods/RoveMarketPlace.sol/RoveMarketPlace.json";
   const roveTokenJson = "./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json";
 
   beforeEach(async function () {
@@ -195,7 +195,7 @@ describe("Marketplace contract", function () {
     });
 
     it("* Stop offering", async function () {
-      let contract = require(path.resolve("./artifacts/contracts/goods/RoveMarketPlaceV2.sol/RoveMarketPlaceV2.json"));
+      let contract = require(path.resolve("./artifacts/contracts/goods/RoveMarketPlace.sol/RoveMarketPlace.json"));
       let contractToken = require(path.resolve("./artifacts/contracts/monetary/RoveToken.sol/RoveToken.json"));
       const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
       const marketplace1 = new web3.eth.Contract(contract.abi, roveMarketplaceAddress);
@@ -474,7 +474,7 @@ describe("Marketplace contract", function () {
       */
       const marketplace2Address = "0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199";
       let roveMarketplace2;
-      let marketContract2 = await ethers.getContractFactory("RoveMarketPlaceV2");
+      let marketContract2 = await ethers.getContractFactory("RoveMarketPlace");
       // deploy second
       roveMarketplace2 = await marketContract2.deploy(marketplace2Address, paramControlAddress);
       roveMarketplace2Address = roveMarketplace2.address;
@@ -757,6 +757,114 @@ describe("Marketplace contract", function () {
       } catch (error) {
         expect(error.toString()).to.include("OFFERING_CLOSED");
       }
+    });
+
+    it.only("* Test benifit of market when sell/buy by Rove token", async function () {
+      const MARKET_BENEFIT = 1000; // 3%
+      const ROVE_TOKEN_ADD = roveTokenContractAddress;
+      const DISCOUNT_ROVE_TOKEN = 200; // Operator benifit = 3 %
+      const CREATOR_BENEFIT = 0;
+      // set parameter control when use rove token to trade
+      await paramControl.set("ROVE_TOKEN", ROVE_TOKEN_ADD);
+      await paramControl.setUInt256("DISCOUNT_ROVE_TOKEN", DISCOUNT_ROVE_TOKEN);
+      await paramControl.setUInt256("MARKET_BENEFIT", MARKET_BENEFIT);
+      await paramControl.setUInt256("CREATOR_BENEFIT", CREATOR_BENEFIT);
+
+      // nftOwner approve for market place contract
+      let tx = await objectNFT.setApprovalForAll(roveMarketplaceAddress, true);
+      let receipt = await tx.wait();
+      let events = receipt.events?.filter(x => {
+        return x.event == "ApprovalForAll";
+      });
+      expect(events.length).to.equal(1);
+      expect(events[0].args[0]).to.equal(nftOwner);
+      expect(events[0].args[1]).to.equal(roveMarketplaceAddress);
+      expect(events[0].args[2]).to.equal(true);
+
+      // nftOwner place offering with price 5 rove token
+      const priceOffer = 5 * decimals;
+      const amountPlaceOffer = 3;
+      tx = await roveMarketplace.placeOffering(
+        objectNFTAddress,
+        tokenID,
+        roveTokenContractAddress,
+        priceOffer,
+        amountPlaceOffer
+      );
+      receipt = await tx.wait();
+      events = receipt.events?.filter(x => {
+        return x.event == "OfferingPlaced";
+      });
+      expect(events.length).to.equal(1);
+      const offeringId = events[0].args[0];
+
+      // buyer approve for market place contract as spender
+      const amountCloseOffer = amountPlaceOffer;
+      const benifitOfOperator = (priceOffer * amountCloseOffer * 3) / 100; // operator of market place
+
+      await signAnotherContractThenExcuteFunction(
+        roveTokenJson,
+        roveTokenContractAddress,
+        buyer,
+        "approve",
+        [roveMarketplaceAddress, priceOffer * amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // Balance of rovemarketpace, buyer, seller before close oferring
+      const balanceNFTofSellerBefore = await objectNFT.balanceOf(nftOwner, tokenID);
+      const balanceNFTofBuyerBefore = await objectNFT.balanceOf(buyer, tokenID);
+      const balanceRoveTokenofSellerBefore = await roveToken.balanceOf(nftOwner);
+      const balanceRoveTokenofBuyerBefore = await roveToken.balanceOf(buyer);
+      const balanceRoveTokenofMarketBefore = await roveToken.balanceOf(roveMarketplaceAddress);
+      console.log(
+        "Balance before: ",
+        balanceNFTofSellerBefore,
+        balanceNFTofBuyerBefore,
+        balanceRoveTokenofSellerBefore,
+        balanceRoveTokenofBuyerBefore,
+        balanceRoveTokenofMarketBefore
+      );
+
+      // buyer close offering
+      await signAnotherContractThenExcuteFunction(
+        roveMaketJson,
+        roveMarketplaceAddress,
+        buyer,
+        "closeOffering",
+        [offeringId, amountCloseOffer],
+        buyerPrivateKey
+      );
+
+      // check balance nft of seller
+      const balanceNFTofSellerAfter = await objectNFT.balanceOf(nftOwner, tokenID);
+      expect(balanceNFTofSellerAfter).to.equal(initSupply - amountCloseOffer);
+
+      // check balance nft of buyer
+      const balanceNFTofBuyerAfter = await objectNFT.balanceOf(buyer, tokenID);
+      expect(balanceNFTofBuyerAfter).to.equal(amountCloseOffer);
+
+      // check balance rove token of seller
+      await roveMarketplace.withdrawBalance(roveTokenContractAddress);
+      const balanceRoveTokenofSellerAfterWithdraw = await roveToken.balanceOf(nftOwner);
+      // expect(balanceRoveTokenofSellerAfterWithdraw).to.equal(priceOffer * amountCloseOffer - benifitOfOperator);
+
+      // check balance rove token of buyer
+      const balanceRoveTokenofBuyerAfter = await roveToken.balanceOf(buyer);
+      // expect(balanceRoveTokenofBuyerAfter).to.equal(balanceRoveTokenofBuyerBefore - priceOffer * amountCloseOffer);
+
+      // check balance rove token of market place
+      const balanceRoveTokenofMarketAfterWithdraw = await roveToken.balanceOf(roveMarketplaceAddress);
+      // expect(balanceRoveTokenofMarketAfterWithdraw).to.equal(benifitOfOperator);
+
+      console.log(
+        "Balance after: ",
+        balanceNFTofSellerAfter,
+        balanceNFTofBuyerAfter,
+        balanceRoveTokenofSellerAfterWithdraw,
+        balanceRoveTokenofBuyerAfter,
+        balanceRoveTokenofMarketAfterWithdraw
+      );
     });
 
     context("* Place/close offering with ETH", () => {
