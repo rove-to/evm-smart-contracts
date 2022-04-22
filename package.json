@@ -10,6 +10,7 @@
     "hh:size": "hardhat size-contracts",
     "hh:deploy_token": "node ./migrations/roveToken/1_deploy_Rove_Token.js",
     "hh:schedule_token": "node ./migrations/roveToken/2_schedule_Rove_Token.js",
+    "hh:verify": "npx hardhat verify",
     "ts:run": "npx ts-node"
   },
   "repository": {
