@@ -116,7 +116,7 @@ contract RockNFT is ERC1155Tradable {
     function createNFT(address recipient, uint256 initialSupply, string[] memory tokenIds, uint256 price, uint256 max_supply)
     external payable
     {
-        require(max_supply >= initialSupply, "MAX_SUPPLY_INVALID");
+        require(max_supply >= initialSupply, "INIT_SUPPLY_INVALID");
         require(max_supply == tokenIds.length, "MAX_SUPPLY_INVALID");
 
         ParameterControl _p = ParameterControl(parameterControlAdd);
