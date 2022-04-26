@@ -15,6 +15,8 @@ import "../governance/ParameterControl.sol";
 contract RockNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
 
+    mapping(uint256 => address) metaverseOwners;
+
     using SafeMath for uint256;
 
     address public parameterControlAdd;
@@ -53,7 +55,7 @@ contract RockNFT is ERC1155Tradable {
             require(_initialSupply <= _max, "REACH_MAX");
         }
 
-        creators[_id] = _msgSender();
+        creators[_id] = operator;
 
         if (bytes(_uri).length > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
@@ -95,7 +97,7 @@ contract RockNFT is ERC1155Tradable {
             ParameterControl _p = ParameterControl(parameterControlAdd);
             uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
-            (bool success,) = creators[_id].call{value : msg.value - fee}("");
+            (bool success,) = metaverseOwners[t].call{value : msg.value - fee}("");
             require(success, "FAIL");
         }
 
@@ -126,10 +128,12 @@ contract RockNFT is ERC1155Tradable {
         for (uint256 i = 0; i < initialSupply; i++) {
             uint256 t = toUint256(bytes(tokenIds[i]));
             _createNft(recipient, t, 1, tokenIds[i], "0x", price, 1);
+            metaverseOwners[t] = _msgSender();
         }
         for (uint256 i = initialSupply; i < max_supply; i++) {
             uint256 t = toUint256(bytes(tokenIds[i]));
             _createNft(address(this), t, 1, tokenIds[i], "0x", price, 1);
+            metaverseOwners[t] = _msgSender();
         }
     }
 }
