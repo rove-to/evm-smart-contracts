@@ -383,6 +383,21 @@ class RockNFT {
         const price: any = await temp?.nftContract.methods.getPriceToken(tokenId).call(tx);
         return price;
     }
+
+    async uri(contractAddress: any, tokenId: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const uri: any = await temp?.nftContract.methods.uri(tokenId).call(tx);
+        return uri;
+    }
 }
 
 export {RockNFT};
