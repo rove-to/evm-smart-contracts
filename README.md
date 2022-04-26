@@ -30,6 +30,7 @@ https://hardhat.org/config/
 - ```yarn hh:test```: run test
 - ```yarn ts:run <script.ts> args```: run ts script in migrations
 - ```yarn hh:network```: run local chain
+- ```yarn hh:verify --contract "contracts/goods/EnvironmentNFT.sol:EnvironmentNFT" --network mumbai CONTRACT_ADD "CONTRUCTOR_ARGs```: verify contract on explorer
 
 # Example App:
 

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "../governance/ParameterControl.sol";
 
@@ -31,6 +32,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         uint256 benefitCreator;
         uint256 benefitPercentOperator;
         uint256 benefitOperator;
+        uint256 discountRoveToken;
     }
 
     struct offering {
@@ -123,6 +125,31 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
     }
 
+    function _toLower(string memory str) internal pure returns (string memory) {
+        bytes memory bStr = bytes(str);
+        bytes memory bLower = new bytes(bStr.length);
+        for (uint i = 0; i < bStr.length; i++) {
+            // Uppercase character...
+            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
+                // So we add 32 to make it lowercase
+                bLower[i] = bytes1(uint8(bStr[i]) + 32);
+            } else {
+                bLower[i] = bStr[i];
+            }
+        }
+        return string(bLower);
+    }
+
+    function hashCompareWithLengthCheck(string memory a, string memory b) internal returns (bool) {
+        a = _toLower(a);
+        b = _toLower(b);
+        if (bytes(a).length != bytes(b).length) {
+            return false;
+        } else {
+            return keccak256(bytes(a)) == keccak256(bytes(b));
+        }
+    }
+
     function closeOffering(bytes32 _offeringId) external nonReentrant payable {
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
@@ -173,10 +200,25 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         // logic for 
         // benefit of operator here
         ParameterControl parameterController = ParameterControl(parameterControl);
-        benefit memory _benefit = benefit(0, 0, 0, 0);
+        benefit memory _benefit = benefit(0, 0, 0, 0, 0);
         _benefit.benefitPercentOperator = parameterController.getUInt256("MARKET_BENEFIT");
         if (_benefit.benefitPercentOperator > 0) {
-            _benefit.benefitOperator = _closeOfferingData.originPrice / 100 * _benefit.benefitPercentOperator;
+            _benefit.benefitOperator = _closeOfferingData.originPrice * _benefit.benefitPercentOperator / 10000;
+            if (isERC20) {
+                // check for erc-20
+                string memory _roveTokenAdd = parameterController.get("ROVE_TOKEN");
+                // using param control rove token for market
+                if (bytes(_roveTokenAdd).length != 0) {
+                    // erc-20 is rove token
+                    if (hashCompareWithLengthCheck(Strings.toHexString(uint256(uint160(_offer.erc20Token)), 20), _roveTokenAdd)) {
+                        _benefit.discountRoveToken = parameterController.getUInt256("DISCOUNT_ROVE_TOKEN");
+                        // discount > 0
+                        if (_benefit.discountRoveToken > 0) {
+                            _benefit.benefitOperator = _benefit.benefitOperator - _benefit.benefitOperator * _benefit.discountRoveToken / 10000;
+                        }
+                    }
+                }
+            }
             _closeOfferingData.price -= _benefit.benefitOperator;
             // update balance(on market) of operator
             _balances[operator][_closeOfferingData.erc20Token] += _benefit.benefitOperator;

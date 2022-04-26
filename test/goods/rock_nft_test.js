@@ -7,8 +7,15 @@ const {addresses} = require("../constants");
 const hardhatConfig = require("../../hardhat.config");
 let nft_owner_address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // default for local
 
-describe("** NFTs erc-1155 contract", function () {
+describe.only("** NFTs erc-1155 contract", function () {
     let rockNFT;
+    let rockNFTAddress;
+    let parameterControl;
+    let parameterControlAddress;
+    let adminContract = addresses[0]; // default for local
+    let initTokens = 1;
+    
+    let apiUri = "https://api.rove.to/api/v1/rock/";
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork)
@@ -18,73 +25,63 @@ describe("** NFTs erc-1155 contract", function () {
         }
         console.log("nft_owner_address", nft_owner_address);
 
+        let ParameterControlContract = await ethers.getContractFactory("ParameterControl");
+
+        // deploy parameter control
+        parameterControl = await ParameterControlContract.deploy(adminContract);
+        parameterControlAddress = parameterControl.address;
+        console.log("ParameterControl deployed address", parameterControlAddress);
+        await parameterControl.set("ROCK_URI", apiUri);
+
         let RockNFTContract = await ethers.getContractFactory("RockNFT");
-        rockNFT = await RockNFTContract.deploy();
+        rockNFT = await RockNFTContract.deploy(nft_owner_address, nft_owner_address, parameterControlAddress, "Rock", "R");
+        rockNFTAddress = rockNFT.address;
+
         console.log("RockNFTDeploy address", rockNFT.address);
-
-
     });
-    describe("* Mint NFT erc-1155", function () {
-        it("- Check total supply of minted NFT token", async function () {
-            let recipient = nft_owner_address;
-            let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
+    describe("* Create Rock NFT erc-1155", function () {
+        it("- Check balance is 1 for each of tokenId", async function () {
+            let tokenUris = ['62624b0a01c2ee182dbc2f4c', '625d237cf8a81aa62257d4c1', '625d22b6f8a81aa62257d430'];
+            let tokensIds = []
+            tokenUris.forEach((v, i) => {
+                tokensIds.push(BigInt(parseInt(v, 16)));
+            });
+            await rockNFT.createNFT(adminContract, initTokens, tokensIds, tokenUris, ethers.utils.parseEther("0.1"));
 
-            // check token init
-            let newItemId = await rockNFT.newItemId()
-            console.log("newItemId", newItemId);
-            expect(newItemId).to.equal(0);
+            for (let i = 0; i < initTokens; i++) {
+                let b = await rockNFT.balanceOf(adminContract, tokensIds[i]);
+                console.log(adminContract, b);
+                expect(b).to.equal(1);
+            }
 
-            // check token id increase after mint
-            let tx = await rockNFT.mintNFT(recipient, tokenURI);
-            await tx.wait();
-            let tokenID = await rockNFT.newItemId()
-            console.log("tokenID", tokenID);
-            expect(tokenID).to.equal(newItemId + 1);
+            for (let i = 0; i < tokensIds.length; i++) {
+                const uri = await parameterControl.get("ROCK_URI");
+                let b = await rockNFT.uri(tokensIds[i]);
+                console.log(tokensIds[i], tokenUris[i], b);
+                expect(b).to.equal(uri + tokenUris[i] + "/json");
+            }
+        });
 
-            // check total supply of token id
-            let totalSupply = await rockNFT.totalSupply(tokenID);
-            console.log("totalSupply init:", totalSupply);
-            expect(totalSupply).to.equal(1);
+        it("- Call userMint", async function () {
+            let tokenUris = ['62624b0a01c2ee182dbc2f4c', '625d237cf8a81aa62257d4c1', '625d22b6f8a81aa62257d430'];
+            let tokensIds = []
+            tokenUris.forEach((v, i) => {
+                tokensIds.push(BigInt(parseInt(v, 16)));
+            });
+            console.log("Token Ids", tokensIds);
+            await rockNFT.createNFT(adminContract, initTokens, tokensIds, tokenUris, ethers.utils.parseEther("0.0"));
+            console.log("User mint", tokensIds[initTokens]);
+
+            for (let i = initTokens; i < tokensIds.length; i++) {
+                await rockNFT.userMint(adminContract, tokensIds[i], 1, "0x");
+
+                let b = await rockNFT.balanceOf(adminContract, tokensIds[i]);
+                console.log(tokensIds[i], adminContract, b);
+                expect(b).to.equal(1);
+            }
         });
     });
     describe("* Transactions", function () {
-        it("- Should transfer erc-1155 between accounts", async function () {
-            let nftOwner = nft_owner_address;
-            let receiver = addresses[1];
-            let tokenURI = "https://gateway.pinata.cloud/ipfs/QmWYZQzeTHDMGcsUMgdJ64hgLrXk8iZKDRmbxWha4xdbbH";
 
-            // check token init
-            console.log("+ check token init");
-            let newItemId = await rockNFT.newItemId()
-            console.log("newItemId:", newItemId);
-            expect(newItemId).to.equal(0);
-
-            // check token id minted 1st
-            console.log("+ check token id minted 1st");
-            let tx = await rockNFT.mintNFT(nftOwner, tokenURI);
-            await tx.wait();
-            let tokenID = await rockNFT.newItemId()
-            expect(tokenID).to.equal(1);
-            console.log("tokenID:", tokenID);
-
-            // check token id minted 2nd
-            console.log("+ check token id minted 2nd");
-            tx = await rockNFT.mintNFT(nftOwner, tokenURI);
-            await tx.wait();
-            tokenID = await rockNFT.newItemId();
-            expect(tokenID).to.equal(2);
-            console.log("tokenID:", tokenID);
-
-            // transfer and check balance
-            console.log("+ transfer and check balance")
-            tx = await rockNFT.safeTransferFrom(nftOwner, receiver, tokenID, 1, "0x");
-            console.log("Transfer tx:", tx.hash);
-            await tx.wait();
-            let balance_erc1155_receiver = await rockNFT.balanceOf(receiver, tokenID);
-            console.log("balance of receiver %s on token %s is %s", receiver, tokenID, balance_erc1155_receiver);
-            let balance_erc1155_owner = await rockNFT.balanceOf(nftOwner, tokenID);
-            console.log("balance of nft owner %s on token %s is %s", nftOwner, tokenID, balance_erc1155_owner);
-            expect(balance_erc1155_receiver.add(balance_erc1155_owner)).to.equal(1);
-        });
     });
 });
