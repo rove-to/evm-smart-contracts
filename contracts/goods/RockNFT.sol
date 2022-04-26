@@ -97,7 +97,7 @@ contract RockNFT is ERC1155Tradable {
             ParameterControl _p = ParameterControl(parameterControlAdd);
             uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
-            (bool success,) = metaverseOwners[t].call{value : msg.value - fee}("");
+            (bool success,) = metaverseOwners[_id].call{value : msg.value - fee}("");
             require(success, "FAIL");
         }
 
