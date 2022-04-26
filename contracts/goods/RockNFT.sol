@@ -139,13 +139,14 @@ contract RockNFT is ERC1155Tradable {
     function createNFT(address recipient, uint256 initialSupply, uint256[] memory tokenIds, string[] memory tokenIdUris, uint256 price)
     external payable
     {
+        require(tokenIds.length > 0, "INVALID_INIT");
         require(tokenIds.length >= initialSupply, "INIT_SUPPLY_INVALID");
         require(tokenIds.length == tokenIdUris.length, "TOKEN_IDS_INVALID");
 
         ParameterControl _p = ParameterControl(parameterControlAdd);
-        uint256 publishFee = _p.getUInt256("ROCK_PUB_FEE");
-        if (publishFee > 0) {
-            require(msg.value >= publishFee, "MISS_PUBLISH_FEE");
+        uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
+        if (imoFEE > 0) {
+            require(msg.value >= imoFEE * tokenIds.length, "MISS_PUBLISH_FEE");
         }
 
         for (uint256 i = 0; i < initialSupply; i++) {
