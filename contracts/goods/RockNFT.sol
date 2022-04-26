@@ -113,7 +113,7 @@ contract RockNFT is ERC1155Tradable {
         } else {
             require(_quantity <= 1, "MAX_QUANTITY");
         }
-        _mint(_msgSender(), _id, _quantity, _data);
+        _mint(_to, _id, _quantity, _data);
 
         // check purchaseFee
         if (price_tokens[_id] > 0) {
