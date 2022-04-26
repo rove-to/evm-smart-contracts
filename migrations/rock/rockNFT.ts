@@ -57,7 +57,7 @@ class RockNFT {
         return null;
     }
 
-    async deploy(adminAddress: any, operatorAddress: any, paramAddress: any) {
+    async deploy(adminAddress: any, operatorAddress: any, paramAddress: any, name: string, symbol: string) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
@@ -65,7 +65,7 @@ class RockNFT {
         }
         const RockNFT = await ethers.getContractFactory("RockNFT");
         // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
-        const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, paramAddress);
+        const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, paramAddress, name, symbol);
 
         console.log("Rove Rock NFT deployed:", NFTDeploy.address);
         return NFTDeploy.address;

@@ -9,7 +9,12 @@ import {RockNFT} from "./rockNFT";
             return;
         }
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const address = await nft.deploy('', 'process.env.PUBLIC_KEY', '');
+        const address = await nft.deploy(
+            '',
+            '',
+            '',
+            "Rove Rocks",
+            "RRs");
         console.log("%s RockNFT deployed address: %s", process.env.NETWORK, address);
     } catch (e) {
         // Deal with the fact the chain failed
