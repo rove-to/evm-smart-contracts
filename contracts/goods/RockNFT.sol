@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 import "../utils/ERC1155Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../governance/ParameterControl.sol";
+import "hardhat/console.sol";
 
 /*
  * TODO:
@@ -14,6 +15,7 @@ import "../governance/ParameterControl.sol";
 
 contract RockNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
+    event PreCreateEvent (address _initialOwner, uint256 _id, uint256 _initialSupply, string _uri, address _operator);
 
     mapping(uint256 => address) metaverseOwners;
 
@@ -44,33 +46,56 @@ contract RockNFT is ERC1155Tradable {
     function _createNft(
         address _initialOwner,
         uint256 _id,
-        uint256 _initialSupply,
         string memory _uri,
         bytes memory _data,
-        uint256 _price,
-        uint256 _max
+        uint256 _price
     ) internal returns (uint256) {
         require(!_exists(_id), "ALREADY_EXIST");
-        if (_max > 0) {
-            require(_initialSupply <= _max, "REACH_MAX");
-        }
-
         creators[_id] = operator;
 
         if (bytes(_uri).length > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
-            customUri[_id] = string(abi.encodePacked(_p.get("ROCK_URI"), _uri));
+            customUri[_id] = string(abi.encodePacked(_p.get("ROCK_URI"), _uri, "/json"));
             emit URI(_uri, _id);
         }
 
-        _mint(_initialOwner, _id, _initialSupply, _data);
+        _mint(_initialOwner, _id, 1, _data);
 
-        tokenSupply[_id] = _initialSupply;
+        tokenSupply[_id] = 1;
 
         price_tokens[_id] = _price;
-        max_supply_tokens[_id] = _max;
+        max_supply_tokens[_id] = 1;
 
-        emit CreateEvent(_initialOwner, _id, _initialSupply, _uri, operator);
+        metaverseOwners[_id] = _msgSender();
+
+        emit CreateEvent(_initialOwner, _id, 1, _uri, operator);
+        return _id;
+    }
+
+    function _prepareCreateNft(
+        address _initialOwner,
+        uint256 _id,
+        string memory _uri,
+        bytes memory _data,
+        uint256 _price
+    ) internal returns (uint256) {
+        require(!_exists(_id), "ALREADY_EXIST");
+        creators[_id] = operator;
+
+        if (bytes(_uri).length > 0) {
+            ParameterControl _p = ParameterControl(parameterControlAdd);
+            customUri[_id] = string(abi.encodePacked(_p.get("ROCK_URI"), _uri, "/json"));
+            emit URI(_uri, _id);
+        }
+
+        tokenSupply[_id] = 1;
+
+        price_tokens[_id] = _price;
+        max_supply_tokens[_id] = 1;
+
+        metaverseOwners[_id] = _msgSender();
+        
+        emit PreCreateEvent(_initialOwner, _id, 1, _uri, operator);
         return _id;
     }
 
@@ -80,17 +105,15 @@ contract RockNFT is ERC1155Tradable {
         bytes memory _data)
     public payable override {
         _quantity = 1;
+        
         require(_exists(_id), "NONEXIST_TOKEN");
+        
         if (price_tokens[_id] > 0) {
             require(msg.value >= price_tokens[_id] * _quantity, "MISS_PRICE");
         } else {
             require(_quantity <= 1, "MAX_QUANTITY");
         }
-        if (max_supply_tokens[_id] != 0) {
-            require(tokenSupply[_id].add(_quantity) <= max_supply_tokens[_id], "REACH_MAX");
-        }
-        safeTransferFrom(address(this), _to, _id, _quantity, _data);
-        tokenSupply[_id] = tokenSupply[_id].add(_quantity);
+        _mint(_msgSender(), _id, _quantity, _data);
 
         // check purchaseFee
         if (price_tokens[_id] > 0) {
@@ -113,11 +136,11 @@ contract RockNFT is ERC1155Tradable {
         }
     }
 
-    function createNFT(address recipient, uint256 initialSupply, string[] memory tokenIds, uint256 price, uint256 max_supply)
+    function createNFT(address recipient, uint256 initialSupply, uint256[] memory tokenIds, string[] memory tokenIdUris, uint256 price)
     external payable
     {
-        require(max_supply >= initialSupply, "INIT_SUPPLY_INVALID");
-        require(max_supply == tokenIds.length, "MAX_SUPPLY_INVALID");
+        require(tokenIds.length >= initialSupply, "INIT_SUPPLY_INVALID");
+        require(tokenIds.length == tokenIdUris.length, "TOKEN_IDS_INVALID");
 
         ParameterControl _p = ParameterControl(parameterControlAdd);
         uint256 publishFee = _p.getUInt256("ROCK_PUB_FEE");
@@ -126,14 +149,10 @@ contract RockNFT is ERC1155Tradable {
         }
 
         for (uint256 i = 0; i < initialSupply; i++) {
-            uint256 t = toUint256(bytes(tokenIds[i]));
-            _createNft(recipient, t, 1, tokenIds[i], "0x", price, 1);
-            metaverseOwners[t] = _msgSender();
+            _createNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
         }
-        for (uint256 i = initialSupply; i < max_supply; i++) {
-            uint256 t = toUint256(bytes(tokenIds[i]));
-            _createNft(address(this), t, 1, tokenIds[i], "0x", price, 1);
-            metaverseOwners[t] = _msgSender();
+        for (uint256 i = initialSupply; i < tokenIds.length; i++) {
+            _prepareCreateNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
         }
     }
 }
