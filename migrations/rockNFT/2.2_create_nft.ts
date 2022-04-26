@@ -38,7 +38,7 @@ import {RockNFT} from "./rockNFT";
         if (process.argv.length >= 6) {
             tokenIds = process.argv[6];
         }
-        console.log("tokenUri:", tokenIds);
+        console.log("tokenIds:", tokenIds);
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
