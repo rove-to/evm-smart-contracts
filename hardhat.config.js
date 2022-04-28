@@ -75,6 +75,14 @@ module.exports = {
         kardia_testnet: {
             url: process.env.KARDIA_TESTNET_API_URL,
             accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        aurora: {
+            url: process.env.AURORA_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        aurora_testnet: {
+            url: process.env.AURORA_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
         }
     },
     mocha: {
