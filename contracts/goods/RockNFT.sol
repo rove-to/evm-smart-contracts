@@ -64,13 +64,12 @@ contract RockNFT is ERC1155Tradable {
         uint256 _price
     ) internal returns (uint256) {
         require(!_exists(_id), "ALREADY_EXIST");
-        creators[_id] = operator;
         uint _supply = 1;
 
+        creators[_id] = operator;
         _mint(_initialOwner, _id, _supply, _data);
 
         price_tokens[_id] = _price;
-
         metaverseOwners[_id] = _msgSender();
 
         emit CreateEvent(_initialOwner, _id, _supply, _uri, operator);
@@ -85,7 +84,6 @@ contract RockNFT is ERC1155Tradable {
         uint256 _price
     ) internal returns (uint256) {
         require(!_exists(_id), "ALREADY_EXIST");
-        creators[_id] = operator;
         uint _supply = 1;
 
         price_tokens[_id] = _price;
@@ -109,9 +107,11 @@ contract RockNFT is ERC1155Tradable {
         } else {
             require(_quantity <= 1, "MAX_QUANTITY");
         }
+
+        creators[_id] = operator;
         _mint(_to, _id, _quantity, _data);
 
-        // check purchaseFee
+        // check user mint fee
         if (price_tokens[_id] > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
             uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
