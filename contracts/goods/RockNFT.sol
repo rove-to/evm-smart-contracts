@@ -47,6 +47,15 @@ contract RockNFT is ERC1155Tradable {
         return 0;
     }
 
+    function mint(
+        address _to,
+        uint256 _id,
+        uint256 _quantity,
+        bytes memory _data
+    ) public override creatorOnly(_id) {
+
+    }
+
     function _createNft(
         address _initialOwner,
         uint256 _id,
@@ -60,10 +69,7 @@ contract RockNFT is ERC1155Tradable {
 
         _mint(_initialOwner, _id, _supply, _data);
 
-        tokenSupply[_id] = _supply;
-
         price_tokens[_id] = _price;
-        max_supply_tokens[_id] = _supply;
 
         metaverseOwners[_id] = _msgSender();
 
@@ -82,12 +88,7 @@ contract RockNFT is ERC1155Tradable {
         creators[_id] = operator;
         uint _supply = 1;
 
-
-        tokenSupply[_id] = _supply;
-
         price_tokens[_id] = _price;
-        max_supply_tokens[_id] = _supply;
-
         metaverseOwners[_id] = _msgSender();
 
         emit PreCreateEvent(_initialOwner, _id, _supply, _uri, operator);
@@ -122,16 +123,7 @@ contract RockNFT is ERC1155Tradable {
         emit MintEvent(_to, _id, _quantity);
     }
 
-    function toUint256(bytes memory _bytes)
-    internal
-    pure
-    returns (uint256 value) {
-        assembly {
-            value := mload(add(_bytes, 0x20))
-        }
-    }
-
-    function createNFT(address recipient, uint256 initialRock, uint256[] memory rockIds, string[] memory rockURIs, uint256 rockPrice)
+    function createNFT(address recipient, uint256 initialRock, uint256[] memory rockIds, string[] memory rockURIs, uint256[] memory rockPrices)
     external payable
     {
         console.log("blockGasLimit", block.gaslimit);
@@ -150,11 +142,11 @@ contract RockNFT is ERC1155Tradable {
         // get base uri
         for (uint256 i = 0; i < initialRock; i++) {
             console.log(i, gasleft());
-            _createNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrice);
+            _createNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrices[i]);
         }
         for (uint256 i = initialRock; i < rockIds.length; i++) {
             console.log(i, gasleft());
-            _prepareCreateNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrice);
+            _prepareCreateNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrices[i]);
         }
     }
 }
