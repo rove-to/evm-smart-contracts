@@ -17,17 +17,21 @@ contract RockNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
     event PreCreateEvent (address _initialOwner, uint256 _id, uint256 _initialSupply, string _uri, address _operator);
 
-    mapping(uint256 => address) metaverseOwners;
+    mapping(uint256 => address) public metaverseOwners;
 
     using SafeMath for uint256;
 
     address public parameterControlAdd;
+    string public baseUri;
 
     constructor(address admin, address operator, address _parameterAdd, string memory name, string memory symbol)
     ERC1155Tradable(name, symbol, "", admin, operator
     ) public {
         require(_parameterAdd != address(0x0), "ADDRES_INVALID");
         parameterControlAdd = _parameterAdd;
+        ParameterControl _p = ParameterControl(parameterControlAdd);
+        string memory _baseUri = _p.get("ROCK_URI");
+        setURI(_baseUri);
     }
 
     function create(
@@ -52,23 +56,18 @@ contract RockNFT is ERC1155Tradable {
     ) internal returns (uint256) {
         require(!_exists(_id), "ALREADY_EXIST");
         creators[_id] = operator;
+        uint _supply = 1;
 
-        if (bytes(_uri).length > 0) {
-            ParameterControl _p = ParameterControl(parameterControlAdd);
-            customUri[_id] = string(abi.encodePacked(_p.get("ROCK_URI"), _uri, "/json"));
-            emit URI(_uri, _id);
-        }
+        _mint(_initialOwner, _id, _supply, _data);
 
-        _mint(_initialOwner, _id, 1, _data);
-
-        tokenSupply[_id] = 1;
+        tokenSupply[_id] = _supply;
 
         price_tokens[_id] = _price;
-        max_supply_tokens[_id] = 1;
+        max_supply_tokens[_id] = _supply;
 
         metaverseOwners[_id] = _msgSender();
 
-        emit CreateEvent(_initialOwner, _id, 1, _uri, operator);
+        emit CreateEvent(_initialOwner, _id, _supply, _uri, operator);
         return _id;
     }
 
@@ -81,21 +80,17 @@ contract RockNFT is ERC1155Tradable {
     ) internal returns (uint256) {
         require(!_exists(_id), "ALREADY_EXIST");
         creators[_id] = operator;
+        uint _supply = 1;
 
-        if (bytes(_uri).length > 0) {
-            ParameterControl _p = ParameterControl(parameterControlAdd);
-            customUri[_id] = string(abi.encodePacked(_p.get("ROCK_URI"), _uri, "/json"));
-            emit URI(_uri, _id);
-        }
 
-        tokenSupply[_id] = 1;
+        tokenSupply[_id] = _supply;
 
         price_tokens[_id] = _price;
-        max_supply_tokens[_id] = 1;
+        max_supply_tokens[_id] = _supply;
 
         metaverseOwners[_id] = _msgSender();
-        
-        emit PreCreateEvent(_initialOwner, _id, 1, _uri, operator);
+
+        emit PreCreateEvent(_initialOwner, _id, _supply, _uri, operator);
         return _id;
     }
 
@@ -105,9 +100,9 @@ contract RockNFT is ERC1155Tradable {
         bytes memory _data)
     public payable override {
         _quantity = 1;
-        
+
         require(_exists(_id), "NONEXIST_TOKEN");
-        
+
         if (price_tokens[_id] > 0) {
             require(msg.value >= price_tokens[_id] * _quantity, "MISS_PRICE");
         } else {
@@ -139,20 +134,26 @@ contract RockNFT is ERC1155Tradable {
     function createNFT(address recipient, uint256 initialSupply, uint256[] memory tokenIds, string[] memory tokenIdUris, uint256 price)
     external payable
     {
+        console.log("blockGasLimit", block.gaslimit);
         require(tokenIds.length > 0, "INVALID_INIT");
         require(tokenIds.length >= initialSupply, "INIT_SUPPLY_INVALID");
         require(tokenIds.length == tokenIdUris.length, "TOKEN_IDS_INVALID");
 
+        // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
+        // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
             require(msg.value >= imoFEE * tokenIds.length, "MISS_PUBLISH_FEE");
         }
 
+        // get base uri
         for (uint256 i = 0; i < initialSupply; i++) {
+            console.log(i, gasleft());
             _createNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
         }
         for (uint256 i = initialSupply; i < tokenIds.length; i++) {
+            console.log(i, gasleft());
             _prepareCreateNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
         }
     }
