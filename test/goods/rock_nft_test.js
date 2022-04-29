@@ -17,7 +17,7 @@ describe("** NFTs erc-1155 contract", function () {
     let adminContract = addresses[0]; // default for local
     let userMint = addresses[1]; // default for local
 
-    let apiUri = "https://api.rove.to/api/v1/rock";
+    let apiUri = "https://rove-dev.moshwithme.io/api/v1/rock/{id}/json";
 
     beforeEach(async function () {
         console.log("Hardhat network", hardhatConfig.defaultNetwork)
@@ -42,7 +42,7 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("RockNFTDeploy address", rockNFT.address);
     });
     describe("* Create Rock NFT erc-1155", function () {
-        it("- Check balance is 1 for each of tokenId Init", async function () {
+        it.only("- Check balance is 1 for each of tokenId Init", async function () {
             let initTokens = 2;
 
             let tokenUris = [];
@@ -66,12 +66,12 @@ describe("** NFTs erc-1155 contract", function () {
             for (let i = 0; i < initTokens; i++) {
                 const uri = await parameterControl.get("ROCK_URI");
                 let b = await rockNFT.uri(tokensIds[i]);
-                console.log(tokensIds[i], b + "/" + tokenUris[i] + "/json");
-                expect(b + tokenUris[i] + "/json").to.equal(uri + tokenUris[i] + "/json");
+                console.log(tokensIds[i], b.replace("{id}", tokenUris[i]));
+                expect(b.replace("{id}", tokenUris[i])).to.equal(uri.replace("{id}", tokenUris[i]));
             }
         });
 
-        it.only("- Call userMint", async function () {
+        it("- Call userMint", async function () {
             let initTokens = 10;
 
             let tokenUris = [];
