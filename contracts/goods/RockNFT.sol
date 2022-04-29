@@ -125,6 +125,7 @@ contract RockNFT is ERC1155Tradable {
         console.log("blockGasLimit", block.gaslimit);
         require(rockIds.length > 0, "INVALID_INIT");
         require(rockIds.length >= initialRock, "INIT_SUPPLY_INVALID");
+        require(rockPrices.length == rockIds.length, "INIT_PRICE_INVALID");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
