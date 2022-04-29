@@ -131,30 +131,30 @@ contract RockNFT is ERC1155Tradable {
         }
     }
 
-    function createNFT(address recipient, uint256 initialSupply, uint256[] memory tokenIds, string[] memory tokenIdUris, uint256 price)
+    function createNFT(address recipient, uint256 initialRock, uint256[] memory rockIds, string[] memory rockURIs, uint256 rockPrice)
     external payable
     {
         console.log("blockGasLimit", block.gaslimit);
-        require(tokenIds.length > 0, "INVALID_INIT");
-        require(tokenIds.length >= initialSupply, "INIT_SUPPLY_INVALID");
-        require(tokenIds.length == tokenIdUris.length, "TOKEN_IDS_INVALID");
+        require(rockIds.length > 0, "INVALID_INIT");
+        require(rockIds.length >= initialRock, "INIT_SUPPLY_INVALID");
+        require(rockIds.length == rockURIs.length, "TOKEN_IDS_INVALID");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
-            require(msg.value >= imoFEE * tokenIds.length, "MISS_PUBLISH_FEE");
+            require(msg.value >= imoFEE * rockIds.length, "MISS_PUBLISH_FEE");
         }
 
         // get base uri
-        for (uint256 i = 0; i < initialSupply; i++) {
+        for (uint256 i = 0; i < initialRock; i++) {
             console.log(i, gasleft());
-            _createNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
+            _createNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrice);
         }
-        for (uint256 i = initialSupply; i < tokenIds.length; i++) {
+        for (uint256 i = initialRock; i < rockIds.length; i++) {
             console.log(i, gasleft());
-            _prepareCreateNft(recipient, tokenIds[i], tokenIdUris[i], "0x", price);
+            _prepareCreateNft(recipient, rockIds[i], rockURIs[i], "0x", rockPrice);
         }
     }
 }
