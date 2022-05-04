@@ -23,13 +23,14 @@ contract RockNFT is ERC1155Tradable {
 
     // for rock base on erc-721
     mapping(string => address) public metaverseNFTColl;
-    mapping(string => uint256) public metaverseRocksNFTColl;
-    mapping(string => uint256) public metaversePriceNFTColl;
+    mapping(string => uint256) public metaverseNFTCollRocksSize;
+    mapping(string => uint256) public metaverseNFTCollRockPrice;
+
     mapping(address => mapping(uint256 => bool)) minted;
 
     // for rock by public
-    mapping(string => uint256) public metaverseRocksPublic;
-    mapping(string => uint256) public metaversePricePublic;
+    mapping(string => uint256) public metaversePublicRocksSize;
+    mapping(string => uint256) public metaversePublicRockPrice;
 
 
     using SafeMath for uint256;
@@ -94,11 +95,12 @@ contract RockNFT is ERC1155Tradable {
         bytes memory _data)
     public payable
     {
+        require(metaverseOwners[_metaverseId] != address(0x0), "NON_EXIST_METAVERSE");
         require(!_exists(_id), "ALREADY_EXIST");
 
         address _erc721Add = metaverseNFTColl[_metaverseId];
-        if (_erc721Add != address(0x0)) {
-            require(metaverseRocksNFTColl[_metaverseId] > 0, "OUT_OF_STOCK_");
+        if (_erc721Add != address(0x0) && metaverseNFTCollRocksSize[_metaverseId] > 0) {
+            require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OUT_OF_STOCK_");
             /* check erc-721 */
             ERC721 _erc721 = ERC721(_erc721Add);
             // get token erc721 id from _data
@@ -114,24 +116,24 @@ contract RockNFT is ERC1155Tradable {
             if (price_tokens[_id] > 0) {
                 require(msg.value >= price_tokens[_id], "MISS_PRICE_NFTCOLL");
             } else {
-                require(msg.value >= metaversePriceNFTColl[_metaverseId], "MISS_PRICE_NFTCOLL");
+                require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRICE_NFTCOLL");
             }
 
             creators[_id] = operator;
             _mint(_to, _id, 1, _data);
-            metaverseRocksNFTColl[_metaverseId]--;
+            metaverseNFTCollRocksSize[_metaverseId]--;
         } else {
             // rock as public
-            require(metaverseRocksPublic[_metaverseId] > 0, "OUT_OF_STOCK");
+            require(metaversePublicRocksSize[_metaverseId] > 0, "OUT_OF_STOCK");
             if (price_tokens[_id] > 0) {
                 require(msg.value >= price_tokens[_id], "MISS_PRICE_PUBLIC");
             } else {
-                require(msg.value >= metaversePricePublic[_metaverseId], "MISS_PRICE_PUBLIC");
+                require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRICE_PUBLIC");
             }
 
             creators[_id] = operator;
             _mint(_to, _id, 1, _data);
-            metaverseRocksPublic[_metaverseId]--;
+            metaversePublicRocksSize[_metaverseId]--;
         }
 
         // check user mint fee
@@ -172,9 +174,9 @@ contract RockNFT is ERC1155Tradable {
         if (erc721Addr != address(0x0)) {
             require(rockIdNFTCollsSize > 0, "INVALID_COLLECTION_");
             // set price
-            metaversePriceNFTColl[metaverseId] = priceNftColl;
+            metaverseNFTCollRockPrice[metaverseId] = priceNftColl;
             // set rocks list
-            metaverseRocksNFTColl[metaverseId] = rockIdNFTCollsSize;
+            metaverseNFTCollRocksSize[metaverseId] = rockIdNFTCollsSize;
         } else {
             require(rockIdNFTCollsSize == 0, "INVALID_COLLECTION");
         }
@@ -182,9 +184,9 @@ contract RockNFT is ERC1155Tradable {
         if (rockIdsPublicSize > 0) {
             require(pricePublic > 0, "MISS_PUBLIC_PRICE");
             // set price
-            metaversePricePublic[metaverseId] = pricePublic;
+            metaversePublicRockPrice[metaverseId] = pricePublic;
             // set rocks list
-            metaverseRocksPublic[metaverseId] = rockIdsPublicSize;
+            metaversePublicRocksSize[metaverseId] = rockIdsPublicSize;
         }
     }
 }
