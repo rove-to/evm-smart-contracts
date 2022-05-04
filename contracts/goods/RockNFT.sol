@@ -179,9 +179,12 @@ contract RockNFT is ERC1155Tradable {
             require(rockIdNFTCollsSize == 0, "INVALID_COLLECTION");
         }
         // -- rock as public
-        // set price
-        metaversePricePublic[metaverseId] = pricePublic;
-        // set rocks list
-        metaverseRocksPublic[metaverseId] = rockIdsPublicSize;
+        if (rockIdsPublicSize > 0) {
+            require(pricePublic > 0, "MISS_PUBLIC_PRICE");
+            // set price
+            metaversePricePublic[metaverseId] = pricePublic;
+            // set rocks list
+            metaverseRocksPublic[metaverseId] = rockIdsPublicSize;
+        }
     }
 }
