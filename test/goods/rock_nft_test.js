@@ -16,6 +16,15 @@ describe("** NFTs erc-1155 contract", function () {
     let parameterControlAddress;
     let adminContract = addresses[0]; // default for local
     let userMint = addresses[1]; // default for local
+    const maxRockByNFTColl = 0;
+    const priceRockByNFTColl = 0.001;
+    const maxRockPublic = 10000;
+    const priceRockPublic = 0.01;
+    const mintRockByNFTColl = 100;
+    const mintRockPublic = 999;
+
+    const address0 = "0x0000000000000000000000000000000000000000"; // ETH
+    const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
 
     let apiUri = "https://rove-dev.moshwithme.io/api/v1/rock/{id}/json";
 
@@ -42,72 +51,58 @@ describe("** NFTs erc-1155 contract", function () {
         console.log("RockNFTDeploy address", rockNFT.address);
     });
     describe("* Create Rock NFT erc-1155", function () {
-        it.only("- Check balance is 1 for each of tokenId Init", async function () {
-            let initTokens = 2;
-
-            let tokenUris = [];
-            for (let i = 1; i <= 550; i++) {
-                tokenUris.push(i.toString(16));
+        it.only("- Check init metaverse", async function () {
+            const metaverseId = 1;
+            let rocks = [];
+            for (let i = 1; i <= maxRockByNFTColl + maxRockPublic; i++) {
+                rocks.push(i.toString(16));
             }
 
-            let tokensIds = []
-            let tokenPrices = []
-            tokenUris.forEach((v, i) => {
-                tokensIds.push(BigInt(parseInt(v, 16)));
-                tokenPrices.push(ethers.utils.parseEther("0.1"));
-            });
-            await rockNFT.createNFT(adminContract, initTokens, tokensIds, tokenPrices);
-
-            for (let i = 0; i < initTokens; i++) {
-                let b = await rockNFT.balanceOf(adminContract, tokensIds[i]);
-                expect(b).to.equal(1);
+            // rock by nft coll
+            let rocksIdsNftColl = []
+            for (let i = 0; i < maxRockByNFTColl; i++) {
+                rocksIdsNftColl.push(BigInt(parseInt(rocks[i], 16)));
             }
 
-            for (let i = 0; i < initTokens; i++) {
-                const uri = await parameterControl.get("ROCK_URI");
-                let b = await rockNFT.uri(tokensIds[i]);
-                console.log(tokensIds[i], b.replace("{id}", tokenUris[i]));
-                expect(b.replace("{id}", tokenUris[i])).to.equal(uri.replace("{id}", tokenUris[i]));
+            // public rock
+            let rocksIdsPublic = []
+            for (let i = rocksIdsNftColl.length; i < rocks.length; i++) {
+                rocksIdsPublic.push(BigInt(parseInt(rocks[i], 16)));
             }
-        });
+            await rockNFT.initMetaverse(metaverseId.toString(16),
+                address0, ethers.utils.parseEther(priceRockByNFTColl.toString()), rocksIdsNftColl.length, // rock by nft coll
+                ethers.utils.parseEther(priceRockPublic.toString()), rocksIdsPublic.length); // rock public
 
-        it("- Call userMint", async function () {
-            let initTokens = 10;
 
-            let tokenUris = [];
-            for (let i = 1; i <= 550; i++) {
-                tokenUris.push(i.toString(16));
-            }
-
-            let tokensIds = [];
-            let tokenPrices = [];
-            tokenUris.forEach((v, i) => {
-                tokensIds.push(BigInt(parseInt(v, 16)));
-                tokenPrices.push(ethers.utils.parseEther("0.1"));
-            });
-
-            await rockNFT.createNFT(adminContract, initTokens, tokensIds, tokenPrices);
-
-            const web3 = createAlchemyWeb3(hardhatConfig.networks[hardhatConfig.defaultNetwork].url);
-            for (let i = initTokens; i < tokensIds.length; i++) {
+            // mint rock public
+            for (let i = maxRockByNFTColl; i < mintRockPublic; i++) {
                 const jsonFile = "./artifacts/contracts/goods/RockNFT.sol/RockNFT.json";
-                const oldBalance = await web3.eth.getBalance(adminContract);
                 await signAnotherContractThenExcuteFunctionWithValue(
                     jsonFile,
                     rockNFTAddress,
                     userMint,
-                    tokenPrices[i], // 2 ETH
-                    "userMint",
-                    [userMint, tokensIds[i], 1, "0x0"],
+                    ethers.utils.parseEther(priceRockPublic.toString()),
+                    "mintRock",
+                    [metaverseId.toString(16), userMint, rocksIdsPublic[i], "0x0"],
                     private_keys[1]
                 );
-                let b = await rockNFT.balanceOf(userMint, tokensIds[i]);
-                console.log(tokensIds[i], userMint, b);
+                let b = await rockNFT.balanceOf(userMint, rocksIdsPublic[i]);
+                // console.log(rocksIdsPublic[i], userMint, b);
                 expect(b).to.equal(1);
+
+                const uri = await parameterControl.get("ROCK_URI");
+                let tokenUri = await rockNFT.uri(rocksIdsPublic[i]);
+                // console.log(tokenUri.replace("{id}", rocks[i]));
+                expect(tokenUri.replace("{id}", rocks[i])).to.equal(uri.replace("{id}", rocks[i]));
             }
+            let temp = await web3.eth.getBalance(rockNFTAddress);
+            console.log("----", ethers.utils.formatEther(temp));
+            expect(temp).to.equal(ethers.utils.parseEther((priceRockPublic * mintRockPublic).toString()));
         });
     });
     describe("* Transactions", function () {
 
     });
 });
+99900000000000000000
+9990000000000000000
