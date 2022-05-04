@@ -93,13 +93,28 @@ contract TicketNFTFor721 is ERC1155Tradable {
         _mint(_to, _id, 1, _data);
         tokenSupply[_id] = tokenSupply[_id] + 1;
 
+        // check purchaseFee
+        if (price_tokens[_id] > 0) {
+            ParameterControl _p = ParameterControl(parameterControlAdd);
+            uint256 purchaseFeePercent = _p.getUInt256("TICKET_PUR_FEE");
+            uint256 fee = msg.value * purchaseFeePercent / 10000;
+            (bool success,) = creators[_id].call{value : msg.value - fee}("");
+            require(success, "FAIL");
+        }
+        
         emit MintEvent(_to, _id, 1);
     }
 
     function publishTicket(address recipient, address erc721, uint256 initialSupply, string memory tokenURI, uint256 price, uint256 max)
-    external
+    external payable
     returns (uint256)
     {
+        ParameterControl _p = ParameterControl(parameterControlAdd);
+        uint256 publishFee = _p.getUInt256("TICKET_PUB_FEE");
+        if (publishFee > 0) {
+            require(msg.value >= publishFee, "MISS_PUBLISH_FEE");
+        }
+        
         ERC721 _erc721Token = ERC721(erc721);
         require(_erc721Token.supportsInterface(type(IERC721).interfaceId), "NOT_ERC721");
         require(!whiteList[erc721], "IS_EXISTEd");

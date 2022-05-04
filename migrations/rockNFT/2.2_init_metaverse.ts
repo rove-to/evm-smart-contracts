@@ -1,6 +1,7 @@
 import {RockNFT} from "./rockNFT";
 
 const {ethers} = require("hardhat");
+
 (async () => {
     try {
         if (process.env.NETWORK != "local") {
@@ -8,52 +9,53 @@ const {ethers} = require("hardhat");
             return;
         }
 
+        // set metaverdse id
         let metaverseId: any;
         if (process.argv.length >= 2) {
             metaverseId = process.argv[2];
         }
         console.log("metaverseId:", metaverseId);
 
-        // set init owner
-        let to: any;
+        // set erc721
+        let erc721: any;
         if (process.argv.length >= 3) {
-            to = process.argv[3];
+            erc721 = process.argv[3];
         }
-        console.log("to:", to);
+        console.log("erc721:", erc721);
 
-        // set quantity
-        let amount: any = 0;
+        let priceNftColl: any;
         if (process.argv.length >= 4) {
-            amount = process.argv[4];
+            priceNftColl = process.argv[4];
         }
-        console.log("amount:", amount);
+        console.log("priceNftColl:", priceNftColl);
 
-        let eth_amount: any;
+        let nftCollSize: any;
         if (process.argv.length >= 5) {
-            eth_amount = process.argv[5];
+            nftCollSize = process.argv[5];
         }
-        console.log("eth_amount:", eth_amount);
+        console.log("nftCollSize:", nftCollSize);
 
-        // set metadata
-        let tokenId: any;
+        let pricePublic: any;
         if (process.argv.length >= 6) {
-            tokenId = process.argv[6];
+            pricePublic = process.argv[6];
         }
-        console.log("tokenId:", tokenId);
+        console.log("pricePublic:", pricePublic);
+
+        let sizePublic: any;
+        if (process.argv.length >= 7) {
+            sizePublic = process.argv[7];
+        }
+        console.log("publicSize:", sizePublic);
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 6) {
-            nftContract = process.argv[6];
+        if (process.argv.length > 8) {
+            nftContract = process.argv[8];
         }
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const maxSupply = await nft.getMaxSupply(nftContract, tokenId);
-        console.log(maxSupply);
-        const price = await nft.getPriceToken(nftContract, tokenId);
-        console.log(ethers.utils.formatEther(price));
-        const tx = await nft.mintRock(metaverseId, to, nftContract, tokenId, eth_amount, 0);
+        const tx = await nft.initMetaverse(nftContract, metaverseId, erc721, priceNftColl, nftCollSize, pricePublic, sizePublic, 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
