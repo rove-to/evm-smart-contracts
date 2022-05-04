@@ -106,7 +106,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
     }
 
     function publishTicket(address recipient, address erc721, uint256 initialSupply, string memory tokenURI, uint256 price, uint256 max)
-    external
+    external payable
     returns (uint256)
     {
         ParameterControl _p = ParameterControl(parameterControlAdd);
