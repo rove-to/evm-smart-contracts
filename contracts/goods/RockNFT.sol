@@ -123,7 +123,7 @@ contract RockNFT is ERC1155Tradable {
             _mint(_to, _id, 1, _data);
             metaverseNFTCollRocksSize[_metaverseId]--;
         } else {
-            // rock as public
+            // rock as public: run when no rocks base on erc-721 or minted full rock base on erc-721 
             require(metaversePublicRocksSize[_metaverseId] > 0, "OUT_OF_STOCK");
             if (price_tokens[_id] > 0) {
                 require(msg.value >= price_tokens[_id], "MISS_PRICE_PUBLIC");
