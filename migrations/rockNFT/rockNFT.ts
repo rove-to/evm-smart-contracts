@@ -4,6 +4,7 @@ import * as path from "path";
 
 const {ethers} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
+const Web3 = require('web3');
 
 class RockNFT {
     network: string;
@@ -125,13 +126,12 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async createNFT(initOwnerAddress: any, contractAddress: any, initSupply: number, price: string, max: number, tokenIds: string[], gas: number) {
+    async initMetaverse(contractAddress: any, metaverseId: string, erc721: any, priceNftColl: number, nftCollSize: number, pricePublic: number, sizePublic: number, gas: number) {
         let temp = this.getContract(contractAddress);
-        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
-        const eth = ethers.utils.parseEther(price);
-        const fun = temp?.nftContract.methods.createNFT(initOwnerAddress, initSupply, tokenIds, eth, max);
-        console.log(gas);
+        const fun = temp?.nftContract.methods.initMetaverse(metaverseId, erc721, ethers.utils.parseEther(priceNftColl), nftCollSize, ethers.utils.parseEther(pricePublic), sizePublic);
+        const block = await temp?.web3.eth.getBlock("latest");
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -139,39 +139,20 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             data: fun.encodeABI(),
+            maxFeePerGas: ethers.utils.parseUnits("100.0", "gwei"),
+            gasLimit: block?.gasLimit,
         }
         if (tx.gas == 0) {
-            tx.gas = await fun.estimateGas(tx);
+            tx.gas = await fun.estimateGas({from: this.senderPublicKey});
         }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
+    async mintRock(metaverseId: string, to: any, contractAddress: any, rockId: number, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
-        const fun = temp?.nftContract.methods.mint(to, tokenId, amount, '0x');
-        //the transaction
-        const tx = {
-            from: this.senderPublicKey,
-            to: contractAddress,
-            nonce: nonce,
-            gas: gas,
-            data: fun.encodeABI(),
-        }
-
-        if (tx.gas == 0) {
-            tx.gas = await fun.estimateGas(tx);
-        }
-
-        return await this.signedAndSendTx(temp?.web3, tx);
-    }
-
-    async userMintNFT(to: any, contractAddress: any, tokenId: number, amount: number, ethAmount: string, gas: number) {
-        let temp = this.getContract(contractAddress);
-        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
-        const fun = temp?.nftContract.methods.userMint(to, tokenId, amount, '0x')
+        const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockId, '0x')
         //the transaction
         let tx = {
             from: this.senderPublicKey,
