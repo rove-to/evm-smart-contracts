@@ -118,8 +118,7 @@ contract RockNFT is ERC1155Tradable {
                 require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRI_N");
             }
 
-            creators[_id] = operator;
-            _mint(_to, _id, 1, _data);
+
             metaverseNFTCollRocksSize[_metaverseId]--;
         } else {
             // rock as public: run when no rocks base on erc-721 or minted full rock base on erc-721 
@@ -130,10 +129,10 @@ contract RockNFT is ERC1155Tradable {
                 require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRI_P");
             }
 
-            creators[_id] = operator;
-            _mint(_to, _id, 1, _data);
             metaversePublicRocksSize[_metaverseId]--;
         }
+        creators[_id] = operator;
+        _mint(_to, _id, 1, _data);
 
         // check user mint fee
         if (price_tokens[_id] > 0) {
