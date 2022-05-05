@@ -100,6 +100,7 @@ contract RockNFT is ERC1155Tradable {
 
         address _erc721Add = metaverseNFTColl[_metaverseId];
         if (_erc721Add != address(0x0) && metaverseNFTCollRocksSize[_metaverseId] > 0) {
+            require(_data.length > 0, "MISS_ERC721_TOKEN");
             require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OUT_OF_STOCK_");
             /* check erc-721 */
             ERC721 _erc721 = ERC721(_erc721Add);
@@ -157,6 +158,8 @@ contract RockNFT is ERC1155Tradable {
     )
     external payable
     {
+        require(metaverseOwners[metaverseId] == address(0x0), "EXIST_METAVERSE");
+
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
         // get fee for imo
@@ -166,7 +169,6 @@ contract RockNFT is ERC1155Tradable {
         }
 
         // metaverse owner
-        require(metaverseOwners[metaverseId] == address(0x0), "EXIST_METAVERSE");
         metaverseOwners[metaverseId] = msgSender();
 
         // -- rock base on erc-721 nft collection
