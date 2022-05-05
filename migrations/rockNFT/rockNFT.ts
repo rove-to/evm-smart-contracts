@@ -1,6 +1,7 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
+import {BigNumber} from "ethers";
 
 const {ethers} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
@@ -149,7 +150,7 @@ class RockNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
-        const rockIDInt = parseInt(rockIdHexa, 16);
+        const rockIDInt = BigInt(parseInt(rockIdHexa, 16));
         const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockIDInt, rockURI, '0x')
         //the transaction
         let tx = {
