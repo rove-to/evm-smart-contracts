@@ -150,7 +150,8 @@ class RockNFT {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
-        const rockIDInt = BigInt(parseInt(rockIdHexa, 16));
+
+        const rockIDInt = BigInt("0x" + rockIdHexa);
         const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockIDInt, rockURI, '0x')
         //the transaction
         let tx = {
