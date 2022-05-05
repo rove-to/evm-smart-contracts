@@ -23,7 +23,7 @@ const {ethers} = require("hardhat");
 
         let eth_amount: any;
         if (process.argv.length >= 4) {
-            eth_amount = process.argv[4];
+            eth_amount = process.argv[4]
         }
         console.log("eth_amount:", eth_amount);
 
