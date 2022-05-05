@@ -131,7 +131,6 @@ class RockNFT {
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.initMetaverse(metaverseId, erc721, ethers.utils.parseEther(priceNftColl), nftCollSize, ethers.utils.parseEther(pricePublic), sizePublic);
-        const block = await temp?.web3.eth.getBlock("latest");
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -139,8 +138,6 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             data: fun.encodeABI(),
-            maxFeePerGas: ethers.utils.parseUnits("100.0", "gwei"),
-            gasLimit: block?.gasLimit,
         }
         if (tx.gas == 0) {
             tx.gas = await fun.estimateGas({from: this.senderPublicKey});
