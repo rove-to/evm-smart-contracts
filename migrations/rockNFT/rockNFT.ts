@@ -145,12 +145,12 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintRock(metaverseId: string, to: any, contractAddress: any, rockIdHexa: string, ethAmount: string, gas: number) {
+    async mintRock(metaverseId: string, to: any, contractAddress: any, rockIdHexa: string, rockURI: string, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const rockIDInt = parseInt(rockIdHexa, 16);
-        const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockIDInt, '0x')
+        const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockIDInt, rockURI, '0x')
         //the transaction
         let tx = {
             from: this.senderPublicKey,

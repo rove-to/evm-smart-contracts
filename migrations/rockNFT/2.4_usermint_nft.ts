@@ -34,15 +34,22 @@ const {ethers} = require("hardhat");
         }
         console.log("rockIdHexa:", rockIdHexa);
 
+        // set rockUri
+        let rockUri: string = "";
+        if (process.argv.length >= 6) {
+            rockUri = process.argv[6];
+        }
+        console.log("rockUri:", rockUri);
+
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 6) {
-            nftContract = process.argv[6];
+        if (process.argv.length > 7) {
+            nftContract = process.argv[7];
         }
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.mintRock(metaverseId, to, nftContract, rockIdHexa, eth_amount, 0);
+        const tx = await nft.mintRock(metaverseId, to, nftContract, rockIdHexa, rockUri, eth_amount, 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
