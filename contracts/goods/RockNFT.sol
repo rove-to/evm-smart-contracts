@@ -40,8 +40,6 @@ contract RockNFT is ERC1155Tradable {
     ) public {
         require(_parameterAdd != address(0x0), "ADD_INVALID");
         parameterControlAdd = _parameterAdd;
-        ParameterControl _p = ParameterControl(parameterControlAdd);
-        setURI(_p.get("ROCK_URI"));
     }
 
     function create(
@@ -90,6 +88,7 @@ contract RockNFT is ERC1155Tradable {
         string memory _metaverseId,
         address _to,
         uint256 _id,
+        string memory _uri,
         bytes memory _data)
     public payable
     {
@@ -132,6 +131,10 @@ contract RockNFT is ERC1155Tradable {
             metaversePublicRocksSize[_metaverseId]--;
         }
         creators[_id] = operator;
+        if (bytes(_uri).length > 0) {
+            customUri[_id] = _uri;
+            emit URI(_uri, _id);
+        }
         _mint(_to, _id, 1, _data);
 
         // check user mint fee
