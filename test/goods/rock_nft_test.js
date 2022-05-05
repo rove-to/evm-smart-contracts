@@ -61,13 +61,13 @@ describe("** NFTs erc-1155 contract", function () {
             // rock by nft coll
             let rocksIdsNftColl = []
             for (let i = 0; i < maxRockByNFTColl; i++) {
-                rocksIdsNftColl.push(BigInt(parseInt(rocks[i], 16)));
+                rocksIdsNftColl.push(BigInt("0x" + rocks[i]));
             }
 
             // public rock
             let rocksIdsPublic = []
             for (let i = rocksIdsNftColl.length; i < rocks.length; i++) {
-                rocksIdsPublic.push(BigInt(parseInt(rocks[i], 16)));
+                rocksIdsPublic.push(BigInt("0x" + rocks[i]));
             }
             await rockNFT.initMetaverse(metaverseId.toString(16),
                 address0, ethers.utils.parseEther(priceRockByNFTColl.toString()), rocksIdsNftColl.length, // rock by nft coll
