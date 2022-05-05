@@ -3,11 +3,9 @@ pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "../utils/ERC1155Tradable.sol";
 import "../governance/ParameterControl.sol";
-import "hardhat/console.sol";
 
 /*
  * TODO:
@@ -40,7 +38,7 @@ contract RockNFT is ERC1155Tradable {
     constructor(address admin, address operator, address _parameterAdd, string memory name, string memory symbol)
     ERC1155Tradable(name, symbol, "", admin, operator
     ) public {
-        require(_parameterAdd != address(0x0), "ADDRES_INVALID");
+        require(_parameterAdd != address(0x0), "ADD_INVALID");
         parameterControlAdd = _parameterAdd;
         ParameterControl _p = ParameterControl(parameterControlAdd);
         setURI(_p.get("ROCK_URI"));
@@ -80,7 +78,7 @@ contract RockNFT is ERC1155Tradable {
     internal pure
     returns (uint256)
     {
-        require(bs.length >= start + 32, "OUT_OF_RANGE");
+        require(bs.length >= start + 32, "OOR");
         uint256 x;
         assembly {
             x := mload(add(bs, add(0x20, start)))
@@ -95,19 +93,19 @@ contract RockNFT is ERC1155Tradable {
         bytes memory _data)
     public payable
     {
-        require(metaverseOwners[_metaverseId] != address(0x0), "NON_EXIST_METAVERSE");
+        require(metaverseOwners[_metaverseId] != address(0x0), "N_EXI_M");
         require(!_exists(_id), "ALREADY_EXIST");
 
         address _erc721Add = metaverseNFTColl[_metaverseId];
         if (_erc721Add != address(0x0) && metaverseNFTCollRocksSize[_metaverseId] > 0) {
             require(_data.length > 0, "MISS_ERC721_TOKEN");
-            require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OUT_OF_STOCK_");
+            require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OOS_");
             /* check erc-721 */
             ERC721 _erc721 = ERC721(_erc721Add);
             // get token erc721 id from _data
             uint256 _erc721Id = sliceUint(_data, 0);
             // check owner token id
-            require(_erc721.ownerOf(_erc721Id) == msgSender(), "NOT_OWNER_ERC721");
+            require(_erc721.ownerOf(_erc721Id) == msgSender(), "N_OWN_ERC721");
             // check token not minted 
             require(!minted[_erc721Add][_erc721Id], "MINTED");
 
@@ -115,9 +113,9 @@ contract RockNFT is ERC1155Tradable {
             minted[_erc721Add][_erc721Id] = true;
 
             if (price_tokens[_id] > 0) {
-                require(msg.value >= price_tokens[_id], "MISS_PRICE_NFTCOLL");
+                require(msg.value >= price_tokens[_id], "MISS_PRI_N");
             } else {
-                require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRICE_NFTCOLL");
+                require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRI_N");
             }
 
             creators[_id] = operator;
@@ -125,11 +123,11 @@ contract RockNFT is ERC1155Tradable {
             metaverseNFTCollRocksSize[_metaverseId]--;
         } else {
             // rock as public: run when no rocks base on erc-721 or minted full rock base on erc-721 
-            require(metaversePublicRocksSize[_metaverseId] > 0, "OUT_OF_STOCK");
+            require(metaversePublicRocksSize[_metaverseId] > 0, "OOS");
             if (price_tokens[_id] > 0) {
-                require(msg.value >= price_tokens[_id], "MISS_PRICE_PUBLIC");
+                require(msg.value >= price_tokens[_id], "MISS_PRI_P");
             } else {
-                require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRICE_PUBLIC");
+                require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRI_P");
             }
 
             creators[_id] = operator;
@@ -158,14 +156,14 @@ contract RockNFT is ERC1155Tradable {
     )
     external payable
     {
-        require(metaverseOwners[metaverseId] == address(0x0), "EXIST_METAVERSE");
+        require(metaverseOwners[metaverseId] == address(0x0), "E_M");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
-            require(msg.value >= imoFEE * (rockIdNFTCollsSize * rockIdsPublicSize), "MISS_PUBLISH_FEE");
+            require(msg.value >= imoFEE * (rockIdNFTCollsSize * rockIdsPublicSize), "MISS_INI_FEE");
         }
 
         // metaverse owner
@@ -174,17 +172,17 @@ contract RockNFT is ERC1155Tradable {
         // -- rock base on erc-721 nft collection
         metaverseNFTColl[metaverseId] = erc721Addr;
         if (erc721Addr != address(0x0)) {
-            require(rockIdNFTCollsSize > 0, "INVALID_COLLECTION_");
+            require(rockIdNFTCollsSize > 0, "INV_COL");
             // set price
             metaverseNFTCollRockPrice[metaverseId] = priceNftColl;
             // set rocks list
             metaverseNFTCollRocksSize[metaverseId] = rockIdNFTCollsSize;
         } else {
-            require(rockIdNFTCollsSize == 0, "INVALID_COLLECTION");
+            require(rockIdNFTCollsSize == 0, "INV_COL");
         }
         // -- rock as public
         if (rockIdsPublicSize > 0) {
-            require(pricePublic > 0, "MISS_PUBLIC_PRICE");
+            require(pricePublic > 0, "MISS_PRI_P");
             // set price
             metaversePublicRockPrice[metaverseId] = pricePublic;
             // set rocks list
