@@ -165,7 +165,7 @@ contract RockNFT is ERC1155Tradable {
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
-            require(msg.value >= imoFEE * (rockIdNFTCollsSize * rockIdsPublicSize), "MISS_INI_FEE");
+            require(msg.value >= imoFEE * (rockIdNFTCollsSize + rockIdsPublicSize), "MISS_INI_FEE");
         }
 
         // metaverse owner
