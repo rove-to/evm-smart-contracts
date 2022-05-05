@@ -12,7 +12,7 @@ import {RockNFT} from "./rockNFT";
         const address = await nft.deploy(
             '0xE55EAdE1B17BbA28A80a71633aF8C15Dc2D556A5',
             '0xE55EAdE1B17BbA28A80a71633aF8C15Dc2D556A5',
-            '0xFD8500cf6B98F37Bc1a287195d2537b72945a1e8',
+            '0x87e3A224cc55569664A1097A0293B3d48d731299',
             "Rove Rocks",
             "RRs");
         console.log("%s RockNFT deployed address: %s", process.env.NETWORK, address);

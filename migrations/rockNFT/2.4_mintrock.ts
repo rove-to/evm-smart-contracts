@@ -21,39 +21,35 @@ const {ethers} = require("hardhat");
         }
         console.log("to:", to);
 
-        // set quantity
-        let amount: any = 0;
-        if (process.argv.length >= 4) {
-            amount = process.argv[4];
-        }
-        console.log("amount:", amount);
-
         let eth_amount: any;
-        if (process.argv.length >= 5) {
-            eth_amount = process.argv[5];
+        if (process.argv.length >= 4) {
+            eth_amount = process.argv[4]
         }
         console.log("eth_amount:", eth_amount);
 
-        // set metadata
-        let tokenId: any;
-        if (process.argv.length >= 6) {
-            tokenId = process.argv[6];
+        // set rockIdHexa
+        let rockIdHexa: string = "";
+        if (process.argv.length >= 5) {
+            rockIdHexa = process.argv[5];
         }
-        console.log("tokenId:", tokenId);
+        console.log("rockIdHexa:", rockIdHexa);
+
+        // set rockUri
+        let rockUri: string = "";
+        if (process.argv.length >= 6) {
+            rockUri = process.argv[6];
+        }
+        console.log("rockUri:", rockUri);
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 6) {
-            nftContract = process.argv[6];
+        if (process.argv.length > 7) {
+            nftContract = process.argv[7];
         }
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const maxSupply = await nft.getMaxSupply(nftContract, tokenId);
-        console.log(maxSupply);
-        const price = await nft.getPriceToken(nftContract, tokenId);
-        console.log(ethers.utils.formatEther(price));
-        const tx = await nft.mintRock(metaverseId, to, nftContract, tokenId, eth_amount, 0);
+        const tx = await nft.mintRock(metaverseId, to, nftContract, rockIdHexa, rockUri, eth_amount, 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed

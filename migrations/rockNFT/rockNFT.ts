@@ -1,6 +1,7 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
+import {BigNumber} from "ethers";
 
 const {ethers} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
@@ -131,7 +132,6 @@ class RockNFT {
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.initMetaverse(metaverseId, erc721, ethers.utils.parseEther(priceNftColl), nftCollSize, ethers.utils.parseEther(pricePublic), sizePublic);
-        const block = await temp?.web3.eth.getBlock("latest");
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -139,8 +139,6 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             data: fun.encodeABI(),
-            maxFeePerGas: ethers.utils.parseUnits("100.0", "gwei"),
-            gasLimit: block?.gasLimit,
         }
         if (tx.gas == 0) {
             tx.gas = await fun.estimateGas({from: this.senderPublicKey});
@@ -148,11 +146,12 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintRock(metaverseId: string, to: any, contractAddress: any, rockId: number, ethAmount: string, gas: number) {
+    async mintRock(metaverseId: string, to: any, contractAddress: any, rockIdHexa: string, rockURI: string, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
-        const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockId, '0x')
+        const rockIDInt = BigInt(parseInt(rockIdHexa, 16));
+        const fun = temp?.nftContract.methods.mintRock(metaverseId, to, rockIDInt, rockURI, '0x')
         //the transaction
         let tx = {
             from: this.senderPublicKey,
