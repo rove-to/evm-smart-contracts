@@ -127,7 +127,7 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async initMetaverse(contractAddress: any, metaverseId: string, erc721: any, priceNftColl: number, nftCollSize: number, pricePublic: number, sizePublic: number, gas: number) {
+    async initMetaverse(contractAddress: any, metaverseId: string, erc721: any, priceNftColl: number, nftCollSize: number, pricePublic: number, sizePublic: number, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
@@ -139,6 +139,12 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             data: fun.encodeABI(),
+            value: 0,
+        }
+        if (ethAmount != "") {
+            const value = ethers.utils.parseEther(ethAmount);
+            console.log("value:", value);
+            tx.value = value;
         }
         if (tx.gas == 0) {
             tx.gas = await fun.estimateGas({from: this.senderPublicKey});
