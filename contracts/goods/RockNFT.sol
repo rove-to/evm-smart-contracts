@@ -138,7 +138,7 @@ contract RockNFT is ERC1155Tradable {
         _mint(_to, _id, 1, _data);
 
         // check user mint fee
-        if (price_tokens[_id] > 0) {
+        if (price_tokens[_id] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
             uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
