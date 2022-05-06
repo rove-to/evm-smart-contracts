@@ -23,40 +23,46 @@ const {ethers} = require("hardhat");
         }
         console.log("erc721:", erc721);
 
-        let priceNftColl: any;
+        let priceNftColl: any = 0;
         if (process.argv.length >= 4) {
             priceNftColl = process.argv[4];
         }
         console.log("priceNftColl:", priceNftColl);
 
-        let nftCollSize: any;
+        let nftCollSize = 0;
         if (process.argv.length >= 5) {
-            nftCollSize = process.argv[5];
+            nftCollSize = parseInt(process.argv[5]);
         }
         console.log("nftCollSize:", nftCollSize);
 
-        let pricePublic: any;
+        let pricePublic: any = 0;
         if (process.argv.length >= 6) {
             pricePublic = process.argv[6];
         }
         console.log("pricePublic:", pricePublic);
 
-        let sizePublic: any;
+        let sizePublic = 0;
         if (process.argv.length >= 7) {
-            sizePublic = process.argv[7];
+            sizePublic = parseInt(process.argv[7]);
         }
         console.log("publicSize:", sizePublic);
 
+        let eth_amount: any = "0.0";
+        if (process.argv.length >= 8) {
+            eth_amount = process.argv[8]
+        }
+        console.log("eth_amount:", eth_amount);
+
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 8) {
-            nftContract = process.argv[8];
+        if (process.argv.length > 9) {
+            nftContract = process.argv[9];
         }
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.initMetaverse(nftContract, metaverseId, erc721, priceNftColl, nftCollSize, pricePublic, sizePublic, 0);
-        console.log(tx);
+        const tx = await nft.initMetaverse(nftContract, metaverseId, erc721, priceNftColl, nftCollSize, pricePublic, sizePublic, eth_amount, 0);
+        console.log("tx hash:", tx.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
