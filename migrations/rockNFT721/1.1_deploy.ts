@@ -15,7 +15,7 @@ import {RockNFT721} from "./rockNFT";
             '0x87e3A224cc55569664A1097A0293B3d48d731299',
             "Rove Rocks",
             "RRs");
-        console.log("%s RockNFT deployed address: %s", process.env.NETWORK, address);
+        console.log("%s RockNFT721 deployed address: %s", process.env.NETWORK, address);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
