@@ -19,7 +19,7 @@ module.exports = {
     },
     defaultNetwork: process.env.NETWORK,
     etherscan: {
-        apiKey: "xxx"
+        apiKey: process.env.ETHSCAN_API_KEY,
     },
     networks: {
         hardhat: {
