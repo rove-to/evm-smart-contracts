@@ -101,7 +101,7 @@ contract RockNFT is ERC1155Tradable {
     public payable
     {
         require(metaverseOwners[_metaverseId] != address(0x0), "N_EXI_M");
-        require(_rockIndex >= 1, "ROCK_IDX_INV");
+        require(_rockIndex >= 1 && _rockIndex <= metaverseNFTCollRocksSize[_metaverseId] + metaversePublicRocksSize[_metaverseId], "ROCK_IDX_INV");
         uint256 _tokenId = _metaverseId * (10 ** 18) + _rockIndex;
         require(!_exists(_tokenId), "ALREADY_EXIST");
 
