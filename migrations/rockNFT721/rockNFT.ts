@@ -65,7 +65,7 @@ class RockNFT721 {
             console.log("not run local");
             return;
         }
-        const RockNFT = await ethers.getContractFactory("RockNFT");
+        const RockNFT = await ethers.getContractFactory("RockNFTFor721");
         // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
         const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, paramAddress, name, symbol);
 
