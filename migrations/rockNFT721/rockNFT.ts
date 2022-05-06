@@ -7,7 +7,7 @@ const {ethers} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
 const Web3 = require('web3');
 
-class RockNFT {
+class RockNFT721 {
     network: string;
     senderPublicKey: string;
     senderPrivateKey: string;
@@ -28,7 +28,7 @@ class RockNFT {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/RockNFT.sol/RockNFT.json"));
+        let contract = require(path.resolve("./artifacts/contracts/goods/RockNFTFor721.sol/RockNFTFor721.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
         return {web3, nftContract};
@@ -65,7 +65,7 @@ class RockNFT {
             console.log("not run local");
             return;
         }
-        const RockNFT = await ethers.getContractFactory("RockNFT");
+        const RockNFT = await ethers.getContractFactory("RockNFTFor721");
         // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
         const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, paramAddress, name, symbol);
 
@@ -127,10 +127,10 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async initMetaverse(contractAddress: any, metaverseId: string, price: number, size: number, ethAmount: string, gas: number) {
+    async initMetaverse(contractAddress: any, metaverseId: string, erc721: any, price: number, size: number, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-        const fun = temp?.nftContract.methods.initMetaverse(metaverseId, ethers.utils.parseEther(price), size);
+        const fun = temp?.nftContract.methods.initMetaverse(metaverseId, erc721, ethers.utils.parseEther(price), size);
 
         //the transaction
         const tx = {
@@ -390,4 +390,4 @@ class RockNFT {
     }
 }
 
-export {RockNFT};
+export {RockNFT721};

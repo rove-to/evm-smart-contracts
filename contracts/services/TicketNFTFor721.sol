@@ -96,7 +96,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
         // check purchaseFee
         if (price_tokens[_id] > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
-            uint256 purchaseFeePercent = _p.getUInt256("TICKET_PUR_FEE");
+            uint256 purchaseFeePercent = _p.getUInt256("TICKET_721_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
             (bool success,) = creators[_id].call{value : msg.value - fee}("");
             require(success, "FAIL");
@@ -110,7 +110,7 @@ contract TicketNFTFor721 is ERC1155Tradable {
     returns (uint256)
     {
         ParameterControl _p = ParameterControl(parameterControlAdd);
-        uint256 publishFee = _p.getUInt256("TICKET_PUB_FEE");
+        uint256 publishFee = _p.getUInt256("TICKET_721_PUB_FEE");
         if (publishFee > 0) {
             require(msg.value >= publishFee, "MISS_PUBLISH_FEE");
         }

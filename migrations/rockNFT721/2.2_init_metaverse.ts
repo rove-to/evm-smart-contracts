@@ -1,4 +1,4 @@
-import {RockNFT} from "./rockNFT";
+import {RockNFT721} from "./rockNFT";
 
 const {ethers} = require("hardhat");
 
@@ -16,33 +16,40 @@ const {ethers} = require("hardhat");
         }
         console.log("metaverseId:", metaverseId);
 
-        let pricePublic: any = 0;
+        // set erc721
+        let erc721: any;
         if (process.argv.length >= 3) {
-            pricePublic = process.argv[3];
+            erc721 = process.argv[3];
         }
-        console.log("pricePublic:", pricePublic);
+        console.log("erc721:", erc721);
 
-        let sizePublic = 0;
+        let priceNftColl: any = 0;
         if (process.argv.length >= 4) {
-            sizePublic = parseInt(process.argv[4]);
+            priceNftColl = process.argv[4];
         }
-        console.log("publicSize:", sizePublic);
+        console.log("priceNftColl:", priceNftColl);
+
+        let nftCollSize = 0;
+        if (process.argv.length >= 5) {
+            nftCollSize = parseInt(process.argv[5]);
+        }
+        console.log("nftCollSize:", nftCollSize);
 
         let eth_amount: any = "0.0";
-        if (process.argv.length >= 5) {
-            eth_amount = process.argv[5]
+        if (process.argv.length >= 8) {
+            eth_amount = process.argv[8]
         }
         console.log("eth_amount:", eth_amount);
 
         let nftContract: any;
         nftContract = process.env.ENVIRONMENT_NFT_CONTRACT;
-        if (process.argv.length > 6) {
-            nftContract = process.argv[6];
+        if (process.argv.length > 9) {
+            nftContract = process.argv[9];
         }
         console.log("nftContract:", nftContract);
 
-        const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.initMetaverse(nftContract, metaverseId, pricePublic, sizePublic, eth_amount, 0);
+        const nft = new RockNFT721(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
+        const tx = await nft.initMetaverse(nftContract, metaverseId, erc721, priceNftColl, nftCollSize, eth_amount, 0);
         console.log("tx hash:", tx.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed
