@@ -153,13 +153,11 @@ contract RockNFT is ERC1155Tradable {
 
         // check user mint fee
         if (price_tokens[_tokenId] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
-            if (msg.value > 0) {
-                ParameterControl _p = ParameterControl(parameterControlAdd);
-                uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
-                uint256 fee = msg.value * purchaseFeePercent / 10000;
-                (bool success,) = metaverseOwners[_metaverseId].call{value : msg.value - fee}("");
-                require(success, "FAIL");
-            }
+            ParameterControl _p = ParameterControl(parameterControlAdd);
+            uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
+            uint256 fee = msg.value * purchaseFeePercent / 10000;
+            (bool success,) = metaverseOwners[_metaverseId].call{value : msg.value - fee}("");
+            require(success, "FAIL");
         }
 
         emit MintEvent(_to, _tokenId, 1);
