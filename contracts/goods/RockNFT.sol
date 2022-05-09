@@ -20,6 +20,7 @@ contract RockNFT is ERC1155Tradable {
     mapping(uint256 => address) public metaverseOwners;
 
     // for rock base on core team
+    mapping(uint256 => address) public metaverseCoreTeamAddr;
     mapping(uint256 => uint256) public metaverseCoreTeamRocksSize;
 
     // for rock base on erc-721
@@ -109,7 +110,7 @@ contract RockNFT is ERC1155Tradable {
         require(!_exists(_tokenId), "ALREADY_EXIST");
 
         if (_rockIndex <= metaverseCoreTeamRocksSize[_metaverseId]) {
-            require(metaverseOwners[_metaverseId] == msgSender(), "CORE_TEAM");
+            require(metaverseCoreTeamAddr[_metaverseId] == msgSender(), "CORE_TEAM");
         } else if (metaverseCoreTeamRocksSize[_metaverseId] < _rockIndex && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId]) {
             // erc-721 check
             address _erc721Add = metaverseNFTColl[_metaverseId];
@@ -164,6 +165,7 @@ contract RockNFT is ERC1155Tradable {
     }
 
     function initMetaverse(uint256 _metaverseId,
+        address _coreTeamAddr,
         uint256 _rockIdsCoreTeamSize,
         address _erc721Addr,
         uint256 _priceNftColl,
@@ -187,7 +189,14 @@ contract RockNFT is ERC1155Tradable {
         // metaverse owner
         metaverseOwners[_metaverseId] = msgSender();
         // rock base on core team
+        metaverseCoreTeamAddr[_metaverseId] = _coreTeamAddr;
+        if (_coreTeamAddr != address(0x0)) {
+            require(_rockIdsCoreTeamSize > 0, "INV_CORE_TEAM");
+        }
         metaverseCoreTeamRocksSize[_metaverseId] = _rockIdsCoreTeamSize;
+        if (_rockIdsCoreTeamSize > 0) {
+            require(_coreTeamAddr != address(0x0), "INV_CORE_TEAM");
+        }
         // -- rock base on erc-721 nft collection
         metaverseNFTColl[_metaverseId] = _erc721Addr;
         if (_erc721Addr != address(0x0)) {
