@@ -19,6 +19,9 @@ contract RockNFT is ERC1155Tradable {
 
     mapping(uint256 => address) public metaverseOwners;
 
+    // for rock base on core team
+    mapping(uint256 => uint256) public metaverseCoreTeamRocksSize;
+
     // for rock base on erc-721
     mapping(uint256 => address) public metaverseNFTColl;
     mapping(uint256 => uint256) public metaverseNFTCollRocksSize;
@@ -101,11 +104,13 @@ contract RockNFT is ERC1155Tradable {
     public payable
     {
         require(metaverseOwners[_metaverseId] != address(0x0), "N_EXI_M");
-        require(_rockIndex >= 1 && _rockIndex <= metaverseNFTCollRocksSize[_metaverseId] + metaversePublicRocksSize[_metaverseId], "ROCK_IDX_INV");
+        require(_rockIndex >= 1 && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId] + metaversePublicRocksSize[_metaverseId], "ROCK_IDX_INV");
         uint256 _tokenId = _metaverseId * (10 ** 18) + _rockIndex;
         require(!_exists(_tokenId), "ALREADY_EXIST");
 
-        if (_rockIndex <= metaverseNFTCollRocksSize[_metaverseId]) {
+        if (_rockIndex <= metaverseCoreTeamRocksSize[_metaverseId]) {
+            require(metaverseOwners[_metaverseId] == msgSender(), "CORE_TEAM");
+        } else if (metaverseCoreTeamRocksSize[_metaverseId] < _rockIndex && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId]) {
             // erc-721 check
             address _erc721Add = metaverseNFTColl[_metaverseId];
             require(_erc721Add != address(0x0));
@@ -147,7 +152,7 @@ contract RockNFT is ERC1155Tradable {
         _mint(_to, _tokenId, 1, _data);
 
         // check user mint fee
-        if (price_tokens[_tokenId] > 0 || metaverseNFTCollRockPrice[_tokenId] > 0 || metaversePublicRockPrice[_tokenId] > 0) {
+        if (price_tokens[_tokenId] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
             ParameterControl _p = ParameterControl(parameterControlAdd);
             uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
             uint256 fee = msg.value * purchaseFeePercent / 10000;
@@ -159,37 +164,40 @@ contract RockNFT is ERC1155Tradable {
     }
 
     function initMetaverse(uint256 _metaverseId,
+        uint256 _rockIdsCoreTeamSize,
         address _erc721Addr,
         uint256 _priceNftColl,
-        uint256 _rockIdNFTCollsSize,
+        uint256 _rockIdsNFTCollsSize,
         uint256 _pricePublic,
         uint256 _rockIdsPublicSize
     )
     external payable
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
+        require(_rockIdsCoreTeamSize <= _rockIdsNFTCollsSize, "INVALID_SIZE");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
-            require(msg.value >= imoFEE * (_rockIdNFTCollsSize + _rockIdsPublicSize), "MISS_INI_FEE");
+            require(msg.value >= imoFEE * (_rockIdsCoreTeamSize + _rockIdsNFTCollsSize + _rockIdsPublicSize), "MISS_INI_FEE");
         }
 
         // metaverse owner
         metaverseOwners[_metaverseId] = msgSender();
-
+        // rock base on core team
+        metaverseCoreTeamRocksSize[_metaverseId] = _rockIdsCoreTeamSize;
         // -- rock base on erc-721 nft collection
         metaverseNFTColl[_metaverseId] = _erc721Addr;
         if (_erc721Addr != address(0x0)) {
-            require(_rockIdNFTCollsSize > 0, "INV_COL");
+            require(_rockIdsNFTCollsSize > 0, "INV_COL");
             // set price
             metaverseNFTCollRockPrice[_metaverseId] = _priceNftColl;
             // set rocks list
-            metaverseNFTCollRocksSize[_metaverseId] = _rockIdNFTCollsSize;
+            metaverseNFTCollRocksSize[_metaverseId] = _rockIdsNFTCollsSize;
         } else {
-            require(_rockIdNFTCollsSize == 0, "INV_COL");
+            require(_rockIdsNFTCollsSize == 0, "INV_COL");
         }
         // -- rock as public
         if (_rockIdsPublicSize > 0) {
