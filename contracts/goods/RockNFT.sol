@@ -178,7 +178,8 @@ contract RockNFT is ERC1155Tradable {
     external payable
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
-        require(_rockIdsCoreTeamSize <= _rockIdsNFTCollsSize, "INVALID_SIZE");
+        //        require(_rockIdsCoreTeamSize <= _rockIdsNFTCollsSize, "INVALID_SIZE1");
+        require(_rockIdsCoreTeamSize + _rockIdsNFTCollsSize + _rockIdsPublicSize < 10 ** 18, "INVALID_SIZE2");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
