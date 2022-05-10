@@ -17,18 +17,22 @@ import "../governance/ParameterControl.sol";
 contract RockNFT is ERC1155Tradable {
     event ParameterControlChanged (address previous, address new_);
 
-    mapping(string => address) public metaverseOwners;
+    mapping(uint256 => address) public metaverseOwners;
+
+    // for rock base on core team
+    mapping(uint256 => address) public metaverseCoreTeamAddr;
+    mapping(uint256 => uint256) public metaverseCoreTeamRocksSize;
 
     // for rock base on erc-721
-    mapping(string => address) public metaverseNFTColl;
-    mapping(string => uint256) public metaverseNFTCollRocksSize;
-    mapping(string => uint256) public metaverseNFTCollRockPrice;
+    mapping(uint256 => address) public metaverseNFTColl;
+    mapping(uint256 => uint256) public metaverseNFTCollRocksSize;
+    mapping(uint256 => uint256) public metaverseNFTCollRockPrice;
 
     mapping(address => mapping(uint256 => bool)) minted;
 
     // for rock by public
-    mapping(string => uint256) public metaversePublicRocksSize;
-    mapping(string => uint256) public metaversePublicRockPrice;
+    mapping(uint256 => uint256) public metaversePublicRocksSize;
+    mapping(uint256 => uint256) public metaversePublicRockPrice;
 
 
     using SafeMath for uint256;
@@ -40,6 +44,14 @@ contract RockNFT is ERC1155Tradable {
     ) public {
         require(_parameterAdd != address(0x0), "ADD_INVALID");
         parameterControlAdd = _parameterAdd;
+    }
+
+    function changeNFTCollRockPrice(uint256 _metaverseId, uint256 _price) public {
+        metaverseNFTCollRockPrice[_metaverseId] = _price;
+    }
+
+    function changePublicRockPrice(uint256 _metaverseId, uint256 _price) public {
+        metaversePublicRockPrice[_metaverseId] = _price;
     }
 
     function create(
@@ -85,18 +97,25 @@ contract RockNFT is ERC1155Tradable {
     }
 
     function mintRock(
-        string memory _metaverseId,
+        uint256 _metaverseId,
         address _to,
-        uint256 _id,
+        uint256 _rockIndex,
         string memory _uri,
         bytes memory _data)
     public payable
     {
         require(metaverseOwners[_metaverseId] != address(0x0), "N_EXI_M");
-        require(!_exists(_id), "ALREADY_EXIST");
+        require(_rockIndex >= 1 && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId] + metaversePublicRocksSize[_metaverseId], "ROCK_IDX_INV");
+        uint256 _tokenId = _metaverseId * (10 ** 18) + _rockIndex;
+        require(!_exists(_tokenId), "ALREADY_EXIST");
 
-        address _erc721Add = metaverseNFTColl[_metaverseId];
-        if (_erc721Add != address(0x0) && metaverseNFTCollRocksSize[_metaverseId] > 0) {
+        if (_rockIndex <= metaverseCoreTeamRocksSize[_metaverseId]) {
+            require(metaverseCoreTeamAddr[_metaverseId] == msgSender(), "CORE_TEAM");
+        } else if (metaverseCoreTeamRocksSize[_metaverseId] < _rockIndex && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId]) {
+            // erc-721 check
+            address _erc721Add = metaverseNFTColl[_metaverseId];
+            require(_erc721Add != address(0x0));
+
             require(_data.length > 0, "MISS_ERC721_TOKEN");
             require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OOS_");
             /* check erc-721 */
@@ -111,84 +130,94 @@ contract RockNFT is ERC1155Tradable {
             // marked this erc721 token id is minted ticket
             minted[_erc721Add][_erc721Id] = true;
 
-            if (price_tokens[_id] > 0) {
-                require(msg.value >= price_tokens[_id], "MISS_PRI_N");
+            if (price_tokens[_tokenId] > 0) {
+                require(msg.value >= price_tokens[_tokenId], "MISS_PRI_N");
             } else {
                 require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRI_N");
             }
-
-
-            metaverseNFTCollRocksSize[_metaverseId]--;
         } else {
             // rock as public: run when no rocks base on erc-721 or minted full rock base on erc-721 
             require(metaversePublicRocksSize[_metaverseId] > 0, "OOS");
-            if (price_tokens[_id] > 0) {
-                require(msg.value >= price_tokens[_id], "MISS_PRI_P");
+            if (price_tokens[_tokenId] > 0) {
+                require(msg.value >= price_tokens[_tokenId], "MISS_PRI_P");
             } else {
                 require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRI_P");
             }
 
-            metaversePublicRocksSize[_metaverseId]--;
         }
-        creators[_id] = operator;
+        creators[_tokenId] = operator;
         if (bytes(_uri).length > 0) {
-            customUri[_id] = _uri;
-            emit URI(_uri, _id);
+            customUri[_tokenId] = _uri;
+            emit URI(_uri, _tokenId);
         }
-        _mint(_to, _id, 1, _data);
+        _mint(_to, _tokenId, 1, _data);
 
         // check user mint fee
-        if (price_tokens[_id] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
-            ParameterControl _p = ParameterControl(parameterControlAdd);
-            uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
-            uint256 fee = msg.value * purchaseFeePercent / 10000;
-            (bool success,) = metaverseOwners[_metaverseId].call{value : msg.value - fee}("");
-            require(success, "FAIL");
+        if (price_tokens[_tokenId] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
+            if (msg.value > 0) {
+                ParameterControl _p = ParameterControl(parameterControlAdd);
+                uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
+                uint256 fee = msg.value * purchaseFeePercent / 10000;
+                (bool success,) = metaverseOwners[_metaverseId].call{value : msg.value - fee}("");
+                require(success, "FAIL");
+            }
         }
 
-        emit MintEvent(_to, _id, 1);
+        emit MintEvent(_to, _tokenId, 1);
     }
 
-    function initMetaverse(string memory metaverseId,
-        address erc721Addr,
-        uint256 priceNftColl,
-        uint256 rockIdNFTCollsSize,
-        uint256 pricePublic,
-        uint256 rockIdsPublicSize
+    function initMetaverse(uint256 _metaverseId,
+        address _coreTeamAddr,
+        uint256 _rockIdsCoreTeamSize,
+        address _erc721Addr,
+        uint256 _priceNftColl,
+        uint256 _rockIdsNFTCollsSize,
+        uint256 _pricePublic,
+        uint256 _rockIdsPublicSize
     )
     external payable
     {
-        require(metaverseOwners[metaverseId] == address(0x0), "E_M");
+        require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
+        //        require(_rockIdsCoreTeamSize <= _rockIdsNFTCollsSize, "INVALID_SIZE1");
+        require(_rockIdsCoreTeamSize + _rockIdsNFTCollsSize + _rockIdsPublicSize < 10 ** 18, "INVALID_SIZE2");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
-            require(msg.value >= imoFEE * (rockIdNFTCollsSize + rockIdsPublicSize), "MISS_INI_FEE");
+            require(msg.value >= imoFEE * (_rockIdsCoreTeamSize + _rockIdsNFTCollsSize + _rockIdsPublicSize), "MISS_INI_FEE");
         }
 
         // metaverse owner
-        metaverseOwners[metaverseId] = msgSender();
-
+        metaverseOwners[_metaverseId] = msgSender();
+        // rock base on core team
+        metaverseCoreTeamAddr[_metaverseId] = _coreTeamAddr;
+        if (_coreTeamAddr != address(0x0)) {
+            require(_rockIdsCoreTeamSize > 0, "INV_CORE_TEAM");
+        }
+        metaverseCoreTeamRocksSize[_metaverseId] = _rockIdsCoreTeamSize;
+        if (_rockIdsCoreTeamSize > 0) {
+            require(_coreTeamAddr != address(0x0), "INV_CORE_TEAM");
+        }
         // -- rock base on erc-721 nft collection
-        metaverseNFTColl[metaverseId] = erc721Addr;
-        if (erc721Addr != address(0x0)) {
-            require(rockIdNFTCollsSize > 0, "INV_COL");
+        metaverseNFTColl[_metaverseId] = _erc721Addr;
+        if (_erc721Addr != address(0x0)) {
+            require(_rockIdsNFTCollsSize > 0, "INV_COL");
             // set price
-            metaverseNFTCollRockPrice[metaverseId] = priceNftColl;
+            metaverseNFTCollRockPrice[_metaverseId] = _priceNftColl;
             // set rocks list
-            metaverseNFTCollRocksSize[metaverseId] = rockIdNFTCollsSize;
+            metaverseNFTCollRocksSize[_metaverseId] = _rockIdsNFTCollsSize;
         } else {
-            require(rockIdNFTCollsSize == 0, "INV_COL");
+            require(_rockIdsNFTCollsSize == 0, "INV_COL");
         }
         // -- rock as public
-        if (rockIdsPublicSize > 0) {
-            require(pricePublic > 0, "MISS_PRI_P");
+        if (_rockIdsPublicSize > 0) {
+            require(_pricePublic > 0, "MISS_PRI_P");
             // set price
-            metaversePublicRockPrice[metaverseId] = pricePublic;
+            metaversePublicRockPrice[_metaverseId] = _pricePublic;
             // set rocks list
-            metaversePublicRocksSize[metaverseId] = rockIdsPublicSize;
+            metaversePublicRocksSize[_metaverseId] = _rockIdsPublicSize;
         }
     }
 }

@@ -27,12 +27,12 @@ const {ethers} = require("hardhat");
         }
         console.log("eth_amount:", eth_amount);
 
-        // set rockIdHexa
-        let rockIdHexa: string = "";
+        // set rockIndex
+        let rockIndex: any = 0;
         if (process.argv.length >= 5) {
-            rockIdHexa = process.argv[5];
+            rockIndex = process.argv[5];
         }
-        console.log("rockIdHexa:", rockIdHexa);
+        console.log("rockIndex:", rockIndex);
 
         // set rockUri
         let rockUri: string = "";
@@ -49,7 +49,7 @@ const {ethers} = require("hardhat");
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.mintRock(metaverseId, to, nftContract, rockIdHexa, rockUri, eth_amount, 0);
+        const tx = await nft.mintRock(metaverseId, to, nftContract, rockIndex, rockUri, eth_amount, 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed
