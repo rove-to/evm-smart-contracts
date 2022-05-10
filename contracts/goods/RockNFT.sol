@@ -58,11 +58,13 @@ contract RockNFT is ERC1155Tradable {
 
     function changeCoreTeamAddr(uint256 _metaverseId, address _add) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "INV_ADDR");
+        require(_add != address(0x0), "INV_ADDR");
         metaverseCoreTeamAddr[_metaverseId] = _add;
     }
 
     function changeMetaverseOwner(uint256 _metaverseId, address _add) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "INV_ADDR");
+        require(_add != address(0x0), "INV_ADDR");
         metaverseOwners[_metaverseId] = _add;
     }
 
