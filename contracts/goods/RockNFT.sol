@@ -111,15 +111,16 @@ contract RockNFT is ERC1155Tradable {
         uint256 _mCollSize = metaverseNFTCollRocksSize[_metaverseId];
         uint256 _mPubPrice = metaversePublicRockPrice[_metaverseId];
         uint256 _mPubSize = metaversePublicRocksSize[_metaverseId];
+        uint256 _mCoreSize = metaverseCoreTeamRocksSize[_metaverseId];
 
         require(_mOwner != address(0x0), "N_EXI_M");
-        require(_rockIndex >= 1 && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + _mCollSize + _mPubSize, "ROCK_IDX_INV");
+        require(_rockIndex >= 1 && _rockIndex <= _mCoreSize + _mCollSize + _mPubSize, "ROCK_IDX_INV");
         uint256 _tokenId = _metaverseId * (10 ** 18) + _rockIndex;
         require(!_exists(_tokenId), "ALREADY_EXIST");
 
-        if (_rockIndex <= metaverseCoreTeamRocksSize[_metaverseId]) {
+        if (_rockIndex <= _mCoreSize) {
             require(metaverseCoreTeamAddr[_metaverseId] == msgSender(), "CORE_TEAM");
-        } else if (metaverseCoreTeamRocksSize[_metaverseId] < _rockIndex && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + _mCollSize) {
+        } else if (_mCoreSize < _rockIndex && _rockIndex <= _mCoreSize + _mCollSize) {
             // erc-721 check
             address _erc721Add = metaverseNFTColl[_metaverseId];
             require(_erc721Add != address(0x0));
