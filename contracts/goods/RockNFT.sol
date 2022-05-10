@@ -106,20 +106,27 @@ contract RockNFT is ERC1155Tradable {
         bytes memory _data)
     public payable
     {
-        require(metaverseOwners[_metaverseId] != address(0x0), "N_EXI_M");
-        require(_rockIndex >= 1 && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId] + metaversePublicRocksSize[_metaverseId], "ROCK_IDX_INV");
+        address _mOwner = metaverseOwners[_metaverseId];
+        uint256 _mCollPrice = metaverseNFTCollRockPrice[_metaverseId];
+        uint256 _mCollSize = metaverseNFTCollRocksSize[_metaverseId];
+        uint256 _mPubPrice = metaversePublicRockPrice[_metaverseId];
+        uint256 _mPubSize = metaversePublicRocksSize[_metaverseId];
+        uint256 _mCoreSize = metaverseCoreTeamRocksSize[_metaverseId];
+
+        require(_mOwner != address(0x0), "N_EXI_M");
+        require(_rockIndex >= 1 && _rockIndex <= _mCoreSize + _mCollSize + _mPubSize, "ROCK_IDX_INV");
         uint256 _tokenId = _metaverseId * (10 ** 18) + _rockIndex;
         require(!_exists(_tokenId), "ALREADY_EXIST");
 
-        if (_rockIndex <= metaverseCoreTeamRocksSize[_metaverseId]) {
+        if (_rockIndex <= _mCoreSize) {
             require(metaverseCoreTeamAddr[_metaverseId] == msgSender(), "CORE_TEAM");
-        } else if (metaverseCoreTeamRocksSize[_metaverseId] < _rockIndex && _rockIndex <= metaverseCoreTeamRocksSize[_metaverseId] + metaverseNFTCollRocksSize[_metaverseId]) {
+        } else if (_mCoreSize < _rockIndex && _rockIndex <= _mCoreSize + _mCollSize) {
             // erc-721 check
             address _erc721Add = metaverseNFTColl[_metaverseId];
             require(_erc721Add != address(0x0));
 
             require(_data.length > 0, "MISS_ERC721_TOKEN");
-            require(metaverseNFTCollRocksSize[_metaverseId] > 0, "OOS_");
+            require(_mCollSize > 0, "OOS_");
             /* check erc-721 */
             ERC721 _erc721 = ERC721(_erc721Add);
             // get token erc721 id from _data
@@ -135,15 +142,15 @@ contract RockNFT is ERC1155Tradable {
             if (price_tokens[_tokenId] > 0) {
                 require(msg.value >= price_tokens[_tokenId], "MISS_PRI_N");
             } else {
-                require(msg.value >= metaverseNFTCollRockPrice[_metaverseId], "MISS_PRI_N");
+                require(msg.value >= _mCollPrice, "MISS_PRI_N");
             }
         } else {
             // rock as public: run when no rocks base on erc-721 or minted full rock base on erc-721 
-            require(metaversePublicRocksSize[_metaverseId] > 0, "OOS");
+            require(_mPubSize > 0, "OOS");
             if (price_tokens[_tokenId] > 0) {
                 require(msg.value >= price_tokens[_tokenId], "MISS_PRI_P");
             } else {
-                require(msg.value >= metaversePublicRockPrice[_metaverseId], "MISS_PRI_P");
+                require(msg.value >= _mPubPrice, "MISS_PRI_P");
             }
 
         }
@@ -155,12 +162,12 @@ contract RockNFT is ERC1155Tradable {
         _mint(_to, _tokenId, 1, _data);
 
         // check user mint fee
-        if (price_tokens[_tokenId] > 0 || metaverseNFTCollRockPrice[_metaverseId] > 0 || metaversePublicRockPrice[_metaverseId] > 0) {
+        if (price_tokens[_tokenId] > 0 || _mCollPrice > 0 || _mPubPrice > 0) {
             if (msg.value > 0) {
                 ParameterControl _p = ParameterControl(parameterControlAdd);
                 uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
                 uint256 fee = msg.value * purchaseFeePercent / 10000;
-                (bool success,) = metaverseOwners[_metaverseId].call{value : msg.value - fee}("");
+                (bool success,) = _mOwner.call{value : msg.value - fee}("");
                 require(success, "FAIL");
             }
         }
