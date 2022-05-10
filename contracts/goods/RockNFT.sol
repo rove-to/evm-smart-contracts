@@ -47,10 +47,12 @@ contract RockNFT is ERC1155Tradable {
     }
 
     function changeNFTCollRockPrice(uint256 _metaverseId, uint256 _price) public {
+        require(metaverseOwners[_metaverseId] == msgSender(), "INV_ADDR");
         metaverseNFTCollRockPrice[_metaverseId] = _price;
     }
 
     function changePublicRockPrice(uint256 _metaverseId, uint256 _price) public {
+        require(metaverseOwners[_metaverseId] == msgSender(), "INV_ADDR");
         metaversePublicRockPrice[_metaverseId] = _price;
     }
 
