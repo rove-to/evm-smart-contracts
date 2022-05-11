@@ -151,7 +151,7 @@ contract RockNFT is ERC1155TradableForRock {
     }
 
     function checkZone(zone memory _zone) internal returns (bool) {
-        if (_zone.typeZone >= 1 && _zone.typeZone <= 3) {
+        if (_zone.typeZone < 1 && _zone.typeZone > 3) {
             return false;
         }
         if (_zone.rockIndexTo > 0) {
