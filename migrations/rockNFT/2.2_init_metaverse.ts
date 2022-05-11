@@ -1,4 +1,4 @@
-import {RockNFT} from "./rockNFT";
+import {RockNFT, Zone} from "./rockNFT";
 
 const {ethers} = require("hardhat");
 
@@ -73,7 +73,29 @@ const {ethers} = require("hardhat");
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.initMetaverse(nftContract, metaverseId, coreTeamAddr, coreTeamCollSize, erc721, priceNftColl, nftCollSize, pricePublic, sizePublic, eth_amount, 0);
+        let zone1: Zone = new Zone(1, 1);
+        if (coreTeamCollSize > 0) {
+            zone1.coreTeamAddr = coreTeamAddr;
+            zone1.rockIndexFrom = 1;
+            zone1.rockIndexTo = coreTeamCollSize;
+        }
+
+        let zone2: Zone = new Zone(2, 2);
+        if (nftCollSize > 0) {
+            zone2.rockIndexFrom = coreTeamCollSize + 1;
+            zone2.rockIndexTo = coreTeamCollSize + nftCollSize;
+            zone2.price = ethers.utils.parseEther(priceNftColl).toNumber();
+            zone2.collAddr = erc721;
+        }
+
+        let zone3: Zone = new Zone(3, 3);
+        if (sizePublic > 0) {
+            zone3.rockIndexFrom = coreTeamCollSize + nftCollSize + 1;
+            zone3.rockIndexTo = coreTeamCollSize + nftCollSize + sizePublic;
+            zone3.price = ethers.utils.parseEther(pricePublic).toNumber();
+        }
+
+        const tx = await nft.initMetaverse(nftContract, metaverseId, zone1, zone2, zone3, eth_amount, 0);
         console.log("tx hash:", tx.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed
