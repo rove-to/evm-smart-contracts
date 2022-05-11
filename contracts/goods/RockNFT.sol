@@ -26,7 +26,7 @@ contract RockNFT is ERC1155TradableForRock {
         uint256 price; // required for type=3
         address coreTeamAddr; // required for type=1
         address collAddr; // required for type=2 
-        uint256 type_zone; //1: team ,2: nft hodler, 3: public
+        uint256 typeZone; //1: team ,2: nft hodler, 3: public
         uint256 rockIndexFrom;
         uint256 rockIndexTo;// required to >= from
     }
@@ -48,14 +48,14 @@ contract RockNFT is ERC1155TradableForRock {
 
     function changeNFTCollRockPrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
-        require(metaverseZones[_metaverseId][_zoneIndex].type_zone == 2, "I_Z");
+        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 2, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].price = _price;
     }
 
     function changePublicRockPrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
-        require(metaverseZones[_metaverseId][_zoneIndex].type_zone == 3, "I_Z");
+        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].price = _price;
     }
@@ -63,7 +63,7 @@ contract RockNFT is ERC1155TradableForRock {
     function changeCoreTeamAddr(uint256 _metaverseId, uint256 _zoneIndex, address _add) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(_add != address(0x0), "I_A");
-        require(metaverseZones[_metaverseId][_zoneIndex].type_zone == 1, "I_Z");
+        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 1, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].coreTeamAddr = _add;
     }
@@ -105,9 +105,9 @@ contract RockNFT is ERC1155TradableForRock {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        if (_zone.type_zone == 1) {
+        if (_zone.typeZone == 1) {
             require(_zone.coreTeamAddr == msgSender(), "C_T");
-        } else if (_zone.type_zone == 2) {
+        } else if (_zone.typeZone == 2) {
             // erc-721 check
             address _erc721Add = _zone.collAddr;
             require(_erc721Add != address(0x0));
@@ -126,7 +126,7 @@ contract RockNFT is ERC1155TradableForRock {
             minted[_erc721Add][_erc721Id] = true;
 
             require(msg.value >= _zone.price, "M_P_N");
-        } else if (_zone.type_zone == 3) {
+        } else if (_zone.typeZone == 3) {
             require(msg.value >= _zone.price, "M_P_P");
         }
         creators[_tokenId] = operator;
@@ -151,20 +151,20 @@ contract RockNFT is ERC1155TradableForRock {
     }
 
     function checkZone(zone memory _zone) internal returns (bool) {
-        if (_zone.type_zone >= 1 && _zone.type_zone <= 3) {
+        if (_zone.typeZone >= 1 && _zone.typeZone <= 3) {
             return false;
         }
         if (_zone.rockIndexTo > 0) {
-            if (_zone.type_zone == 1) {
+            if (_zone.typeZone == 1) {
                 if (_zone.coreTeamAddr == address(0x0)) {
                     return false;
                 }
-            } else if (_zone.type_zone == 2) {
+            } else if (_zone.typeZone == 2) {
                 if (_zone.collAddr == address(0x0)) {
                     return false;
                 }
 
-            } else if (_zone.type_zone == 3) {
+            } else if (_zone.typeZone == 3) {
                 if (_zone.price == 0) {
                     return false;
                 }
@@ -186,7 +186,7 @@ contract RockNFT is ERC1155TradableForRock {
         require(metaverseZones[_metaverseId][_zone.zoneIndex].rockIndexTo <= 0, "E_Z");
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(checkZone(_zone), "I_ZONE");
-        require(_zone.type_zone >= 1 && _zone.type_zone <= 3, "INV_TYPE");
+        require(_zone.typeZone >= 1 && _zone.typeZone <= 3, "INV_TYPE");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
