@@ -7,6 +7,26 @@ const {ethers} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
 const Web3 = require('web3');
 
+class Zone {
+    zoneIndex: number; // required
+    price: number; // required for type=3
+    coreTeamAddr: any; // required for type=1
+    collAddr: any; // required for type=2 
+    typeZone: number; //1: team ,2: nft hodler, 3: public
+    rockIndexFrom: number;
+    rockIndexTo: number;// required to >= from
+
+    constructor(zoneIndex: number, type: number) {
+        this.zoneIndex = zoneIndex;
+        this.price = ethers.utils.parseEther("0.0").toNumber();
+        this.typeZone = type;
+        this.rockIndexFrom = 0;
+        this.rockIndexTo = 0;
+        this.collAddr = "0x0000000000000000000000000000000000000000";
+        this.coreTeamAddr = "0x0000000000000000000000000000000000000000";
+    }
+}
+
 class RockNFT {
     network: string;
     senderPublicKey: string;
@@ -127,13 +147,19 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async initMetaverse(contractAddress: any, metaverseIdHexa: string, coreTeamAddr: any, coreTeamCollSize: number, erc721: any, priceNftColl: number, nftCollSize: number, pricePublic: number, sizePublic: number, ethAmount: string, gas: number) {
+    async initMetaverse(contractAddress: any, metaverseIdHexa: string, zone1: Zone, zone2: Zone, zone3: Zone, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
+        console.log("zone1", zone1);
+        console.log("zone2", zone2);
+        console.log("zone3", zone3);
         const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
-        const fun = temp?.nftContract.methods.initMetaverse(metaverseIdInt, coreTeamAddr, coreTeamCollSize, erc721, ethers.utils.parseEther(priceNftColl), nftCollSize, ethers.utils.parseEther(pricePublic), sizePublic);
-        
+        const fun = temp?.nftContract.methods.initMetaverse(metaverseIdInt,
+            JSON.parse(JSON.stringify(zone1)),
+            JSON.parse(JSON.stringify(zone2)),
+            JSON.parse(JSON.stringify(zone3)),
+        );
+
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -157,13 +183,13 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintRock(metaverseIdHexa: string, to: any, contractAddress: any, rockIndex: number, rockURI: string, ethAmount: string, gas: number) {
+    async mintRock(metaverseIdHexa: string, to: any, contractAddress: any, zoneIndex: number, rockIndex: number, rockURI: string, ethAmount: string, gas: number) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
 
         const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
-        const fun = temp?.nftContract.methods.mintRock(metaverseIdInt, to, rockIndex, rockURI, '0x')
+        const fun = temp?.nftContract.methods.mintRock(metaverseIdInt, to, zoneIndex, rockIndex, rockURI, '0x')
         //the transaction
         let tx = {
             from: this.senderPublicKey,
@@ -392,4 +418,4 @@ class RockNFT {
     }
 }
 
-export {RockNFT};
+export {RockNFT, Zone};
