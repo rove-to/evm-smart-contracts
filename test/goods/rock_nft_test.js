@@ -24,6 +24,8 @@ describe("** NFTs erc-1155 contract", function () {
   const userMint = addresses[1]; // default for local
   const coreTeamAddress = addresses[2];
   const erc721User = addresses[3];
+  const newCoreTeamAddress = addresses[4];
+  const newMetaVerseOwner = addresses[5];
 
   // core team
   const maxRockCoreTeam = 1000;
@@ -221,6 +223,118 @@ describe("** NFTs erc-1155 contract", function () {
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE));
     });
 
+    it("- Test metaverse change core team address", async () => {
+      const metaverseId = 1;
+      const INIT_IMO_FEE = ETH("0.01");
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        nft_owner_address,
+        ETH("150"),
+        "initMetaverse",
+        [metaverseId.toString(16), ZONE1, ZONE2, ZONE3],
+        private_keys[0]
+      );
+
+      // change core team address
+      await rockNFT.changeCoreTeamAddr(metaverseId.toString(16), zone1Index, newCoreTeamAddress);
+
+      // mint rock by old core team address
+      for (let i = 0; i < mintRockCoreTeam; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone1Index) * 10 ** 9) + rocksIdsCoreTeam[i];
+        try {
+          await signAnotherContractThenExcuteFunctionWithValue(
+            jsonFile,
+            rockNFTAddress,
+            coreTeamAddress,
+            priceRockCoreTeam, // core team mint with 0 eth
+            "mintRock",
+            [metaverseId.toString(16), coreTeamAddress, zone1Index, rocksIdsCoreTeam[i], apiUri, "0x0"],
+            private_keys[2]
+          );
+        } catch (e) {
+          expect(e.toString()).to.include("C_T");
+        }
+      }
+
+      // mint rock by new core team address
+      for (let i = 0; i < mintRockCoreTeam; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone1Index) * 10 ** 9) + rocksIdsCoreTeam[i];
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          newCoreTeamAddress,
+          priceRockCoreTeam, // core team mint with 0 eth
+          "mintRock",
+          [metaverseId.toString(16), newCoreTeamAddress, zone1Index, rocksIdsCoreTeam[i], apiUri, "0x0"],
+          private_keys[4]
+        );
+        let balanceRockMinter = await rockNFT.balanceOf(newCoreTeamAddress, tokenID);
+        expect(balanceRockMinter).to.equal(1);
+      }
+      const INIT_FEE = (maxRockByNFTColl + maxRockPublic + maxRockCoreTeam) * INIT_IMO_FEE;
+      const balanceOfRockNFTAdress = await getEthBalance(rockNFTAddress);
+      expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE));
+    });
+
+    it.only("- Test change metaverse owner", async () => {
+      const ETH_VALUE = ETH("1");
+      const metaverseId = 1;
+      const INIT_IMO_FEE = ETH("0.01");
+      const ROCK_PUR_FEE_PERCENT = 300; // 3%
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+      await parameterControl.setUInt256("ROCK_PUR_FEE", ROCK_PUR_FEE_PERCENT);
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        nft_owner_address,
+        ETH("150"),
+        "initMetaverse",
+        [metaverseId.toString(16), ZONE1, ZONE2, ZONE3],
+        private_keys[0]
+      );
+
+      // change metaverse owner
+      await rockNFT.changeMetaverseOwner(metaverseId.toString(16), newMetaVerseOwner);
+      const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerBefore = await getEthBalance(newMetaVerseOwner);
+
+      for (let i = 0; i < mintRockPublic; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone3Index) * 10 ** 9) + rocksIdsPublic[i];
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          userMint,
+          ETH_VALUE,
+          "mintRock",
+          [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[i], apiUri, "0x0"],
+          private_keys[1]
+        );
+        let balanceRockMinter = await rockNFT.balanceOf(userMint, tokenID);
+        expect(balanceRockMinter).to.equal(1);
+      }
+
+      const balanceETHOfUserAfterMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerAfter = await getEthBalance(newMetaVerseOwner);
+      console.log(balanceETHOfNFTOwnerBefore, balanceETHOfNFTOwnerAfter);
+
+      const PUR_FEE = (convertWeiToEth(ETH_VALUE * mintRockPublic) * 3) / 100;
+      expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
+        balanceETHOfUserBeforeMint - convertWeiToEth(ETH_VALUE * mintRockPublic)
+      );
+      expect(balanceETHOfNFTOwnerAfter).to.equal(
+        balanceETHOfNFTOwnerBefore + convertWeiToEth(ETH_VALUE * mintRockPublic) - PUR_FEE
+      );
+
+      const INIT_FEE = (maxRockByNFTColl + maxRockPublic + maxRockCoreTeam) * INIT_IMO_FEE;
+      const balanceOfRockNFTAdress = await getEthBalance(rockNFTAddress);
+      expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
+    });
+
     it("- Test metaverse without init fee puclic rock only", async function () {
       const metaverseId = 1;
       await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
@@ -241,7 +355,6 @@ describe("** NFTs erc-1155 contract", function () {
         );
 
         let balanceRockMinter = await rockNFT.balanceOf(userMint, tokenID);
-        // console.log(rocksIdsPublic[i], userMint, balanceRockMinter);
         expect(balanceRockMinter).to.equal(1);
       }
       const balanceETHOfUserAfterMint = await getEthBalance(userMint);
@@ -252,6 +365,56 @@ describe("** NFTs erc-1155 contract", function () {
       );
       expect(balanceETHOfNFTOwnerAfter).to.equal(
         balanceETHOfNFTOwnerBefore + convertWeiToEth(priceRockPublic * mintRockPublic)
+      );
+    });
+
+    it("- Test chagne public price rock", async function () {
+      const newPublicPriceRock = ETH("2");
+      const metaverseId = 1;
+      await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
+      // change price for public rock
+      await rockNFT.changePublicRockPrice(metaverseId.toString(16), zone3Index, newPublicPriceRock);
+      const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
+      for (let i = 0; i < mintRockPublic; i++) {
+        try {
+          await signAnotherContractThenExcuteFunctionWithValue(
+            jsonFile,
+            rockNFTAddress,
+            userMint,
+            ETH("1"),
+            "mintRock",
+            [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[i], apiUri, "0x0"],
+            private_keys[1]
+          );
+        } catch (e) {
+          expect(e.toString()).to.include("M_P_P");
+        }
+      }
+
+      for (let i = 0; i < mintRockPublic; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone3Index) * 10 ** 9) + rocksIdsPublic[i];
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          userMint,
+          ETH("2"),
+          "mintRock",
+          [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[i], apiUri, "0x0"],
+          private_keys[1]
+        );
+        let balanceRockMinter = await rockNFT.balanceOf(userMint, tokenID);
+        expect(balanceRockMinter).to.equal(1);
+      }
+
+      const balanceETHOfUserAfterMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
+
+      expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
+        balanceETHOfUserBeforeMint - convertWeiToEth(newPublicPriceRock * mintRockPublic)
+      );
+      expect(balanceETHOfNFTOwnerAfter).to.equal(
+        balanceETHOfNFTOwnerBefore + convertWeiToEth(newPublicPriceRock * mintRockPublic)
       );
     });
 
@@ -321,7 +484,6 @@ describe("** NFTs erc-1155 contract", function () {
       // mint collection
       for (let i = 0; i < mintRockByNFTColl; i++) {
         const DATA = generateBytes(99);
-        let tokenID = BigInt((metaverseId * 10 ** 9 + zone2Index) * 10 ** 9) + rocksIdsNftColl[i];
         try {
           await signAnotherContractThenExcuteFunctionWithValue(
             jsonFile,
@@ -388,6 +550,73 @@ describe("** NFTs erc-1155 contract", function () {
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
     });
 
+    it("- Test change collection rock price", async () => {
+      const newCollRockPrice = ETH("0.2");
+      const ETH_VALUE = ETH("0.1");
+      const metaverseId = 1;
+      const INIT_IMO_FEE = ETH("0.01");
+      const ROCK_PUR_FEE_PERCENT = 300; // 3%
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+      await parameterControl.setUInt256("ROCK_PUR_FEE", ROCK_PUR_FEE_PERCENT);
+
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        nft_owner_address,
+        ETH("150"),
+        "initMetaverse",
+        [metaverseId.toString(16), ZONE1, ZONE2, ZONE3],
+        private_keys[0]
+      );
+
+      // change collection rock price
+      await rockNFT.changeNFTCollRockPrice(metaverseId.toString(16), zone2Index, newCollRockPrice);
+
+      // mint collection
+      const DATA = generateBytes(1);
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          erc721User,
+          ETH_VALUE,
+          "mintRock",
+          [metaverseId.toString(16), erc721User, zone2Index, rocksIdsNftColl[0], apiUri, DATA],
+          private_keys[3]
+        );
+      } catch (e) {
+        expect(e.toString()).to.include("M_P_N");
+      }
+      const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
+
+      let tokenID = BigInt((metaverseId * 10 ** 9 + zone2Index) * 10 ** 9) + rocksIdsNftColl[0];
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        erc721User,
+        newCollRockPrice,
+        "mintRock",
+        [metaverseId.toString(16), erc721User, zone2Index, rocksIdsNftColl[0], apiUri, DATA],
+        private_keys[3]
+      );
+      let balanceRockMinter = await rockNFT.balanceOf(erc721User, tokenID);
+      expect(balanceRockMinter).to.equal(1);
+
+      const balanceETHOfUserAfterMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
+
+      const PUR_FEE = (convertWeiToEth(newCollRockPrice) * 3) / 100;
+      expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(balanceETHOfUserBeforeMint);
+      expect(balanceETHOfNFTOwnerAfter).to.equal(
+        balanceETHOfNFTOwnerBefore + convertWeiToEth(newCollRockPrice) - PUR_FEE
+      );
+
+      const INIT_FEE = (maxRockByNFTColl + maxRockPublic + maxRockCoreTeam) * INIT_IMO_FEE;
+      const balanceOfRockNFTAdress = await getEthBalance(rockNFTAddress);
+      expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
+    });
+
     it("- Test metaverse with erc721 collection with existed 721 token but missing fee", async () => {
       const ETH_VALUE = ETH("0.01");
       const metaverseId = 1;
@@ -434,6 +663,53 @@ describe("** NFTs erc-1155 contract", function () {
       } catch (e) {
         expect(e.toString()).to.include("M_P_P");
       }
+    });
+
+    it("- Test add new public zone", async function () {
+      const metaverseId = 1;
+      const zone4Index = 4;
+      const ZONE4 = {
+        zoneIndex: zone4Index,
+        price: priceRockPublic,
+        coreTeamAddr: address0,
+        collAddr: address0,
+        typeZone: 1,
+        rockIndexFrom: 1,
+        rockIndexTo: 100,
+      };
+
+      // init metaverse
+      await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
+      // add new zone
+      await rockNFT.addZone(metaverseId.toString(16), ZONE4);
+      /*
+      const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
+      // mint rock public
+      for (let i = 0; i < mintRockPublic; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone3Index) * 10 ** 9) + rocksIdsPublic[i];
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          userMint,
+          ETH("1"),
+          "mintRock",
+          [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[i], apiUri, "0x0"],
+          private_keys[1]
+        );
+
+        let balanceRockMinter = await rockNFT.balanceOf(userMint, tokenID);
+        expect(balanceRockMinter).to.equal(1);
+      }
+      const balanceETHOfUserAfterMint = await getEthBalance(userMint);
+      const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
+
+      expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
+        balanceETHOfUserBeforeMint - convertWeiToEth(priceRockPublic * mintRockPublic)
+      );
+      expect(balanceETHOfNFTOwnerAfter).to.equal(
+        balanceETHOfNFTOwnerBefore + convertWeiToEth(priceRockPublic * mintRockPublic)
+      );*/
     });
   });
 });
