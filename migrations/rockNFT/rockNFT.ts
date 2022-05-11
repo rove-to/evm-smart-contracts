@@ -387,10 +387,10 @@ class RockNFT {
         return max;
     }
 
-    async getPriceToken(contractAddress: any, tokenId: number) {
+    async getMetaverseOwner(contractAddress: any, metaverseIdHexa: string) {
         let temp = this.getContract(contractAddress);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -398,8 +398,23 @@ class RockNFT {
             nonce: nonce,
         }
 
-        const price: any = await temp?.nftContract.methods.getPriceToken(tokenId).call(tx);
-        return price;
+        const owner: any = await temp?.nftContract.methods.metaverseOwners(metaverseIdInt).call(tx);
+        return owner;
+    }
+
+    async getMetaverseZones(contractAddress: any, metaverseIdHexa: string, zoneIndex: number) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const zones: any = await temp?.nftContract.methods.metaverseZones(metaverseIdInt, zoneIndex).call(tx);
+        return zones;
     }
 
     async uri(contractAddress: any, tokenId: number) {
