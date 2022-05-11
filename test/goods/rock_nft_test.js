@@ -279,14 +279,13 @@ describe("** NFTs erc-1155 contract", function () {
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE));
     });
 
-    it.only("- Test change metaverse owner", async () => {
+    it("- Test change metaverse owner", async () => {
       const ETH_VALUE = ETH("1");
       const metaverseId = 1;
       const INIT_IMO_FEE = ETH("0.01");
       const ROCK_PUR_FEE_PERCENT = 300; // 3%
       await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
       await parameterControl.setUInt256("ROCK_PUR_FEE", ROCK_PUR_FEE_PERCENT);
-      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
 
       await signAnotherContractThenExcuteFunctionWithValue(
         jsonFile,
@@ -320,7 +319,6 @@ describe("** NFTs erc-1155 contract", function () {
 
       const balanceETHOfUserAfterMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerAfter = await getEthBalance(newMetaVerseOwner);
-      console.log(balanceETHOfNFTOwnerBefore, balanceETHOfNFTOwnerAfter);
 
       const PUR_FEE = (convertWeiToEth(ETH_VALUE * mintRockPublic) * 3) / 100;
       expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
@@ -665,23 +663,44 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it("- Test add new public zone", async function () {
+    it.only("- Test add new zone", async function () {
       const metaverseId = 1;
-      const zone4Index = 4;
-      const ZONE4 = {
-        zoneIndex: zone4Index,
-        price: priceRockPublic,
-        coreTeamAddr: address0,
+      ZONE4 = {
+        zoneIndex: 4,
+        price: priceRockCoreTeam,
+        coreTeamAddr: coreTeamAddress,
         collAddr: address0,
         typeZone: 1,
         rockIndexFrom: 1,
         rockIndexTo: 100,
       };
-
+      // collection zone
+      ZONE5 = {
+        zoneIndex: 5,
+        price: priceRockByNFTColl,
+        coreTeamAddr: address0,
+        collAddr: erc721TradableAddress,
+        typeZone: 2,
+        rockIndexFrom: 101,
+        rockIndexTo: 500,
+      };
+      // public zone
+      ZONE6 = {
+        zoneIndex: 6,
+        price: priceRockPublic,
+        coreTeamAddr: address0,
+        collAddr: address0,
+        typeZone: 3,
+        rockIndexFrom: 501,
+        rockIndexTo: 1000,
+      };
       // init metaverse
       await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
       // add new zone
       await rockNFT.addZone(metaverseId.toString(16), ZONE4);
+      await rockNFT.addZone(metaverseId.toString(16), ZONE5);
+      await rockNFT.addZone(metaverseId.toString(16), ZONE6);
+
       /*
       const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
