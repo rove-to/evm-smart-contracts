@@ -138,6 +138,25 @@ describe("** NFTs erc-1155 contract", function () {
   });
 
   describe("* Create Rock NFT erc-1155", function () {
+    it("- Test init metaverse with missing fee", async () => {
+      const metaverseId = 1;
+      const INIT_IMO_FEE = ETH("0.01");
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          nft_owner_address,
+          ETH("10"),
+          "initMetaverse",
+          [metaverseId.toString(16), ZONE1, ZONE2, ZONE3],
+          private_keys[0]
+        );
+      } catch (e) {
+        expect(e.toString()).to.include("I_F");
+      }
+    });
+
     it("- Test metaverse for core team", async () => {
       const metaverseId = 1;
       const INIT_IMO_FEE = ETH("0.01");
@@ -227,7 +246,6 @@ describe("** NFTs erc-1155 contract", function () {
       }
       const balanceETHOfUserAfterMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
-      console.log("balance of:", balanceETHOfUserAfterMint, balanceETHOfNFTOwnerAfter);
 
       expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
         balanceETHOfUserBeforeMint - convertWeiToEth(priceRockPublic * mintRockPublic)
@@ -368,6 +386,54 @@ describe("** NFTs erc-1155 contract", function () {
       const INIT_FEE = (maxRockByNFTColl + maxRockPublic + maxRockCoreTeam) * INIT_IMO_FEE;
       const balanceOfRockNFTAdress = await getEthBalance(rockNFTAddress);
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
+    });
+
+    it("- Test metaverse with erc721 collection with existed 721 token but missing fee", async () => {
+      const ETH_VALUE = ETH("0.01");
+      const metaverseId = 1;
+      const INIT_IMO_FEE = ETH("0.01");
+      await parameterControl.setUInt256("INIT_IMO_FEE", INIT_IMO_FEE);
+
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        nft_owner_address,
+        ETH("150"),
+        "initMetaverse",
+        [metaverseId.toString(16), ZONE1, ZONE2, ZONE3],
+        private_keys[0]
+      );
+
+      // mint collection
+      const DATA = generateBytes(1);
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          erc721User,
+          ETH_VALUE,
+          "mintRock",
+          [metaverseId.toString(16), erc721User, zone2Index, rocksIdsNftColl[0], apiUri, DATA],
+          private_keys[3]
+        );
+      } catch (e) {
+        expect(e.toString()).to.include("M_P_N");
+      }
+
+      // mint public rock
+      try {
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          userMint,
+          ETH_VALUE,
+          "mintRock",
+          [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[0], apiUri, "0x0"],
+          private_keys[1]
+        );
+      } catch (e) {
+        expect(e.toString()).to.include("M_P_P");
+      }
     });
   });
 });
