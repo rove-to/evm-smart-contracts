@@ -663,57 +663,117 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it.only("- Test add new zone", async function () {
+    it("- Test add new zone", async function () {
       const metaverseId = 1;
+      const zone4Index = 4;
+      const zone5Index = 5;
+      const zone6Index = 6;
+      const maxRockCoreTeam = 100;
+      const maxRockByNFTColl = 400;
+      const maxRockPublic = 1000;
+
+      let rocks = [];
+      for (let i = 1; i <= maxRockCoreTeam + maxRockByNFTColl + maxRockPublic; i++) {
+        rocks.push(i.toString(16));
+      }
+
+      // core team rock
+      let rocksIdsCoreTeam = [];
+      for (let i = 0; i < maxRockCoreTeam; i++) {
+        rocksIdsCoreTeam.push(BigInt("0x" + rocks[i]));
+      }
+      // rock by nft coll
+      let rocksIdsNftColl = [];
+      for (let i = rocksIdsCoreTeam.length; i < maxRockCoreTeam + maxRockByNFTColl; i++) {
+        rocksIdsNftColl.push(BigInt("0x" + rocks[i]));
+      }
+
+      // public rock
+      let rocksIdsPublic = [];
+      for (let i = rocksIdsCoreTeam.length + rocksIdsNftColl.length; i < rocks.length; i++) {
+        rocksIdsPublic.push(BigInt("0x" + rocks[i]));
+      }
       ZONE4 = {
-        zoneIndex: 4,
+        zoneIndex: zone4Index,
         price: priceRockCoreTeam,
         coreTeamAddr: coreTeamAddress,
         collAddr: address0,
         typeZone: 1,
         rockIndexFrom: 1,
-        rockIndexTo: 100,
+        rockIndexTo: rocksIdsCoreTeam.length,
       };
       // collection zone
       ZONE5 = {
-        zoneIndex: 5,
+        zoneIndex: zone5Index,
         price: priceRockByNFTColl,
         coreTeamAddr: address0,
         collAddr: erc721TradableAddress,
         typeZone: 2,
-        rockIndexFrom: 101,
-        rockIndexTo: 500,
+        rockIndexFrom: rocksIdsCoreTeam.length,
+        rockIndexTo: rocksIdsNftColl.length,
       };
       // public zone
       ZONE6 = {
-        zoneIndex: 6,
+        zoneIndex: zone6Index,
         price: priceRockPublic,
         coreTeamAddr: address0,
         collAddr: address0,
         typeZone: 3,
-        rockIndexFrom: 501,
-        rockIndexTo: 1000,
+        rockIndexFrom: rocksIdsNftColl.length,
+        rockIndexTo: rocksIdsPublic.length,
       };
+
       // init metaverse
       await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
       // add new zone
-      await rockNFT.addZone(metaverseId.toString(16), ZONE4);
-      await rockNFT.addZone(metaverseId.toString(16), ZONE5);
-      await rockNFT.addZone(metaverseId.toString(16), ZONE6);
+      await rockNFT.addZone(metaverseId.toString(16), ZONE4); // coreteam zone
+      await rockNFT.addZone(metaverseId.toString(16), ZONE5); // collection zone
+      await rockNFT.addZone(metaverseId.toString(16), ZONE6); // public zone
 
-      /*
       const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
+      const balanceETHOfErc721UserBefore = await getEthBalance(erc721User);
+
+      // mint core team rock in new zone
+      for (let i = 0; i < mintRockCoreTeam; i++) {
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone4Index) * 10 ** 9) + rocksIdsCoreTeam[i];
+        await signAnotherContractThenExcuteFunctionWithValue(
+          jsonFile,
+          rockNFTAddress,
+          coreTeamAddress,
+          priceRockCoreTeam, // core team mint with 0 eth
+          "mintRock",
+          [metaverseId.toString(16), coreTeamAddress, zone4Index, rocksIdsCoreTeam[i], apiUri, "0x0"],
+          private_keys[2]
+        );
+        let balanceRockMinter = await rockNFT.balanceOf(coreTeamAddress, tokenID);
+        expect(balanceRockMinter).to.equal(1);
+      }
+
+      // mint collection rock in new zone
+      let tokenIDCoreTeamRock = BigInt((metaverseId * 10 ** 9 + zone5Index) * 10 ** 9) + rocksIdsNftColl[0];
+      await signAnotherContractThenExcuteFunctionWithValue(
+        jsonFile,
+        rockNFTAddress,
+        erc721User,
+        priceRockByNFTColl,
+        "mintRock",
+        [metaverseId.toString(16), erc721User, zone5Index, rocksIdsNftColl[0], apiUri, generateBytes(1)],
+        private_keys[3]
+      );
+      let balanceRockMinter = await rockNFT.balanceOf(erc721User, tokenIDCoreTeamRock);
+      expect(balanceRockMinter).to.equal(1);
+
       // mint rock public
       for (let i = 0; i < mintRockPublic; i++) {
-        let tokenID = BigInt((metaverseId * 10 ** 9 + zone3Index) * 10 ** 9) + rocksIdsPublic[i];
+        let tokenID = BigInt((metaverseId * 10 ** 9 + zone6Index) * 10 ** 9) + rocksIdsPublic[i];
         await signAnotherContractThenExcuteFunctionWithValue(
           jsonFile,
           rockNFTAddress,
           userMint,
           ETH("1"),
           "mintRock",
-          [metaverseId.toString(16), userMint, zone3Index, rocksIdsPublic[i], apiUri, "0x0"],
+          [metaverseId.toString(16), userMint, zone6Index, rocksIdsPublic[i], apiUri, "0x0"],
           private_keys[1]
         );
 
@@ -722,13 +782,19 @@ describe("** NFTs erc-1155 contract", function () {
       }
       const balanceETHOfUserAfterMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
+      const balanceETHOfErc721UserAfter = await getEthBalance(erc721User);
 
       expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(
         balanceETHOfUserBeforeMint - convertWeiToEth(priceRockPublic * mintRockPublic)
       );
       expect(balanceETHOfNFTOwnerAfter).to.equal(
-        balanceETHOfNFTOwnerBefore + convertWeiToEth(priceRockPublic * mintRockPublic)
-      );*/
+        balanceETHOfNFTOwnerBefore +
+          convertWeiToEth(priceRockPublic * mintRockPublic) +
+          convertWeiToEth(priceRockByNFTColl)
+      );
+      expect(balanceETHOfErc721UserAfter).to.lessThanOrEqual(
+        balanceETHOfErc721UserBefore - convertWeiToEth(priceRockByNFTColl)
+      );
     });
   });
 });
