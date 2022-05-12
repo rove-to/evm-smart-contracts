@@ -14,13 +14,7 @@ import "../governance/ParameterControl.sol";
  *
  */
 
-contract RockNFT is ERC1155TradableForRock {
-    event ParameterControlChanged (address previous, address new_);
-    event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
-    event InitMetaverse(uint256 _metaverseId);
-
-    mapping(uint256 => address) public metaverseOwners;
-
+library SharedStructs {
     struct zone {
         uint256 zoneIndex; // required
         uint256 price; // required for type=3
@@ -30,8 +24,16 @@ contract RockNFT is ERC1155TradableForRock {
         uint256 rockIndexFrom;
         uint256 rockIndexTo;// required to >= from
     }
+}
 
-    mapping(uint256 => mapping(uint256 => zone)) public metaverseZones;
+contract RockNFT is ERC1155TradableForRock {
+    event ParameterControlChanged (address previous, address new_);
+    event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
+    event InitMetaverse(uint256 _metaverseId);
+
+    mapping(uint256 => address) public metaverseOwners;
+
+    mapping(uint256 => mapping(uint256 => SharedStructs.zone)) public metaverseZones;
     mapping(address => mapping(uint256 => bool)) minted;
 
 
@@ -98,7 +100,7 @@ contract RockNFT is ERC1155TradableForRock {
         address _mOwner = metaverseOwners[_metaverseId];
         require(_mOwner != address(0x0), "N_E_M");
 
-        zone memory _zone = metaverseZones[_metaverseId][_zoneIndex];
+        SharedStructs.zone memory _zone = metaverseZones[_metaverseId][_zoneIndex];
 
         require(_rockIndex >= _zone.rockIndexFrom && _rockIndex <= _zone.rockIndexTo, "I_R_I");
         uint256 _tokenId = (_metaverseId * (10 ** 9) + _zoneIndex) * (10 ** 9) + _rockIndex;
@@ -150,7 +152,7 @@ contract RockNFT is ERC1155TradableForRock {
         emit MintEvent(_to, _tokenId, 1);
     }
 
-    function checkZone(zone memory _zone) internal returns (bool) {
+    function checkZone(SharedStructs.zone memory _zone) internal returns (bool) {
         if (_zone.typeZone < 1 && _zone.typeZone > 3) {
             return false;
         }
@@ -180,7 +182,7 @@ contract RockNFT is ERC1155TradableForRock {
 
     function addZone(
         uint256 _metaverseId,
-        zone memory _zone)
+        SharedStructs.zone memory _zone)
     external payable {
         require(metaverseOwners[_metaverseId] != address(0x0), "N_E_M");
         require(metaverseZones[_metaverseId][_zone.zoneIndex].rockIndexTo <= 0, "E_Z");
@@ -203,9 +205,9 @@ contract RockNFT is ERC1155TradableForRock {
 
     function initMetaverse(
         uint256 _metaverseId,
-        zone memory _zone1,
-        zone memory _zone2,
-        zone memory _zone3
+        SharedStructs.zone memory _zone1,
+        SharedStructs.zone memory _zone2,
+        SharedStructs.zone memory _zone3
     )
     external payable
     {
