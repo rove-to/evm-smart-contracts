@@ -1,0 +1,41 @@
+{
+  "attributes": [
+    {
+      "trait_type": "rove-nft-type",
+      "value": "Environment NFTs"
+    },
+    {
+      "trait_type": "rove-nft-version",
+      "value": "1.0"
+    },
+    {
+      "trait_type": "rove-asset-bundle-web",
+      "value": "ipfs://QmS4UB4r2n6LdUq6RYdFea28pB83gyeBxUMxVYn57SVfxc"
+    },
+    {
+      "trait_type": "rove-asset-bundle-android",
+      "value": "ipfs://QmUE2NqDnCbF7LMKz31dDdYU5VFjDSc4XuVjiEd78Jz2xT"
+    },
+    {
+      "trait_type": "rove-asset-bundle-ios",
+      "value": "ipfs://QmPdKrG7Amtch191U5WiNBei2tJaMZAYBaNJRb4uKEfnHC"
+    },
+    {
+      "trait_type": "rove-asset-bundle-window",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-bundle-macos",
+      "value": ""
+    },
+    {
+      "trait_type": "rove-asset-addressable",
+      "value": ""
+    }
+  ],
+  "description": "Aki Story x Rove: An exclusive home for Aki Holder",
+  "image": "ipfs://QmeBL5kbVVdtvY5Wtu34qM3mCLcgokfArA9N3VHjXftVQ1",
+  "name": "Aki x Rove Home1",
+  "external_url": "https://rove.to/",
+  "animation_url": "ipfs://QmYzegFiSqer1B2QG2WGcmGVqJ6ToQKfXYjpgUadxQPKDX"
+}
