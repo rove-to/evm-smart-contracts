@@ -663,7 +663,7 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it.only("- Test add new zone", async function () {
+    it("- Test add new zone", async function () {
       const metaverseId = 1;
       const zone4Index = 4;
       const zone5Index = 5;
