@@ -366,12 +366,12 @@ describe("** NFTs erc-1155 contract", function () {
       );
     });
 
-    it("- Test chagne public price rock", async function () {
+    it.only("- Test change public price rock", async function () {
       const newPublicPriceRock = ETH("2");
       const metaverseId = 1;
       await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
       // change price for public rock
-      await rockNFT.changePublicRockPrice(metaverseId.toString(16), zone3Index, newPublicPriceRock);
+      await rockNFT.changeZonePrice(metaverseId.toString(16), zone3Index, newPublicPriceRock);
       const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerBefore = await getEthBalance(nft_owner_address);
       for (let i = 0; i < mintRockPublic; i++) {
@@ -548,7 +548,7 @@ describe("** NFTs erc-1155 contract", function () {
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
     });
 
-    it("- Test change collection rock price", async () => {
+    it.only("- Test change collection rock price", async () => {
       const newCollRockPrice = ETH("0.2");
       const ETH_VALUE = ETH("0.1");
       const metaverseId = 1;
@@ -568,7 +568,7 @@ describe("** NFTs erc-1155 contract", function () {
       );
 
       // change collection rock price
-      await rockNFT.changeNFTCollRockPrice(metaverseId.toString(16), zone2Index, newCollRockPrice);
+      await rockNFT.changeZonePrice(metaverseId.toString(16), zone2Index, newCollRockPrice);
 
       // mint collection
       const DATA = generateBytes(1);
@@ -604,8 +604,9 @@ describe("** NFTs erc-1155 contract", function () {
       const balanceETHOfUserAfterMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerAfter = await getEthBalance(nft_owner_address);
 
-      const PUR_FEE = (convertWeiToEth(newCollRockPrice) * 3) / 100;
+      const PUR_FEE = convertWeiToEth(newCollRockPrice) * 0.03;
       expect(balanceETHOfUserAfterMint).to.lessThanOrEqual(balanceETHOfUserBeforeMint);
+
       expect(balanceETHOfNFTOwnerAfter).to.equal(
         balanceETHOfNFTOwnerBefore + convertWeiToEth(newCollRockPrice) - PUR_FEE
       );
