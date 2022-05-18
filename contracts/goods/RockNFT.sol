@@ -30,6 +30,9 @@ contract RockNFT is ERC1155TradableForRock {
     event ParameterControlChanged (address previous, address new_);
     event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
     event InitMetaverse(uint256 _metaverseId);
+    event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
+    event EChangeCoreTeamAddr(uint256 _metaverseId, uint256 _zoneIndex, address _add);
+    event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
 
     mapping(uint256 => address) public metaverseOwners;
 
@@ -48,18 +51,12 @@ contract RockNFT is ERC1155TradableForRock {
         parameterControlAdd = _parameterAdd;
     }
 
-    function changeNFTCollRockPrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
+    function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
-        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 2, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
+        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 2 || metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].price = _price;
-    }
-
-    function changePublicRockPrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
-        require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
-        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
-        require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
-        metaverseZones[_metaverseId][_zoneIndex].price = _price;
+        emit EChangeZonePrice(_metaverseId, _zoneIndex, _price);
     }
 
     function changeCoreTeamAddr(uint256 _metaverseId, uint256 _zoneIndex, address _add) public {
@@ -68,12 +65,14 @@ contract RockNFT is ERC1155TradableForRock {
         require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 1, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].coreTeamAddr = _add;
+        emit EChangeCoreTeamAddr(_metaverseId, _zoneIndex, _add);
     }
 
     function changeMetaverseOwner(uint256 _metaverseId, address _add) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(_add != address(0x0), "I_A");
         metaverseOwners[_metaverseId] = _add;
+        emit EChangeMetaverseOwner(_metaverseId, _add);
     }
 
     function sliceUint(bytes memory bs, uint start)
