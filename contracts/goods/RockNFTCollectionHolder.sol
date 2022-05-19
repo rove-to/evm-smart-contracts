@@ -13,8 +13,8 @@ import "../governance/ParameterControl.sol";
  * [] 
  *
  */
-// Rock NFT public
-contract RockNFT is ERC1155TradableForRock {
+// Rock NFT for NFT Holder
+contract RockNFTCollectionHolder is ERC1155TradableForRock {
     event ParameterControlChanged (address previous, address new_);
     event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
     event InitMetaverse(uint256 _metaverseId);
@@ -41,7 +41,7 @@ contract RockNFT is ERC1155TradableForRock {
     function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
-        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
+        require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 2 || metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
         metaverseZones[_metaverseId][_zoneIndex].price = _price;
         emit EChangeZonePrice(_metaverseId, _zoneIndex, _price);
     }
@@ -84,7 +84,28 @@ contract RockNFT is ERC1155TradableForRock {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        require(msg.value >= _zone.price, "M_P_P");
+        if (_zone.typeZone == 2) {
+            // erc-721 check
+            address _erc721Add = _zone.collAddr;
+            require(_erc721Add != address(0x0));
+
+            require(_data.length > 0, "M_721_T");
+            /* check erc-721 */
+            ERC721 _erc721 = ERC721(_erc721Add);
+            // get token erc721 id from _data
+            uint256 _erc721Id = sliceUint(_data, 0);
+            // check owner token id
+            require(_erc721.ownerOf(_erc721Id) == msgSender(), "N_O_721");
+            // check token not minted 
+            require(!minted[_metaverseId][_erc721Add][_erc721Id], "M");
+
+            // marked this erc721 token id is minted ticket
+            minted[_metaverseId][_erc721Add][_erc721Id] = true;
+
+            require(msg.value >= _zone.price, "M_P_N");
+        } else if (_zone.typeZone == 3) {
+            require(msg.value >= _zone.price, "M_P_P");
+        }
         creators[_tokenId] = operator;
         if (bytes(_uri).length > 0) {
             customUri[_tokenId] = _uri;
@@ -107,15 +128,22 @@ contract RockNFT is ERC1155TradableForRock {
     }
 
     function checkZone(SharedStructs.zone memory _zone) internal returns (bool) {
-        if (_zone.typeZone != 3) {
+        if (_zone.typeZone != 2 || _zone.typeZone != 3) {
             return false;
         }
         if (_zone.zoneIndex >= 10 ** 9 || _zone.rockIndexFrom >= 10 ** 9 || _zone.rockIndexTo >= 10 ** 9) {
             return false;
         }
         if (_zone.rockIndexTo > 0) {
-            if (_zone.price == 0) {
-                return false;
+            if (_zone.typeZone == 2) {
+                if (_zone.collAddr == address(0x0)) {
+                    return false;
+                }
+
+            } else if (_zone.typeZone == 3) {
+                if (_zone.price == 0) {
+                    return false;
+                }
             }
             if (_zone.rockIndexFrom > _zone.rockIndexTo || _zone.rockIndexFrom == 0) {
                 return false;
@@ -134,7 +162,7 @@ contract RockNFT is ERC1155TradableForRock {
         require(metaverseZones[_metaverseId][_zone.zoneIndex].rockIndexTo <= 0, "E_Z");
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(checkZone(_zone), "I_ZONE");
-        require(_zone.typeZone == 3, "INV_TYPE");
+        require(_zone.typeZone == 2 && _zone.typeZone == 3, "INV_TYPE");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
@@ -151,26 +179,37 @@ contract RockNFT is ERC1155TradableForRock {
 
     function initMetaverse(
         uint256 _metaverseId,
-        SharedStructs.zone memory _zone3
+        SharedStructs.zone memory _zone2
     )
     external payable
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
-        require(_zone3.typeZone == 3, "I_Z3");
-        require(checkZone(_zone3), "I_Z3");
-        uint256 totalRockSize = _zone3.rockIndexTo - _zone3.rockIndexFrom + 1;
-        require(totalRockSize > 0, "I_Z3");
+        require(_zone2.typeZone == 2, "I_Z2");
+        require(checkZone(_zone2), "I_Z2");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
+
+        uint256 size = _p.getUInt256("INIT_IMO_NFT_HOLDER");
+        _zone2.rockIndexFrom = 1;
+        if (size > 0) {
+            _zone2.rockIndexTo = size;
+        } else {
+            _zone2.rockIndexTo = 100;
+            // default size init
+        }
+        uint256 totalRockSize = _zone2.rockIndexTo - _zone2.rockIndexFrom + 1;
+        require(totalRockSize > 0, "I_Z3");
+
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
         if (imoFEE > 0) {
             require(msg.value >= imoFEE * totalRockSize, "I_F");
         }
 
+
         metaverseOwners[_metaverseId] = operator;
-        metaverseZones[_metaverseId][_zone3.zoneIndex] = _zone3;
+        metaverseZones[_metaverseId][_zone2.zoneIndex] = _zone2;
 
         emit InitMetaverse(_metaverseId);
     }
