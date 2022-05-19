@@ -199,7 +199,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
             // default size init
         }
         uint256 totalRockSize = _zone2.rockIndexTo - _zone2.rockIndexFrom + 1;
-        require(totalRockSize > 0, "I_Z3");
+        require(totalRockSize > 0, "I_Z2");
 
         // get fee for imo
         uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
