@@ -128,7 +128,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
     }
 
     function checkZone(SharedStructs.zone memory _zone) internal returns (bool) {
-        if (_zone.typeZone != 2 || _zone.typeZone != 3) {
+        if (_zone.typeZone != 2 && _zone.typeZone != 3) {
             return false;
         }
         if (_zone.zoneIndex >= 10 ** 9 || _zone.rockIndexFrom >= 10 ** 9 || _zone.rockIndexTo >= 10 ** 9) {
