@@ -95,7 +95,9 @@ const {ethers} = require("hardhat");
             zone3.price = ethers.utils.parseEther(pricePublic).toNumber();
         }
 
-        const tx = await nft.initMetaverse(nftContract, metaverseId, zone1, zone2, zone3, eth_amount, 0);
+        const tx = await nft.initMetaverse(nftContract, metaverseId, zone1, zone2, zone3, eth_amount, 0,
+            'RockNFT'
+        );
         console.log("tx hash:", tx.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed

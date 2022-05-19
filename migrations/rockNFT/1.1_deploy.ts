@@ -16,6 +16,7 @@ import {RockNFT} from "./rockNFT";
             "Metaverse powered by Rove",
             "RMs",
             "RockNFT");
+        // "RockNFTCollectionHolder");
         console.log("%s RockNFT deployed address: %s", process.env.NETWORK, address);
     } catch (e) {
         // Deal with the fact the chain failed
