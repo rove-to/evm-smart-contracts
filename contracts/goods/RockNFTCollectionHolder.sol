@@ -190,7 +190,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
 
-        uint256 size = _p.getUInt256("INIT_IMO_NFT_HOLDER");
+        uint256 size = _p.getUInt256("INIT_IMO_NFT_HOLDER_SIZE");
         _zone2.rockIndexFrom = 1;
         if (size > 0) {
             _zone2.rockIndexTo = size;
