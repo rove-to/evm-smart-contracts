@@ -84,7 +84,11 @@ contract RockNFT is ERC1155TradableForRock {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        require(msg.value >= _zone.price, "M_P_P");
+        if (_zone.typeZone == 1) {
+            require(_zone.coreTeamAddr == msgSender(), "C_T");
+        } else if (_zone.typeZone == 3) {
+            require(msg.value >= _zone.price, "M_P_P");
+        }
         creators[_tokenId] = operator;
         if (bytes(_uri).length > 0) {
             customUri[_tokenId] = _uri;
@@ -157,6 +161,8 @@ contract RockNFT is ERC1155TradableForRock {
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(_zone3.typeZone == 3, "I_Z3");
+        // rock index = 1 for rove team
+        require(_zone3.rockIndexFrom == 2, "I_Z2");
         require(checkZone(_zone3), "I_Z3");
         uint256 totalRockSize = _zone3.rockIndexTo - _zone3.rockIndexFrom + 1;
         require(totalRockSize > 0, "I_Z3");
@@ -171,6 +177,17 @@ contract RockNFT is ERC1155TradableForRock {
 
         metaverseOwners[_metaverseId] = _msgSender();
         metaverseZones[_metaverseId][_zone3.zoneIndex] = _zone3;
+
+        // init zone 1 for operator rove team
+        SharedStructs.zone memory _zone1;
+        _zone1.coreTeamAddr = operator;
+        _zone1.typeZone = 1;
+        _zone1.rockIndexFrom = 1;
+        _zone1.rockIndexTo = 1;
+        _zone1.price = 0;
+        _zone1.collAddr = address(0x0);
+        _zone1.zoneIndex = 1;
+        metaverseZones[_metaverseId][_zone1.zoneIndex] = _zone1;
 
         emit InitMetaverse(_metaverseId);
     }

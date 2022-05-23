@@ -84,7 +84,9 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        if (_zone.typeZone == 2) {
+        if (_zone.typeZone == 1) {
+            require(_zone.coreTeamAddr == msgSender(), "C_T");
+        } else if (_zone.typeZone == 2) {
             // erc-721 check
             address _erc721Add = _zone.collAddr;
             require(_erc721Add != address(0x0));
@@ -106,6 +108,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         } else if (_zone.typeZone == 3) {
             require(msg.value >= _zone.price, "M_P_P");
         }
+
         creators[_tokenId] = operator;
         if (bytes(_uri).length > 0) {
             customUri[_tokenId] = _uri;
@@ -191,8 +194,8 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
 
         require(_zone2.typeZone == 2, "I_Z2");
         require(_zone2.price == 0, "I_Z2");
+        // rock index = 1 for rove team
         require(_zone2.rockIndexFrom == 2, "I_Z2");
-        // 1 for rove team
         require(checkZone(_zone2), "I_Z2");
 
         // get params
@@ -215,12 +218,20 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
             require(msg.value >= imoFEE * totalRockSize, "I_F");
         }
 
-
         metaverseOwners[_metaverseId] = operator;
         metaverseZones[_metaverseId][_zone2.zoneIndex] = _zone2;
         metaverseNftCollections[_metaverseId] = _zone2.collAddr;
 
-        // mint for operator rove team
+        // init zone 1 for operator rove team
+        SharedStructs.zone memory _zone1;
+        _zone1.coreTeamAddr = operator;
+        _zone1.typeZone = 1;
+        _zone1.rockIndexFrom = 1;
+        _zone1.rockIndexTo = 1;
+        _zone1.price = 0;
+        _zone1.collAddr = address(0x0);
+        _zone1.zoneIndex = 1;
+        metaverseZones[_metaverseId][_zone1.zoneIndex] = _zone1;
 
         emit InitMetaverse(_metaverseId);
     }
