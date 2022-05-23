@@ -38,7 +38,7 @@ class RockNFT {
         this.senderPublicKey = senderPublicKey;
     }
 
-    getContract(contractAddress: any) {
+    getContract(contractAddress: any, contractName: string) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
@@ -48,7 +48,12 @@ class RockNFT {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/goods/RockNFT.sol/RockNFT.json"));
+        if (contractName == "") {
+            contractName = "./artifacts/contracts/goods/RockNFT.sol/RockNFT.json";
+        } else {
+            contractName = "./artifacts/contracts/goods/RockNFTCollectionHolder.sol/RockNFTCollectionHolder.json";
+        }
+        let contract = require(path.resolve(contractName));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
         return {web3, nftContract};
@@ -79,13 +84,13 @@ class RockNFT {
         return null;
     }
 
-    async deploy(adminAddress: any, operatorAddress: any, paramAddress: any, name: string, symbol: string) {
+    async deploy(adminAddress: any, operatorAddress: any, paramAddress: any, name: string, symbol: string, contract: string) {
         console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
         if (this.network == "local") {
             console.log("not run local");
             return;
         }
-        const RockNFT = await ethers.getContractFactory("RockNFT");
+        const RockNFT = await ethers.getContractFactory(contract);
         // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
         const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, paramAddress, name, symbol);
 
@@ -93,8 +98,8 @@ class RockNFT {
         return NFTDeploy.address;
     }
 
-    async getAdminAddress(contractAddress: any) {
-        let temp = this.getContract(contractAddress);
+    async getAdminAddress(contractAddress: any, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -110,8 +115,8 @@ class RockNFT {
         return {adminAddress, operatorAddress, paramControl};
     }
 
-    async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -126,8 +131,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async setCustomTokenUri(contractAddress: any, tokenID: number, newTokenURI: string, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async setCustomTokenUri(contractAddress: any, tokenID: number, newTokenURI: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.setCustomURI(tokenID, newTokenURI);
@@ -147,8 +152,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async initMetaverse(contractAddress: any, metaverseIdHexa: string, zone1: Zone, zone2: Zone, zone3: Zone, ethAmount: string, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async initMetaverse(contractAddress: any, metaverseIdHexa: string, zone1: Zone, zone2: Zone, zone3: Zone, ethAmount: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
         console.log("zone1", zone1);
         console.log("zone2", zone2);
@@ -183,8 +188,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async mintRock(metaverseIdHexa: string, to: any, contractAddress: any, zoneIndex: number, rockIndex: number, rockURI: string, ethAmount: string, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async mintRock(metaverseIdHexa: string, to: any, contractAddress: any, zoneIndex: number, rockIndex: number, rockURI: string, ethAmount: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
 
@@ -212,8 +217,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async userBurnNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async userBurnNFT(to: any, contractAddress: any, tokenId: number, amount: number, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.burn(to, tokenId, amount)
@@ -234,12 +239,12 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async userBurnNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number) {
+    async userBurnNFTs(to: any, contractAddress: any, tokenIds: number[], amounts: number[], gas: number, contractName: string) {
         if (tokenIds.length == 0 || amounts.length == 0 || tokenIds.length != amounts.length) {
             console.log("Data is invalid")
             return
         }
-        let temp = this.getContract(contractAddress);
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.burnBatch(to, tokenIds, amounts)
@@ -260,8 +265,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number) {
-        let temp = this.getContract(contractAddress);
+    async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.setCreator(creatorAddress, ids)
@@ -281,8 +286,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async getProxyRegisterAddress(contractAddress: any) {
-        let temp = this.getContract(contractAddress);
+    async getProxyRegisterAddress(contractAddress: any, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -296,8 +301,8 @@ class RockNFT {
         return proxyRegistryAddress;
     }
 
-    async isApprovedForAll(contractAddress: any, owner: any, operator: any) {
-        let temp = this.getContract(contractAddress);
+    async isApprovedForAll(contractAddress: any, owner: any, operator: any, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -319,8 +324,8 @@ class RockNFT {
 
     }
 
-    async setProxyRegisterAddress(contractAddress: any, proxyAddress: any, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async setProxyRegisterAddress(contractAddress: any, proxyAddress: any, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -335,8 +340,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async setApprovalForAll(contractAddress: any, operator: any, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async setApprovalForAll(contractAddress: any, operator: any, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -351,8 +356,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async withdraw(to: any, contractAddress: any, gas: number) {
-        let temp = this.getContract(contractAddress);
+    async withdraw(to: any, contractAddress: any, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         const fun = temp?.nftContract.methods.withdraw(to);
@@ -372,8 +377,8 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async getMaxSupply(contractAddress: any, tokenId: number) {
-        let temp = this.getContract(contractAddress);
+    async getMaxSupply(contractAddress: any, tokenId: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction
@@ -387,10 +392,10 @@ class RockNFT {
         return max;
     }
 
-    async getPriceToken(contractAddress: any, tokenId: number) {
-        let temp = this.getContract(contractAddress);
+    async getMetaverseOwner(contractAddress: any, metaverseIdHexa: string, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
-
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
@@ -398,12 +403,27 @@ class RockNFT {
             nonce: nonce,
         }
 
-        const price: any = await temp?.nftContract.methods.getPriceToken(tokenId).call(tx);
-        return price;
+        const owner: any = await temp?.nftContract.methods.metaverseOwners(metaverseIdInt).call(tx);
+        return owner;
     }
 
-    async uri(contractAddress: any, tokenId: number) {
-        let temp = this.getContract(contractAddress);
+    async getMetaverseZones(contractAddress: any, metaverseIdHexa: string, zoneIndex: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const zones: any = await temp?.nftContract.methods.metaverseZones(metaverseIdInt, zoneIndex).call(tx);
+        return zones;
+    }
+
+    async uri(contractAddress: any, tokenId: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
         //the transaction

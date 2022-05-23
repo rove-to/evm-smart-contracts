@@ -48,7 +48,7 @@ import {EnvironmentNFT} from "./environmentNFT";
         console.log("nftContract:", nftContract);
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.createEnvironmentNFT(initOwnerAddress, nftContract, initSupply, price, max, tokenURI, 500000);
+        const tx = await nft.createEnvironmentNFT(initOwnerAddress, nftContract, initSupply, price, max, tokenURI, 0);
         console.log(tx);
     } catch (e) {
         // Deal with the fact the chain failed

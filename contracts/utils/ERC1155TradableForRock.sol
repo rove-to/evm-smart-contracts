@@ -17,6 +17,18 @@ contract ProxyRegistry {
     mapping(address => OwnableDelegateProxy) public proxies;
 }
 
+library SharedStructs {
+    struct zone {
+        uint256 zoneIndex; // required
+        uint256 price; // required for type=3
+        address coreTeamAddr; // required for type=1
+        address collAddr; // required for type=2 
+        uint256 typeZone; //1: team ,2: nft hodler, 3: public
+        uint256 rockIndexFrom;
+        uint256 rockIndexTo;// required to >= from
+    }
+}
+
 /**
  * @title ERC1155Tradable
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,

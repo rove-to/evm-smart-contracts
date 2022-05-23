@@ -56,7 +56,8 @@ const {ethers} = require("hardhat");
         console.log("nftContract:", nftContract);
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.mintRock(metaverseId, to, nftContract, zoneIndex, rockIndex, rockUri, eth_amount, 0);
+        const tx = await nft.mintRock(metaverseId, to, nftContract, zoneIndex, rockIndex, rockUri, eth_amount, 0,
+            'RockNFT');
         console.log(tx.hash);
     } catch (e) {
         // Deal with the fact the chain failed

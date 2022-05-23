@@ -27,9 +27,10 @@ import {RockNFT} from "./rockNFT";
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         if (tokenUri.length > 0) {
-            await nft.setCustomTokenUri(contract, tokenID, tokenUri, 0);
+            await nft.setCustomTokenUri(contract, tokenID, tokenUri, 0,
+                'RockNFT');
         }
-        console.log("token uri", await nft.uri(contract, tokenID));
+        console.log("token uri", await nft.uri(contract, tokenID, 'RockNFT'));
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
