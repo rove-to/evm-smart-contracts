@@ -235,6 +235,9 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         _zone1.collAddr = address(0x0);
         _zone1.zoneIndex = 1;
         metaverseZones[_metaverseId][_zone1.zoneIndex] = _zone1;
+        uint256 _tokenId = (_metaverseId * (10 ** 9) + _zone1.zoneIndex) * (10 ** 9) + _zone1.rockIndexFrom;
+        creators[_tokenId] = operator;
+        _mint(_zone1.coreTeamAddr, _tokenId, 1, '');
 
         emit InitMetaverse(_metaverseId);
     }
