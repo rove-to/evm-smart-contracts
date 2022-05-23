@@ -38,7 +38,7 @@ contract RockNFT is ERC1155TradableForRock {
         parameterControlAdd = _parameterAdd;
     }
 
-    function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
+    function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) external {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
@@ -46,7 +46,7 @@ contract RockNFT is ERC1155TradableForRock {
         emit EChangeZonePrice(_metaverseId, _zoneIndex, _price);
     }
 
-    function changeMetaverseOwner(uint256 _metaverseId, address _add) public {
+    function changeMetaverseOwner(uint256 _metaverseId, address _add) external {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(_add != address(0x0), "I_A");
         metaverseOwners[_metaverseId] = _add;
@@ -72,7 +72,7 @@ contract RockNFT is ERC1155TradableForRock {
         uint256 _rockIndex,
         string memory _uri,
         bytes memory _data)
-    public payable
+    external payable
     {
         address _mOwner = metaverseOwners[_metaverseId];
         require(_mOwner != address(0x0), "N_E_M");
