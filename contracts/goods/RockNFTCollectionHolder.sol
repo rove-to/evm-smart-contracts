@@ -22,7 +22,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
 
     mapping(uint256 => address) public metaverseOwners;
-    mapping(uint256 => address) public metaverseNftCollections; // 1 metaverse only map with 1 nft collections -> add zone-2 always = this nft collection
+    mapping(address => bool) public metaverseNftCollections; // 1 metaverse only map with 1 nft collections -> add zone-2 always = this nft collection
     mapping(uint256 => mapping(uint256 => SharedStructs.zone)) public metaverseZones;
     mapping(address => mapping(uint256 => bool)) minted;
 
@@ -167,7 +167,9 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         require(checkZone(_zone), "I_ZONE");
         require(_zone.typeZone == 2 || _zone.typeZone == 3, "INV_TYPE");
         if (_zone.typeZone == 2) {
-            require(metaverseNftCollections[_metaverseId] == _zone.collAddr, "I_Z2");
+            require(metaverseZones[_metaverseId][2].typeZone == 2, "I_Z2");
+            // new zone has collAddr == zone index 2
+            require(metaverseZones[_metaverseId][2].collAddr == _zone.collAddr, "I_Z2");
         }
 
         // get params
@@ -190,8 +192,9 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
     external payable
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
-        require(metaverseNftCollections[_metaverseId] == address(0x0), "E_M");
+        require(metaverseNftCollections[_zone2.collAddr] == false, "E_M");
 
+        require(_zone2.zoneIndex == 2, "I_Z2");
         require(_zone2.typeZone == 2, "I_Z2");
         require(_zone2.price == 0, "I_Z2");
         // rock index = 1 for rove team
@@ -220,7 +223,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
 
         metaverseOwners[_metaverseId] = operator;
         metaverseZones[_metaverseId][_zone2.zoneIndex] = _zone2;
-        metaverseNftCollections[_metaverseId] = _zone2.collAddr;
+        metaverseNftCollections[_zone2.collAddr] = true;
 
         // init zone 1 for operator rove team
         SharedStructs.zone memory _zone1;
