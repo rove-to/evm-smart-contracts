@@ -16,7 +16,7 @@ import "../governance/ParameterControl.sol";
 // Rock NFT public
 contract RockNFT is ERC1155TradableForRock {
     event ParameterControlChanged (address previous, address new_);
-    event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
+    event AddZone(uint256 _metaverseId, uint256 _zoneType, uint256 _zoneIndex, uint256 _rockIndexFrom, uint256 _rockIndexTo, address _coreTeam, address _collAddr, uint256 _price);
     event InitMetaverse(uint256 _metaverseId);
     event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
@@ -150,7 +150,7 @@ contract RockNFT is ERC1155TradableForRock {
 
         metaverseZones[_metaverseId][_zone.zoneIndex] = _zone;
 
-        emit AddZone(_metaverseId, _zone.zoneIndex);
+        emit AddZone(_metaverseId, _zone.typeZone, _zone.zoneIndex, _zone.rockIndexFrom, _zone.rockIndexTo, _zone.coreTeamAddr, _zone.collAddr, _zone.price);
     }
 
     function initMetaverse(
