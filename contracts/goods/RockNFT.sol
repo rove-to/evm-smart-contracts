@@ -16,7 +16,7 @@ import "../governance/ParameterControl.sol";
 // Rock NFT public
 contract RockNFT is ERC1155TradableForRock {
     event ParameterControlChanged (address previous, address new_);
-    event AddZone(uint256 _metaverseId, uint256 _zoneIndex);
+    event AddZone(uint256 _metaverseId, uint256 _zoneType, uint256 _zoneIndex, uint256 _rockIndexFrom, uint256 _rockIndexTo, address _coreTeam, address _collAddr, uint256 _price);
     event InitMetaverse(uint256 _metaverseId);
     event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
@@ -38,7 +38,7 @@ contract RockNFT is ERC1155TradableForRock {
         parameterControlAdd = _parameterAdd;
     }
 
-    function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) public {
+    function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) external {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(metaverseZones[_metaverseId][_zoneIndex].rockIndexTo > 0, "I_Z");
         require(metaverseZones[_metaverseId][_zoneIndex].typeZone == 3, "I_Z");
@@ -46,7 +46,7 @@ contract RockNFT is ERC1155TradableForRock {
         emit EChangeZonePrice(_metaverseId, _zoneIndex, _price);
     }
 
-    function changeMetaverseOwner(uint256 _metaverseId, address _add) public {
+    function changeMetaverseOwner(uint256 _metaverseId, address _add) external {
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(_add != address(0x0), "I_A");
         metaverseOwners[_metaverseId] = _add;
@@ -72,7 +72,7 @@ contract RockNFT is ERC1155TradableForRock {
         uint256 _rockIndex,
         string memory _uri,
         bytes memory _data)
-    public payable
+    external payable
     {
         address _mOwner = metaverseOwners[_metaverseId];
         require(_mOwner != address(0x0), "N_E_M");
@@ -84,7 +84,11 @@ contract RockNFT is ERC1155TradableForRock {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        require(msg.value >= _zone.price, "M_P_P");
+        if (_zone.typeZone == 1) {
+            require(_zone.coreTeamAddr == msgSender(), "C_T");
+        } else if (_zone.typeZone == 3) {
+            require(msg.value >= _zone.price, "M_P_P");
+        }
         creators[_tokenId] = operator;
         if (bytes(_uri).length > 0) {
             customUri[_tokenId] = _uri;
@@ -146,7 +150,7 @@ contract RockNFT is ERC1155TradableForRock {
 
         metaverseZones[_metaverseId][_zone.zoneIndex] = _zone;
 
-        emit AddZone(_metaverseId, _zone.zoneIndex);
+        emit AddZone(_metaverseId, _zone.typeZone, _zone.zoneIndex, _zone.rockIndexFrom, _zone.rockIndexTo, _zone.coreTeamAddr, _zone.collAddr, _zone.price);
     }
 
     function initMetaverse(
@@ -157,6 +161,8 @@ contract RockNFT is ERC1155TradableForRock {
     {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(_zone3.typeZone == 3, "I_Z3");
+        // rock index = 1 for rove team
+        require(_zone3.rockIndexFrom == 2, "I_Z2");
         require(checkZone(_zone3), "I_Z3");
         uint256 totalRockSize = _zone3.rockIndexTo - _zone3.rockIndexFrom + 1;
         require(totalRockSize > 0, "I_Z3");
@@ -171,6 +177,17 @@ contract RockNFT is ERC1155TradableForRock {
 
         metaverseOwners[_metaverseId] = _msgSender();
         metaverseZones[_metaverseId][_zone3.zoneIndex] = _zone3;
+
+        // init zone 1 for operator rove team
+        SharedStructs.zone memory _zone1;
+        _zone1.coreTeamAddr = operator;
+        _zone1.typeZone = 1;
+        _zone1.rockIndexFrom = 1;
+        _zone1.rockIndexTo = 1;
+        _zone1.price = 0;
+        _zone1.collAddr = address(0x0);
+        _zone1.zoneIndex = 1;
+        metaverseZones[_metaverseId][_zone1.zoneIndex] = _zone1;
 
         emit InitMetaverse(_metaverseId);
     }
