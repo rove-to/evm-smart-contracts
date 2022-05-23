@@ -34,6 +34,7 @@ describe("** NFTs erc-1155 contract", function () {
   const priceRockPublic = ETH("1");
   const mintRockPublic = 99;
   const zone3Index = 3;
+  const zone1Index = 1;
 
   let rocksIdsPublic = [];
   for (let i = 1; i <= maxRockPublic; i++) {
@@ -93,7 +94,7 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it("- Test change metaverse owner", async () => {
+    it.only("- Test change metaverse owner", async () => {
       const metaverseId = 1;
       const ETH_VALUE = ETH("1");
       const INIT_IMO_FEE = ETH("0.01");
@@ -110,6 +111,14 @@ describe("** NFTs erc-1155 contract", function () {
         [metaverseId.toString(16), ZONE3],
         private_keys[0]
       );
+
+      // check owner of rock index 1
+      const rockIndex1Owner = await rockNFT.balanceOf(
+        operatorContract,
+        BigInt((metaverseId * 10 ** 9 + zone1Index) * 10 ** 9) + BigInt("0x" + "1".toString(16))
+      );
+      expect(rockIndex1Owner).to.eq(1);
+
       await rockNFT.changeMetaverseOwner(metaverseId.toString(16), newMetaVerseOwner);
       const balanceETHOfUserBeforeMint = await getEthBalance(userMint);
       const balanceETHOfNFTOwnerBefore = await getEthBalance(newMetaVerseOwner);
@@ -196,7 +205,7 @@ describe("** NFTs erc-1155 contract", function () {
           private_keys[0]
         );
       } catch (e) {
-        expect(e.toString()).to.include("I_Z2");
+        expect(e.toString()).to.include("I_Z3");
       }
     });
 
