@@ -162,7 +162,7 @@ contract RockNFT is ERC1155TradableForRock {
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(_zone3.typeZone == 3, "I_Z3");
         // rock index = 1 for rove team
-        require(_zone3.rockIndexFrom == 2, "I_Z2");
+        require(_zone3.rockIndexFrom == 2, "I_Z3");
         require(checkZone(_zone3), "I_Z3");
         uint256 totalRockSize = _zone3.rockIndexTo - _zone3.rockIndexFrom + 1;
         require(totalRockSize > 0, "I_Z3");
