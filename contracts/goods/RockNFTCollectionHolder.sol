@@ -162,7 +162,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         require(metaverseZones[_metaverseId][_zone.zoneIndex].rockIndexTo <= 0, "E_Z");
         require(metaverseOwners[_metaverseId] == msgSender(), "I_A");
         require(checkZone(_zone), "I_ZONE");
-        require(_zone.typeZone == 2 && _zone.typeZone == 3, "INV_TYPE");
+        require(_zone.typeZone == 2 || _zone.typeZone == 3, "INV_TYPE");
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
