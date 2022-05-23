@@ -24,7 +24,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
     mapping(uint256 => address) public metaverseOwners;
 
     mapping(uint256 => mapping(uint256 => SharedStructs.zone)) public metaverseZones;
-    mapping(uint256 => mapping(address => mapping(uint256 => bool))) minted;
+    mapping(address => mapping(uint256 => bool)) minted;
 
 
     using SafeMath for uint256;
@@ -97,10 +97,10 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
             // check owner token id
             require(_erc721.ownerOf(_erc721Id) == msgSender(), "N_O_721");
             // check token not minted 
-            require(!minted[_metaverseId][_erc721Add][_erc721Id], "M");
+            require(!minted[_erc721Add][_erc721Id], "M");
 
             // marked this erc721 token id is minted ticket
-            minted[_metaverseId][_erc721Add][_erc721Id] = true;
+            minted[_erc721Add][_erc721Id] = true;
 
             require(msg.value >= _zone.price, "M_P_N");
         } else if (_zone.typeZone == 3) {
