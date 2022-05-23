@@ -12,7 +12,7 @@ import {RockNFT} from "./rockNFT";
         const address = await nft.deploy(
             '0xE55EAdE1B17BbA28A80a71633aF8C15Dc2D556A5',
             '0xF61234046A18b07Bf1486823369B22eFd2C4507F',
-            '0xFD8500cf6B98F37Bc1a287195d2537b72945a1e8',
+            '',
             "Metaverse powered by Rove",
             "RMs",
             // "RockNFT");
