@@ -203,13 +203,11 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
 
         // get params
         ParameterControl _p = ParameterControl(parameterControlAdd);
-
         uint256 size = _p.getUInt256("INIT_IMO_NFT_HOLDER_SIZE");
-        _zone2.rockIndexFrom = 1;
         if (size > 0) {
-            _zone2.rockIndexTo = size;
+            _zone2.rockIndexTo = size + 1;
         } else {
-            _zone2.rockIndexTo = 100;
+            _zone2.rockIndexTo = 101;
             // default size init
         }
         uint256 totalRockSize = _zone2.rockIndexTo - _zone2.rockIndexFrom + 1;
@@ -238,6 +236,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         uint256 _tokenId = (_metaverseId * (10 ** 9) + _zone1.zoneIndex) * (10 ** 9) + _zone1.rockIndexFrom;
         creators[_tokenId] = operator;
         _mint(_zone1.coreTeamAddr, _tokenId, 1, '');
+        emit MintEvent(_zone1.coreTeamAddr, _tokenId, 1);
 
         emit InitMetaverse(_metaverseId);
     }
