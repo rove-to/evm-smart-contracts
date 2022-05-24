@@ -9,8 +9,6 @@ const {
   ETH,
   getEthBalance,
   convertWeiToEth,
-  generateBytes,
-  signAnotherContractThenExcuteFunction,
   signAnotherContractThenExcuteFunctionWithValue,
 } = require("../common_libs");
 let nft_owner_address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; // default for local
@@ -94,7 +92,7 @@ describe("** NFTs erc-1155 contract", function () {
       }
     });
 
-    it.only("- Test change metaverse owner", async () => {
+    it("- Test change metaverse owner", async () => {
       const metaverseId = 1;
       const ETH_VALUE = ETH("1");
       const INIT_IMO_FEE = ETH("0.01");
