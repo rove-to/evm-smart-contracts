@@ -33,7 +33,7 @@ build/
 
 .idea
 
-artifacts
+#artifacts
 
 cache
 
