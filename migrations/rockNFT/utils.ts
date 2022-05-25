@@ -1,11 +1,13 @@
 import { createMetaverse, getRocks } from "../utils/backend";
 import { RockNFT } from "./rockNFT";
 import * as fs from 'fs';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const DEFAULT_SUPPLY = 500;
-const POLYGON_CHAIN_ID = '8001';
+const POLYGON_CHAIN_ID = process.env.POLYGON_CHAIN_ID ?? '80001';
 const EVM_WALLET_TYPE = 0;
-const NFT_HOLDER_CONTRACT_ADDRESS = '0xCe2aa135799F8cB347A80Ec9CA340D9487DE6407';
+const NFT_HOLDER_CONTRACT_ADDRESS = process.env.POLYGON_HOLDER_CONTRACT_ADDRESS;
 
 export interface NFTItem {
   name: string;
@@ -38,11 +40,11 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
         coverUrl: '',
         chainId: POLYGON_CHAIN_ID,
         networkType: EVM_WALLET_TYPE,
-        contractAddress: NFT_HOLDER_CONTRACT_ADDRESS,
+        contractAddress: NFT_HOLDER_CONTRACT_ADDRESS as string,
       });
 
       if (createMetaverseRes.status !== 1) {
-        throw Error('Internal server error');
+        throw Error('API error');
       }
 
       const metaverseId = createMetaverseRes.data.metaverse.id;
@@ -51,7 +53,7 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
 
 
       if (!metaverseId) {
-        throw Error('Internal server error');
+        throw Error('API error');
       }
 
       // Interact with smart contract
@@ -72,11 +74,12 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
         'RockNFTCollectionHolder'
       );
 
-      await delay(5);
+      await delay(3000);
 
-      const rockResponse = await getRocks('628de5c456e9cd13f5f1a70f', undefined, undefined, undefined, 1);
+      const rockResponse = await getRocks(metaverseId, undefined, undefined, undefined, 1);
       const firstRock = rockResponse?.data?.rocks?.[0];
-      console.log(firstRock.id);
+      console.log('Rock id', firstRock.id);
+      console.log('TokenId', transformMetaverseIdToTokenID(metaverseId).toString());
 
       await rockServInstance.setCustomTokenUri(
         NFT_HOLDER_CONTRACT_ADDRESS,
@@ -87,19 +90,19 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
       );
 
       // Log success data
-      const logContent = `Added metaverse: ${metaverseId} - ${nftItem.name} - ${nftItem.address} \r\n`;
+      const logContent = `
+      metaverseId: ${metaverseId}
+      NFT name: ${nftItem.name}
+      NFT address: ${nftItem.address}
+      Rock ID: ${firstRock.id}
+      \n
+      `;
       fs.writeFileSync('./logs/log.txt', logContent, { flag: 'a+' });
     } catch (error: any) {
       // Log error
-      fs.writeFileSync('./logs/error.txt', error.toString(), { flag: 'a+' });
+      fs.writeFileSync('./logs/error.txt', `${error} \n`, { flag: 'a+' });
       console.log(error);
+      throw error;
     }
   }
 }
-
-seedTrendingMetaverses([
-  {
-    name: 'test',
-    address: '0x2953399124f0cbb46d2cbacd8a89cf0599974963'
-  }
-])
