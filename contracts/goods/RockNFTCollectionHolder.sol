@@ -207,7 +207,7 @@ contract RockNFTCollectionHolder is ERC1155TradableForRock {
         if (size > 0) {
             _zone2.rockIndexTo = size + 1;
         } else {
-            _zone2.rockIndexTo = 101;
+            _zone2.rockIndexTo = 501;
             // default size init
         }
         uint256 totalRockSize = _zone2.rockIndexTo - _zone2.rockIndexFrom + 1;
