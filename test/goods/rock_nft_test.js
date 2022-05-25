@@ -366,7 +366,7 @@ describe("** NFTs erc-1155 contract", function () {
       );
     });
 
-    it.only("- Test change public price rock", async function () {
+    it("- Test change public price rock", async function () {
       const newPublicPriceRock = ETH("2");
       const metaverseId = 1;
       await rockNFT.initMetaverse(metaverseId.toString(16), ZONE1, ZONE2, ZONE3);
@@ -548,7 +548,7 @@ describe("** NFTs erc-1155 contract", function () {
       expect(balanceOfRockNFTAdress).to.eq(convertWeiToEth(INIT_FEE) + PUR_FEE);
     });
 
-    it.only("- Test change collection rock price", async () => {
+    it("- Test change collection rock price", async () => {
       const newCollRockPrice = ETH("0.2");
       const ETH_VALUE = ETH("0.1");
       const metaverseId = 1;
