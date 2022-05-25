@@ -188,6 +188,39 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
+    async initNFTHolderMetaverse(contractAddress: any, metaverseIdHexa: string, zone2: Zone, ethAmount: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest");
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        const fun = temp?.nftContract.methods.initMetaverse(
+            metaverseIdInt,
+            JSON.parse(JSON.stringify(zone2)),
+        );
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+            value: 0,
+        }
+        if (ethAmount != "") {
+            tx.value = ethers.utils.parseEther(ethAmount);
+        }
+        try {
+            if (tx.gas == 0) {
+                tx.gas = await fun.estimateGas(tx);
+            }
+        } catch (e) {
+            console.log(e);
+            return;
+        }
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+
     async mintRock(metaverseIdHexa: string, to: any, contractAddress: any, zoneIndex: number, rockIndex: number, rockURI: string, ethAmount: string, gas: number, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
