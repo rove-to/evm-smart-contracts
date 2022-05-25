@@ -38,8 +38,11 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
       if (res.status !== 1) {
         throw Error('Internal server error');
       }
-      
+
       const metaverseId = res.data.metaverse.id;
+      console.log('metaverseId', metaverseId);
+      console.log('address', nftItem.address);
+
 
       if (!metaverseId) {
         throw Error('Internal server error');
@@ -64,7 +67,7 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
       );
 
       // Log success data
-      const logContent = `Added metaverse: ${nftItem.name} - ${nftItem.address}`;
+      const logContent = `Added metaverse: ${metaverseId} - ${nftItem.name} - ${nftItem.address} \r\n`;
       fs.writeFileSync('./logs/log.txt', logContent, { flag: 'a+' });
     } catch (error: any) {
       // Log error
@@ -73,10 +76,3 @@ export const seedTrendingMetaverses = async (nftList: Array<NFTItem>) => {
     }
   }
 }
-
-seedTrendingMetaverses([
-  {
-    name: 'test',
-    address: '0x0'
-  }
-])
