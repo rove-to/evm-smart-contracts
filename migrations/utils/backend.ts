@@ -28,7 +28,7 @@ export interface IResponsePayload {
 }
 
 const headers: any = {
-  Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MjE1OTg2OTk2ZDBmMGExOTIyMTJmYjciLCJpYXQiOjE2NTMyOTQyOTcsImV4cCI6MTY1NTg4NjI5N30.fJhjndEDbrPJ0dXB92Kx-6RyDaCvLsXm_RFYsIFaQZ0`
+  Authorization: `Bearer ${process.env.ACCESS_TOKEN}`
 };
 
 const instance = axios.create({
@@ -47,6 +47,31 @@ export const createMetaverse = async (
       '/metaverse/imo',
       params
     );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    return {
+      status: 0,
+      message: "",
+      data: {},
+    };
+  }
+};
+
+export const getRocks = async (
+  metaverseId?: string,
+  hostId?: string,
+  ownerId?: string,
+  keyword?: string,
+  limit?: number
+): Promise<IResponsePayload> => {
+  try {
+    let url = `/rock/list?limit=${limit || 10000}`;
+    if (metaverseId) url += `&metaverseId=${metaverseId}`;
+    if (hostId) url += `&hostId=${hostId}`;
+    if (ownerId) url += `&ownerId=${ownerId}`;
+    if (keyword) url += `&keywords=${keyword}`;
+    const response = await instance.get(url);
     return response.data;
   } catch (error) {
     console.log(error);

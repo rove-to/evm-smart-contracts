@@ -131,7 +131,7 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async setCustomTokenUri(contractAddress: any, tokenID: number, newTokenURI: string, gas: number, contractName: string) {
+    async setCustomTokenUri(contractAddress: any, tokenID: any, newTokenURI: string, gas: number, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
 
