@@ -270,9 +270,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function changeOperator(address _newOperator) external {
-        require(msg.sender == operator, "only the operator can change the current operator");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
-        require(_newOperator != address(0x0), "new operator is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_newOperator != address(0x0), "ADDRESS_INVALID");
 
         address previousOperator = operator;
         operator = _newOperator;
@@ -282,9 +282,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "only the operator can change the current _parameterControl");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only the operator can change the current _parameterControl");
-        require(_new != address(0x0), "new parametercontrol is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_new != address(0x0), "ADDRESS_INVALID");
 
         address previousParameterControl = parameterControl;
         parameterControl = _new;
@@ -300,8 +300,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
-        require(msg.sender == operator, "Only operator dApp can close offerings");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
