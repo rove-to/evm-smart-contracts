@@ -16,7 +16,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, string uri);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, string uri, uint256 amount);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event OfferingRemain(bytes32 indexed offeringId, address indexed buyer, uint indexed amount);
     event BalanceWithdrawn (address indexed beneficiary, address erc20, uint amount);
@@ -130,9 +130,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
             offeringRegistry[offeringId].erc20Token = address(0x0);
         }
 
-        string memory uri = hostContract.uri(_tokenId);
+        string memory _uri = hostContract.uri(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, _uri, _amount);
     }
 
     function _toLower(string memory str) internal pure returns (string memory) {
@@ -346,6 +346,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     function operatorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == operator, "OPERATOR_ONLY");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
