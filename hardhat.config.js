@@ -83,6 +83,14 @@ module.exports = {
         aurora_testnet: {
             url: process.env.AURORA_TESTNET_API_URL,
             accounts: [`0x${process.env.PRIVATE_KEY}`],
+        }, 
+        bsc_mainnet: {
+            url: process.env.BSC_MAINNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
+        },
+        bsc_testnet: {
+            url: process.env.BSC_TESTNET_API_URL,
+            accounts: [`0x${process.env.PRIVATE_KEY}`],
         }
     },
     mocha: {
