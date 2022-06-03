@@ -48,7 +48,7 @@ class RockNFT {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        if (contractName == "") {
+        if (contractName == "" || contractName == "RockNFT") {
             contractName = "./artifacts/contracts/goods/RockNFT.sol/RockNFT.json";
         } else {
             contractName = "./artifacts/contracts/goods/RockNFTCollectionHolder.sol/RockNFTCollectionHolder.json";
