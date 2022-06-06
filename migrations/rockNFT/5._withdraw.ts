@@ -21,7 +21,7 @@ import {RockNFT} from "./rockNFT";
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         if (toAddress.length > 0) {
-            await nft.withdraw(contract, toAddress, 0, 'RockNFT');
+            await nft.withdraw(toAddress, contract, 0, 'RockNFTCollectionHolder');
         }
     } catch (e) {
         // Deal with the fact the chain failed
