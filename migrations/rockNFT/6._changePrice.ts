@@ -2,7 +2,7 @@ import {RockNFT} from "./rockNFT";
 
 (async () => {
     try {
-        if (process.env.NETWORK != "mumbai") {
+        if (process.env.NETWORK != "local") {
             console.log("wrong network");
             return;
         }
@@ -27,13 +27,13 @@ import {RockNFT} from "./rockNFT";
 
         let price: any = "";
         if (process.argv.length >= 5) {
-            zoneId = process.argv[5];
-            console.log("tokenUri", zoneId)
+            price = process.argv[5];
+            console.log("price", price)
         }
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         let tx = await nft.changeZonePrice(contract, metaverseId, zoneId, price, 'RockNFT', 0);
-        console.log("token uri", tx?.transactionHash);
+        console.log("tx hash", tx?.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
