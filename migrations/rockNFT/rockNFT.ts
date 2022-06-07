@@ -298,6 +298,27 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
+    async changeZonePrice(contractAddress: any, metaverseIdHexa: string, zoneIndex: number, price: string, contractName: string, gas: number) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        const fun = temp?.nftContract.methods.changeZonePrice(metaverseIdInt, zoneIndex, ethers.utils.parseEther(price).toNumber())
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
     async setCreator(contractAddress: any, creatorAddress: any, ids: number[], gas: number, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
