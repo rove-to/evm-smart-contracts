@@ -29,7 +29,7 @@ const {ethers} = require("hardhat");
         const toIndex = 2;
         for (let i = fromIndex; i <= toIndex; i++) {
             const tx = await nft.mintRock(metaverseId, to, nftContract, zoneIndex, i, rockUri, eth_amount, 0, contractName);
-            console.log("rockIndex: ", i, tx.hash);
+            console.log("rockIndex: ", "index: " + i, "id: " + "", "uri: " + rockUri, "hash: " + tx.hash);
         }
     } catch (e) {
         // Deal with the fact the chain failed
