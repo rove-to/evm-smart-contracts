@@ -4,7 +4,7 @@
 - [x] ERC-721
 - [x] Environment NFT
 - [x] Object NFT
-- [ ] Rock NFT
+- [x] Rock NFT
 - [x] Parameter Control
 - [x] Rove token
 - [x] Rove marketplace with ERC-1155
