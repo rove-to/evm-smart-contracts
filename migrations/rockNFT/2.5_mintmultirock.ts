@@ -1,4 +1,5 @@
 import {RockNFT} from "./rockNFT";
+import {PinataIpfsStorage} from "../utils/pinataIpfsStorage";
 
 const {ethers} = require("hardhat");
 (async () => {
@@ -8,7 +9,7 @@ const {ethers} = require("hardhat");
             return;
         }
 
-        let metaverseId: any = 0;
+        let metaverseId: any = "";
 
         // set init owner
         let to: any = 0x0;
@@ -26,10 +27,24 @@ const {ethers} = require("hardhat");
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
         const fromIndex = 2;
-        const toIndex = 2;
+        const toIndex = 5;
+        const request = new PinataIpfsStorage(process.env.ACCESS_TOKEN);
         for (let i = fromIndex; i <= toIndex; i++) {
-            const tx = await nft.mintRock(metaverseId, to, nftContract, zoneIndex, i, rockUri, eth_amount, 0, contractName);
-            console.log("rockIndex: ", "index: " + i, "id: " + "", "uri: " + rockUri, "hash: " + tx.hash);
+            let data = await request.axiosGet(process.env.BE_URL_API + "rock/list?metaverseId=" + metaverseId + "&rockIndex=" + i + "&zoneIndex=" + zoneIndex);
+            if (data.status == 1 && data.data.total == 1) {
+                const rockID = data.data.rocks[0].id;
+                console.log("---- \nMinting rockId: ", rockID);
+                rockUri = process.env.BE_URL_API + "rock/" + rockID + "/metadata";
+
+                // call contract
+                // const tx = await nft.mintRock(metaverseId, to, nftContract, zoneIndex, i, rockUri, eth_amount, 0, contractName);
+
+                console.log("Minted rock: \n", "index: " + i, "id: " + rockID, "uri: " + rockUri, "hash: " + "", "to:" + to);
+                console.log("----\n")
+            } else {
+                console.log("missing data for rockIndex " + i);
+                break;
+            }
         }
     } catch (e) {
         // Deal with the fact the chain failed
