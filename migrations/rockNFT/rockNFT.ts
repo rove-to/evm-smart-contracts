@@ -98,6 +98,20 @@ class RockNFT {
         return NFTDeploy.address;
     }
 
+    async deploy2(adminAddress: any, operatorAddress: any, verifier: any, paramAddress: any, name: string, symbol: string, contract: string) {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+        const RockNFT = await ethers.getContractFactory(contract);
+        // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
+        const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, verifier, paramAddress, name, symbol);
+
+        console.log("Rove Rock NFT deployed:", NFTDeploy.address);
+        return NFTDeploy.address;
+    }
+
     async getAdminAddress(contractAddress: any, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
