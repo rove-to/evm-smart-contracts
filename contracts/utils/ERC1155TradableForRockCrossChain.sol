@@ -17,7 +17,7 @@ contract ProxyRegistry {
     mapping(address => OwnableDelegateProxy) public proxies;
 }
 
-library SharedStructs {
+library SharedStructsCrossChain {
     struct zone {
         uint256 zoneIndex; // required
         uint256 price; // required for type=3

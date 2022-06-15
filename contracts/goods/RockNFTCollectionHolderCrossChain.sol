@@ -22,13 +22,13 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     address public verifier;
     mapping(uint256 => address) public metaverseOwners;
     mapping(uint256 => mapping(address => bool)) public metaverseNftCollections; // 1 metaverse only map with 1 nft collections base on chainId -> add zone-2 always = this nft collection
-    mapping(uint256 => mapping(uint256 => SharedStructs.zone)) public metaverseZones;
+    mapping(uint256 => mapping(uint256 => SharedStructsCrossChain.zone)) public metaverseZones;
     mapping(uint256 => mapping(address => mapping(uint256 => bool))) minted;
 
 
     using SafeMath for uint256;
-    SharedStructs.Data d;
-    using SharedStructs for SharedStructs.Data;
+    SharedStructsCrossChain.Data d;
+    using SharedStructsCrossChain for SharedStructsCrossChain.Data;
 
     address public parameterControlAdd;
 
@@ -88,7 +88,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         address _mOwner = metaverseOwners[_metaverseId];
         require(_mOwner != address(0x0), "N_E_M");
 
-        SharedStructs.zone memory _zone = metaverseZones[_metaverseId][_zoneIndex];
+        SharedStructsCrossChain.zone memory _zone = metaverseZones[_metaverseId][_zoneIndex];
 
         require(_rockIndex >= _zone.rockIndexFrom && _rockIndex <= _zone.rockIndexTo, "I_R_I");
         uint256 _tokenId = (_metaverseId * (10 ** 9) + _zoneIndex) * (10 ** 9) + _rockIndex;
@@ -103,7 +103,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             require(!minted[_chainId][_zone.collAddr][_erc721Id], "M");
 
             // verify signature request
-            require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData, d) == verifier, "I_S");
+            require(SharedStructsCrossChain.verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData, d) == verifier, "I_S");
 
             // marked this erc721 token id is minted ticket
             minted[_chainId][_zone.collAddr][_erc721Id] = true;
@@ -123,7 +123,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         emit MintEvent(_to, _tokenId, 1);
     }
 
-    function checkZone(SharedStructs.zone memory _zone) internal returns (bool) {
+    function checkZone(SharedStructsCrossChain.zone memory _zone) internal returns (bool) {
         if (_zone.typeZone != 2 && _zone.typeZone != 3) {
             return false;
         }
@@ -152,7 +152,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
     function addZone(
         uint256 _metaverseId,
-        SharedStructs.zone memory _zone)
+        SharedStructsCrossChain.zone memory _zone)
     external payable {
         require(metaverseOwners[_metaverseId] != address(0x0), "N_E_M");
         require(metaverseZones[_metaverseId][_zone.zoneIndex].rockIndexTo <= 0, "E_Z");
@@ -172,13 +172,13 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
     function initMetaverse(
         uint256 _metaverseId,
-        SharedStructs.zone memory _zone2,
+        SharedStructsCrossChain.zone memory _zone2,
         bytes memory _singedData
     )
     external payable
     {
         // verify signature request
-        require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData, d) == verifier, "I_S");
+        require(SharedStructsCrossChain.verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData, d) == verifier, "I_S");
 
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(metaverseNftCollections[_zone2.chainId][_zone2.collAddr] == false, "E_M");
@@ -207,7 +207,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         metaverseNftCollections[_zone2.chainId][_zone2.collAddr] = true;
 
         // init zone 1 for operator rove team
-        SharedStructs.zone memory _zone1;
+        SharedStructsCrossChain.zone memory _zone1;
         _zone1.coreTeamAddr = operator;
         _zone1.typeZone = 1;
         _zone1.rockIndexFrom = 1;
