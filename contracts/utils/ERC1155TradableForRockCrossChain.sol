@@ -244,25 +244,6 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     ) virtual public override creatorOnly(_id) {
     }
 
-    /**
-      * @dev Change the creator address for given tokens
-    * @param _to   Address of the new creator
-    * @param _ids  Array of Token IDs to change creator
-    */
-    function setCreator(
-        address _to,
-        uint256[] memory _ids
-    ) public operatorOnly {
-        require(_to != address(0), "INVALID_ADDRESS.");
-
-        _grantRole(CREATOR_ROLE, _to);
-        _grantRole(MINTER_ROLE, _to);
-        for (uint256 i = 0; i < _ids.length; i++) {
-            uint256 id = _ids[i];
-            _setCreator(_to, id);
-        }
-    }
-
     function setProxyRegistryAddress(address _proxyRegistryAddress) public operatorOnly {
         require(_proxyRegistryAddress != proxyRegistryAddress, "PROXY_INVALID");
         address previous = proxyRegistryAddress;
@@ -286,16 +267,6 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
         }
 
         return ERC1155.isApprovedForAll(_owner, _operator);
-    }
-
-    /**
-      * @dev Change the creator address for given token
-    * @param _to   Address of the new creator
-    * @param _id  Token IDs to change creator of
-    */
-    function _setCreator(address _to, uint256 _id) internal creatorOnly(_id)
-    {
-        creators[_id] = _to;
     }
 
     /**

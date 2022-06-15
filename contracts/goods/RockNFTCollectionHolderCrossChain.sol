@@ -95,9 +95,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         require(!_exists(_tokenId), "E_T");
 
         require(_zone.rockIndexTo > 0, "I_S");
-        if (_zone.typeZone == 1) {
-            require(_zone.coreTeamAddr == msgSender(), "C_T");
-        } else if (_zone.typeZone == 2) {
+        if (_zone.typeZone == 2) {
             require(_data.length > 0, "M_721_T");
             // get token erc721 id from _data
             uint256 _erc721Id = sliceUint(_data, 0);
@@ -121,17 +119,6 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             emit URI(_uri, _tokenId);
         }
         _mint(_to, _tokenId, 1, _data);
-
-        // check user mint fee
-        if (_zone.price > 0) {
-            if (msg.value > 0) {
-                ParameterControl _p = ParameterControl(parameterControlAdd);
-                uint256 purchaseFeePercent = _p.getUInt256("ROCK_PUR_FEE");
-                uint256 fee = msg.value * purchaseFeePercent / 10000;
-                (bool success,) = _mOwner.call{value : msg.value - fee}("");
-                require(success, "FAIL");
-            }
-        }
 
         emit MintEvent(_to, _tokenId, 1);
     }
@@ -178,14 +165,6 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             require(metaverseZones[_metaverseId][2].collAddr == _zone.collAddr, "I_Z2");
         }
 
-        // get params
-        ParameterControl _p = ParameterControl(parameterControlAdd);
-        // get fee for imo
-        uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
-        if (imoFEE > 0) {
-            require(msg.value >= imoFEE * (_zone.rockIndexTo - _zone.rockIndexFrom + 1), "MISS_INI_FEE");
-        }
-
         metaverseZones[_metaverseId][_zone.zoneIndex] = _zone;
 
         emit AddZone(_metaverseId, _zone.typeZone, _zone.zoneIndex, _zone.rockIndexFrom, _zone.rockIndexTo, _zone.coreTeamAddr, _zone.collAddr, _zone.price);
@@ -222,12 +201,6 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         }
         uint256 totalRockSize = _zone2.rockIndexTo - _zone2.rockIndexFrom + 1;
         require(totalRockSize > 0, "I_Z2");
-
-        // get fee for imo
-        uint256 imoFEE = _p.getUInt256("INIT_IMO_FEE");
-        if (imoFEE > 0) {
-            require(msg.value >= imoFEE * totalRockSize, "I_F");
-        }
 
         metaverseOwners[_metaverseId] = operator;
         metaverseZones[_metaverseId][_zone2.zoneIndex] = _zone2;
