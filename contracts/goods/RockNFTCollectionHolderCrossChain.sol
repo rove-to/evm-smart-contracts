@@ -17,7 +17,9 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     event InitMetaverse(uint256 _metaverseId);
     event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
+    event VerifierChanged (address previous, address new_);
 
+    address public verifier;
     mapping(uint256 => address) public metaverseOwners;
     mapping(uint256 => mapping(address => bool)) public metaverseNftCollections; // 1 metaverse only map with 1 nft collections base on chainId -> add zone-2 always = this nft collection
     mapping(uint256 => mapping(uint256 => SharedStructs.zone)) public metaverseZones;
@@ -32,11 +34,18 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
     address public parameterControlAdd;
 
-    constructor(address admin, address operator, address _parameterAdd, string memory name, string memory symbol)
+    constructor(address admin, address operator, address _signer, address _parameterAdd, string memory name, string memory symbol)
     ERC1155TradableForRockCrossChain(name, symbol, "", admin, operator
     ) public {
         require(_parameterAdd != address(0x0), "I_A");
         parameterControlAdd = _parameterAdd;
+        verifier = _signer;
+    }
+
+    function changeSigner(address _new) public adminOnly {
+        address _previous = verifier;
+        verifier = _new;
+        emit VerifierChanged(_previous, _new);
     }
 
     function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) external {
@@ -98,7 +107,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             require(!minted[_chainId][_zone.collAddr][_erc721Id], "M");
 
             // verify signature request
-            require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData, d) == operator, "I_S");
+            require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData, d) == verifier, "I_S");
 
             // marked this erc721 token id is minted ticket
             minted[_chainId][_zone.collAddr][_erc721Id] = true;
@@ -192,7 +201,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     external payable
     {
         // verify signature request
-        require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData, d) == operator, "I_S");
+        require(SharedStructs.verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData, d) == verifier, "I_S");
 
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(metaverseNftCollections[_zone2.chainId][_zone2.collAddr] == false, "E_M");
