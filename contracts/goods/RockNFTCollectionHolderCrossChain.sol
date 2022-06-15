@@ -27,8 +27,6 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
 
     using SafeMath for uint256;
-    SharedStructsCrossChain.Data d;
-    using SharedStructsCrossChain for SharedStructsCrossChain.Data;
 
     address public parameterControlAdd;
 
@@ -103,7 +101,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             require(!minted[_chainId][_zone.collAddr][_erc721Id], "M");
 
             // verify signature request
-            require(SharedStructsCrossChain.verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData, d) == verifier, "I_S");
+            require(verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData) == verifier, "I_S");
 
             // marked this erc721 token id is minted ticket
             minted[_chainId][_zone.collAddr][_erc721Id] = true;
@@ -178,7 +176,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     external payable
     {
         // verify signature request
-        require(SharedStructsCrossChain.verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData, d) == verifier, "I_S");
+        require(verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData) == verifier, "I_S");
 
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(metaverseNftCollections[_zone2.chainId][_zone2.collAddr] == false, "E_M");
@@ -222,5 +220,31 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         emit MintEvent(_zone1.coreTeamAddr, _tokenId, 1);
 
         emit InitMetaverse(_metaverseId);
+    }
+
+    mapping(bytes32 => bool) sigDataUsed;
+
+    function sigToAddress(bytes memory signData, bytes32 hash) private view returns (address) {
+        bytes32 s;
+        bytes32 r;
+        uint8 v;
+        assembly {
+            r := mload(add(signData, 0x20))
+            s := mload(add(signData, 0x40))
+        }
+        v = uint8(signData[64]) + 27;
+        return ecrecover(hash, v, r, s);
+    }
+
+    function verifySignData(bytes memory data, bytes memory signData) public returns (address){
+        bytes32 hash = keccak256(data);
+        require(!sigDataUsed[hash], "S_E");
+        address verifier = sigToAddress(signData, hash);
+        // reject when verifier equals zero
+        require(verifier != address(0x0), "I_S");
+        // mark data hash of sig as used
+        sigDataUsed[hash] = true;
+
+        return verifier;
     }
 }

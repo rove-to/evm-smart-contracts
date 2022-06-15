@@ -28,34 +28,6 @@ library SharedStructsCrossChain {
         uint256 rockIndexFrom;
         uint256 rockIndexTo;// required to >= from
     }
-
-    struct Data {
-        mapping(bytes32 => bool) sigDataUsed;
-    }
-
-    function sigToAddress(bytes memory signData, bytes32 hash) private view returns (address) {
-        bytes32 s;
-        bytes32 r;
-        uint8 v;
-        assembly {
-            r := mload(add(signData, 0x20))
-            s := mload(add(signData, 0x40))
-        }
-        v = uint8(signData[64]) + 27;
-        return ecrecover(hash, v, r, s);
-    }
-
-    function verifySignData(bytes memory data, bytes memory signData, Data storage s) public returns (address){
-        bytes32 hash = keccak256(data);
-        require(!s.sigDataUsed[hash], "S_E");
-        address verifier = sigToAddress(signData, hash);
-        // reject when verifier equals zero
-        require(verifier != address(0x0), "I_S");
-        // mark data hash of sig as used
-        s.sigDataUsed[hash] = true;
-
-        return verifier;
-    }
 }
 
 /**
