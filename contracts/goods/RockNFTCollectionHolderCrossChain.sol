@@ -27,9 +27,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
 
     using SafeMath for uint256;
-    // Reserver storage for library data
     SharedStructs.Data d;
-    // When referencing Data allow shortcut to Arithmetic functions
     using SharedStructs for SharedStructs.Data;
 
     address public parameterControlAdd;
