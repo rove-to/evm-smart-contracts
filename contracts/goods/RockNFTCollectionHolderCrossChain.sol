@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.12;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 import "../utils/ERC1155TradableForRockCrossChain.sol";
 import "../governance/ParameterControl.sol";
 
@@ -12,23 +14,21 @@ import "../governance/ParameterControl.sol";
  */
 // Rock NFT for NFT Holder base on multi chain
 contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
-    //    event ParameterControlChanged (address previous, address new_);
     event AddZone(uint256 _metaverseId, uint256 _zoneType, uint256 _zoneIndex, uint256 _rockIndexFrom, uint256 _rockIndexTo, address _coreTeam, address _collAddr, uint256 _price);
     event InitMetaverse(uint256 _metaverseId);
     event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
-    //    event VerifierChanged (address previous, address new_);
 
     address public verifier;
+    address public parameterControlAdd;
     mapping(uint256 => address) public metaverseOwners;
     mapping(uint256 => mapping(address => bool)) public metaverseNftCollections; // 1 metaverse only map with 1 nft collections base on chainId -> add zone-2 always = this nft collection
     mapping(uint256 => mapping(uint256 => SharedStructsCrossChain.zone)) public metaverseZones;
     mapping(uint256 => mapping(address => mapping(uint256 => bool))) minted;
+    mapping(bytes32 => bool) sigDataUsed;
 
-
+    using ECDSA for bytes32;
     using SafeMath for uint256;
-
-    address public parameterControlAdd;
 
     function initialize(address admin, address operator, address _signer, address _parameterAdd, string memory name, string memory symbol) initializer public {
         ERC1155TradableForRockCrossChain.initialize(name, symbol, "", admin, operator);
@@ -37,10 +37,9 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         verifier = _signer;
     }
 
-    function changeSigner(address _new) public adminOnly {
+    function changeVerifier(address _new) public adminOnly {
         address _previous = verifier;
         verifier = _new;
-        //        emit VerifierChanged(_previous, _new);
     }
 
     function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) external {
@@ -72,7 +71,6 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
     function mintRock(
         uint256 _metaverseId,
-        uint256 _chainId,
         address _to,
         uint256 _zoneIndex,
         uint256 _rockIndex,
@@ -97,13 +95,14 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
             // get token erc721 id from _data
             uint256 _erc721Id = sliceUint(_data, 0);
             // check token not minted 
-            require(!minted[_chainId][_zone.collAddr][_erc721Id], "M");
+            require(!minted[_zone.chainId][_zone.collAddr][_erc721Id], "M");
 
             // verify signature request
-            require(verifySignData(abi.encodePacked(_metaverseId, _chainId, _to, _zoneIndex, _rockIndex, _uri, _data), _singedData) == verifier || msgSender() == operator, "I_S");
+            bytes32 hash = keccak256(abi.encodePacked(_metaverseId, _to, _zoneIndex, _rockIndex, _uri, _data));
+            require(verifySignData(hash, _singedData) == verifier, "I_S");
 
             // marked this erc721 token id is minted ticket
-            minted[_chainId][_zone.collAddr][_erc721Id] = true;
+            minted[_zone.chainId][_zone.collAddr][_erc721Id] = true;
 
             require(msg.value >= _zone.price, "M_P_N");
         } else if (_zone.typeZone == 3) {
@@ -175,7 +174,8 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     external payable
     {
         // verify signature request
-        require(verifySignData(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo), _singedData) == verifier || msgSender() == operator, "I_S");
+        bytes32 hash = keccak256(abi.encodePacked(_metaverseId, _zone2.chainId, _zone2.zoneIndex, _zone2.price, _zone2.coreTeamAddr, _zone2.collAddr, _zone2.typeZone, _zone2.rockIndexFrom, _zone2.rockIndexTo));
+        require(verifySignData(hash, _singedData) == verifier, "I_S");
 
         require(metaverseOwners[_metaverseId] == address(0x0), "E_M");
         require(metaverseNftCollections[_zone2.chainId][_zone2.collAddr] == false, "E_M");
@@ -221,24 +221,11 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
         emit InitMetaverse(_metaverseId);
     }
 
-    mapping(bytes32 => bool) sigDataUsed;
-
-    function sigToAddress(bytes memory signData, bytes32 hash) private view returns (address) {
-        bytes32 s;
-        bytes32 r;
-        uint8 v;
-        assembly {
-            r := mload(add(signData, 0x20))
-            s := mload(add(signData, 0x40))
-        }
-        v = uint8(signData[64]) + 27;
-        return ecrecover(hash, v, r, s);
-    }
-
-    function verifySignData(bytes memory data, bytes memory signData) public returns (address){
-        bytes32 hash = keccak256(data);
+    function verifySignData(bytes32 hash, bytes memory signData) public returns (address){
         require(!sigDataUsed[hash], "S_E");
-        address verifier = sigToAddress(signData, hash);
+        bytes32 signedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        address verifier = signedHash.recover(signData);
+
         // reject when verifier equals zero
         require(verifier != address(0x0), "I_S");
         // mark data hash of sig as used
