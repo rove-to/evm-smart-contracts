@@ -12,12 +12,12 @@ import "../governance/ParameterControl.sol";
  */
 // Rock NFT for NFT Holder base on multi chain
 contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
-    event ParameterControlChanged (address previous, address new_);
+    //    event ParameterControlChanged (address previous, address new_);
     event AddZone(uint256 _metaverseId, uint256 _zoneType, uint256 _zoneIndex, uint256 _rockIndexFrom, uint256 _rockIndexTo, address _coreTeam, address _collAddr, uint256 _price);
     event InitMetaverse(uint256 _metaverseId);
     event EChangeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price);
     event EChangeMetaverseOwner(uint256 _metaverseId, address _add);
-    event VerifierChanged (address previous, address new_);
+    //    event VerifierChanged (address previous, address new_);
 
     address public verifier;
     mapping(uint256 => address) public metaverseOwners;
@@ -30,9 +30,8 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
 
     address public parameterControlAdd;
 
-    constructor(address admin, address operator, address _signer, address _parameterAdd, string memory name, string memory symbol)
-    ERC1155TradableForRockCrossChain(name, symbol, "", admin, operator
-    ) public {
+    function initialize(address admin, address operator, address _signer, address _parameterAdd, string memory name, string memory symbol) initializer public {
+        ERC1155TradableForRockCrossChain.initialize(name, symbol, "", admin, operator);
         require(_parameterAdd != address(0x0), "I_A");
         parameterControlAdd = _parameterAdd;
         verifier = _signer;
@@ -41,7 +40,7 @@ contract RockNFTCollectionHolderCrossChain is ERC1155TradableForRockCrossChain {
     function changeSigner(address _new) public adminOnly {
         address _previous = verifier;
         verifier = _new;
-        emit VerifierChanged(_previous, _new);
+        //        emit VerifierChanged(_previous, _new);
     }
 
     function changeZonePrice(uint256 _metaverseId, uint256 _zoneIndex, uint256 _price) external {

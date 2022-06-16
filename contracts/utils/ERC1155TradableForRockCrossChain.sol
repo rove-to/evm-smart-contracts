@@ -2,14 +2,13 @@
 pragma solidity 0.8.12;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC1155/presets/ERC1155PresetMinterPauser.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/presets/ERC1155PresetMinterPauserUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
-import "./common/meta-transactions/NativeMetaTransaction.sol";
-import "./IERC1155Tradable.sol";
+import "./IERC1155TradableUpgradeable.sol";
 
 contract OwnableDelegateProxy {}
 
@@ -35,10 +34,7 @@ library SharedStructsCrossChain {
  * ERC1155Tradable - ERC1155 contract that whitelists an operator address, has create and mint functionality, and supports useful standards from OpenZeppelin,
   like _exists(), name(), symbol(), and totalSupply()
  */
-contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPauser, NativeMetaTransaction, ReentrancyGuard, IERC1155Tradable {
-    event OperatorChanged (address previous, address new_);
-    event AdminChanged (address previous, address new_);
-    event ProxyRegistryAddressChanged (address previous, address new_);
+contract ERC1155TradableForRockCrossChain is ContextMixin, Initializable, ERC1155PresetMinterPauserUpgradeable, ReentrancyGuardUpgradeable, IERC1155TradableUpgradeable {
     event MintEvent (address _to, uint256 _id, uint256 _quantity);
 
     using Strings for string;
@@ -68,11 +64,6 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     /**
      * @dev Require _msgSender() to own more than 0 of the token id
    */
-    modifier ownersOnly(uint256 _id) {
-        require(balanceOf(_msgSender(), _id) > 0, "ONLY_OWNERS");
-        _;
-    }
-
     modifier operatorOnly() {
         require(_msgSender() == operator, "ONLY_OPERATOR");
         require(hasRole(OPERATOR_ROLE, _msgSender()), "ONLY_OPERATOR");
@@ -88,17 +79,17 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
-    constructor(
+    function initialize(
         string memory _name,
         string memory _symbol,
         string memory _uri,
         address _admin,
         address _operator
-    ) ERC1155PresetMinterPauser(_uri) {
+    ) initializer public {
+        __ERC1155PresetMinterPauser_init(_uri);
         name = _name;
         symbol = _symbol;
         proxyRegistryAddress = address(0);
-        _initializeEIP712(name);
 
         admin = _admin;
         // set role for admin address
@@ -136,8 +127,6 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
         revokeRole(CREATOR_ROLE, _previousOperator);
         revokeRole(MINTER_ROLE, _previousOperator);
         revokeRole(PAUSER_ROLE, _previousOperator);
-
-        emit OperatorChanged(_previousOperator, operator);
     }
 
     // changeOperator: update admin by old admin
@@ -149,16 +138,7 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
         admin = _newAdmin;
 
         grantRole(DEFAULT_ADMIN_ROLE, admin);
-        //        grantRole(CREATOR_ROLE, admin);
-        //        grantRole(MINTER_ROLE, admin);
-        //        grantRole(PAUSER_ROLE, admin);
-
-        //        revokeRole(CREATOR_ROLE, admin);
-        //        revokeRole(MINTER_ROLE, admin);
-        //        revokeRole(PAUSER_ROLE, admin);
         revokeRole(DEFAULT_ADMIN_ROLE, _previousAdmin);
-
-        emit AdminChanged(_previousAdmin, admin);
     }
 
     function uri(
@@ -180,12 +160,12 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     * https://eips.ethereum.org/EIPS/eip-1155#metadata[defined in the EIP].
    * @param _newURI New URI for all tokens
    */
-    function setURI(
+    /*function setURI(
         string memory _newURI
     ) public operatorOnly {
         require(hasRole(CREATOR_ROLE, _msgSender()), "ONLY_CREATOR");
         _setURI(_newURI);
-    }
+    }*/
 
     /**
      * @dev Will update the base URI for the token
@@ -220,7 +200,6 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
         require(_proxyRegistryAddress != proxyRegistryAddress, "PROXY_INVALID");
         address previous = proxyRegistryAddress;
         proxyRegistryAddress = _proxyRegistryAddress;
-        emit ProxyRegistryAddressChanged(previous, proxyRegistryAddress);
     }
 
     /**
@@ -229,7 +208,7 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     function isApprovedForAll(
         address _owner,
         address _operator
-    ) override(ERC1155, IERC1155) public view returns (bool isOperator) {
+    ) override(ERC1155Upgradeable, IERC1155Upgradeable) public view returns (bool isOperator) {
         if (proxyRegistryAddress != address(0)) {
             // Whitelist OpenSea proxy contract for easy trading.
             ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
@@ -238,7 +217,7 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
             }
         }
 
-        return ERC1155.isApprovedForAll(_owner, _operator);
+        return ERC1155Upgradeable.isApprovedForAll(_owner, _operator);
     }
 
     /**
@@ -266,9 +245,9 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
         return creators[id];
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155PresetMinterPauser, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155PresetMinterPauserUpgradeable, IERC165Upgradeable) returns (bool) {
         return
-        interfaceId == type(IERC1155Tradable).interfaceId ||
+        interfaceId == type(IERC1155TradableUpgradeable).interfaceId ||
         super.supportsInterface(interfaceId);
     }
 
@@ -285,36 +264,12 @@ contract ERC1155TradableForRockCrossChain is ContextMixin, ERC1155PresetMinterPa
     }
 
     /** @dev EIP2981 royalties implementation. */
-    struct RoyaltyInfo {
-        address recipient;
-        uint24 amount;
-        bool isValue;
-    }
-
-    mapping(uint256 => RoyaltyInfo) public royalties;
-
-    function setTokenRoyalty(
-        uint256 _tokenId,
-        address _recipient,
-        uint256 _value
-    ) public operatorOnly {
-        require(hasRole(CREATOR_ROLE, _msgSender()), "NOT_CREATOR");
-        require(_value <= 10000, 'TOO_HIGH');
-        royalties[_tokenId] = RoyaltyInfo(_recipient, uint24(_value), true);
-    }
-
     // EIP2981 standard royalties return.
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override
     returns (address receiver, uint256 royaltyAmount)
     {
-        RoyaltyInfo memory royalty = royalties[_tokenId];
-        if (royalty.isValue) {
-            receiver = royalty.recipient;
-            royaltyAmount = (_salePrice * royalty.amount) / 10000;
-        } else {
-            receiver = creators[_tokenId];
-            royaltyAmount = (_salePrice * 500) / 10000;
-        }
+        receiver = creators[_tokenId];
+        royaltyAmount = (_salePrice * 500) / 10000;
     }
 
     // Withdraw

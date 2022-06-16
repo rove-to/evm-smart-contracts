@@ -3,7 +3,7 @@ import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
 import {BigNumber} from "ethers";
 
-const {ethers} = require("hardhat");
+const {ethers, upgrades} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
 const Web3 = require('web3');
 
@@ -104,12 +104,17 @@ class RockNFT {
             console.log("not run local");
             return;
         }
-        const RockNFT = await ethers.getContractFactory(contract);
-        // const EnvironmentNFTDeploy = await EnvironmentNFT.deploy(adminAddress, operatorAddress, {maxFeePerGas: ethers.utils.parseUnits("28.0", "gwei")});
-        const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, verifier, paramAddress, name, symbol);
 
+        const RockNFT = await ethers.getContractFactory(contract);
+        /*const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, verifier, paramAddress, name, symbol);
         console.log("Rove Rock NFT deployed:", NFTDeploy.address);
-        return NFTDeploy.address;
+        return NFTDeploy.address;*/
+
+        // deploy upgradable
+        const proxy = await upgrades.deployProxy(RockNFT, [adminAddress, operatorAddress, verifier, paramAddress, name, symbol], {initializer: 'initialize(address, address, address, address, string memory, string memory)'});
+        await proxy.deployed();
+        console.log("Rove Rock NFT deployed:", proxy.address);
+        return proxy.address;
     }
 
     async getAdminAddress(contractAddress: any, contractName: string) {
