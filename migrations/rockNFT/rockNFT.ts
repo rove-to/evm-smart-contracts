@@ -1,7 +1,6 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
-import {BigNumber} from "ethers";
 
 const {ethers, upgrades} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
@@ -135,6 +134,21 @@ class RockNFT {
         const operatorAddress: any = await temp?.nftContract.methods.operator().call(tx);
         const paramControl: any = await temp?.nftContract.methods.parameterControlAdd().call(tx);
         return {adminAddress, operatorAddress, paramControl};
+    }
+
+    async metaverseOwners(contractAddress: any, metaverseIdHexa: string, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const adminAddress: any = await temp?.nftContract.methods.metaverseOwners(metaverseIdInt).call(tx);
+        return {adminAddress,};
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number, contractName: string) {
@@ -532,6 +546,28 @@ class RockNFT {
 
         const uri: any = await temp?.nftContract.methods.uri(tokenId).call(tx);
         return uri;
+    }
+
+    async verifySignData(contractAddress: any, data: string, signdData: string, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const hashedMessage = Web3.utils.sha3(data);
+        // sign hashed message
+        const web3 = new Web3();
+        const signature = web3.eth.accounts.sign(hashedMessage, this.senderPrivateKey);
+        const fun = temp?.nftContract.methods.verifySignData(signature.message, signature.signature);
+        console.log("---------", contractName);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: 50000,
+            data: fun.encodeABI(),
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 }
 
