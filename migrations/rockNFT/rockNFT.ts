@@ -50,6 +50,9 @@ class RockNFT {
         // load contract
         if (contractName == "" || contractName == "RockNFT") {
             contractName = "./artifacts/contracts/goods/RockNFT.sol/RockNFT.json";
+        } else if (contractName == 'RockNFTCollectionHolderCrossChain') {
+            contractName = "./artifacts/contracts/goods/RockNFTCollectionHolderCrossChain.sol/RockNFTCollectionHolderCrossChain.json";
+
         } else {
             contractName = "./artifacts/contracts/goods/RockNFTCollectionHolder.sol/RockNFTCollectionHolder.json";
         }
@@ -307,6 +310,27 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             value: 0,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async changeSigner(contractAddress: any, verifier: any, contractName: string, gas: number) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        console.log("------verifier", verifier);
+        const fun = temp?.nftContract.methods.changeSigner(verifier);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
             data: fun.encodeABI(),
         }
 
