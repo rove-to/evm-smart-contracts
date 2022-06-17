@@ -15,7 +15,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price, string uri);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event BalanceWithdrawn (address indexed beneficiary, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
@@ -91,7 +91,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -120,9 +120,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
             offeringRegistry[offeringId].erc20Token = address(0x0);
         }
 
-        string memory uri = hostContract.tokenURI(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price);
+        return offeringId;
     }
 
     function _toLower(string memory str) internal pure returns (string memory) {
