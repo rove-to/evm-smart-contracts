@@ -334,11 +334,11 @@ class RockNFT {
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
-    async changeSigner(contractAddress: any, verifier: any, contractName: string, gas: number) {
+    async changeVerifier(contractAddress: any, verifier: any, contractName: string, gas: number) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
         console.log("------verifier", verifier);
-        const fun = temp?.nftContract.methods.changeSigner(verifier);
+        const fun = temp?.nftContract.methods.changeVerifier(verifier);
         //the transaction
         const tx = {
             from: this.senderPublicKey,
