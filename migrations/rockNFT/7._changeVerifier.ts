@@ -20,7 +20,7 @@ import {RockNFT} from "./rockNFT";
         }
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        let tx = await nft.changeSigner(contract, verifier, 'RockNFTCollectionHolderCrossChain', 0);
+        let tx = await nft.changeVerifier(contract, verifier, 'RockNFTCollectionHolderCrossChain', 0);
         console.log("tx hash", tx?.transactionHash);
     } catch (e) {
         // Deal with the fact the chain failed
