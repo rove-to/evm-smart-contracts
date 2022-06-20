@@ -31,9 +31,9 @@ const {ethers} = require("hardhat");
 
         const nft = new RockNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
 
-        const owner = await nft.getMetaverseZones(nftContract, metaverseId, zoneIndex,
-            'RockNFT');
-        console.log("owner:", owner);
+        const zones = await nft.getMetaverseZones(nftContract, metaverseId, zoneIndex,
+            'RockNFTCollectionHolderCrossChain');
+        console.log("owner:", zones);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
