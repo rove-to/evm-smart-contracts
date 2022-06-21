@@ -14,7 +14,8 @@ class Zone {
     typeZone: number; //1: team ,2: nft hodler, 3: public
     rockIndexFrom: number;
     rockIndexTo: number;// required to >= from
-
+    chainId: number;
+    testValue: number;
     constructor(zoneIndex: number, type: number) {
         this.zoneIndex = zoneIndex;
         this.price = ethers.utils.parseEther("0.0").toNumber();
@@ -23,6 +24,8 @@ class Zone {
         this.rockIndexTo = 0;
         this.collAddr = "0x0000000000000000000000000000000000000000";
         this.coreTeamAddr = "0x0000000000000000000000000000000000000000";
+        this.chainId = 0;
+        this.testValue = 0;
     }
 }
 
@@ -185,6 +188,38 @@ class RockNFT {
             tx.gas = await fun.estimateGas(tx);
         }
 
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async addZone(contractAddress: any, metaverseIdHexa: string, zone: Zone, ethAmount: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        console.log("zone", zone);
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        // console.log({metaverseIdInt});
+        const fun = temp?.nftContract.methods.addZone(metaverseIdInt,
+            JSON.parse(JSON.stringify(zone)),
+        );
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+            value: 0,
+        }
+        if (ethAmount != "") {
+            tx.value = ethers.utils.parseEther(ethAmount);
+        }
+        try {
+            if (tx.gas == 0) {
+                tx.gas = await fun.estimateGas(tx);
+            }
+        } catch (e) {
+            console.log("ex", e);
+            return;
+        }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
@@ -550,7 +585,7 @@ class RockNFT {
 
     async verifySignData(contractAddress: any, data: string, signdData: string, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
-        
+
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
         const hashedMessage = Web3.utils.sha3(data);
         // sign hashed message
