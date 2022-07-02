@@ -8,7 +8,7 @@ import {Marketplace} from "./marketplace";
         }
 
         const marketplace = new Marketplace(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const address = await marketplace.deployErc721(
+        const address = await marketplace.deployErc721Upgradeable(
             "",
             "");
         console.log("Marketplace 721 deployed address: ", address);
