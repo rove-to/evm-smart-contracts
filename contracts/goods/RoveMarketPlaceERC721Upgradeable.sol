@@ -84,11 +84,11 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
         uint256(result) +
             (uint256(result) + 0x0606060606060606060606060606060606060606060606060606060606060606 >> 4 &
             0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F) * 7);
-    }*/
+    }
 
     function toHex(bytes32 data) private pure returns (string memory) {
         return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
-    }
+    }*/
 
     // NFTs's owner place offering
     function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant returns (bytes32) {
@@ -154,7 +154,7 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
         address hostContractOffering = _offer.hostContract;
-        ERC721 hostContract = ERC721(hostContractOffering);
+        ERC721Upgradeable hostContract = ERC721Upgradeable(hostContractOffering);
         uint tokenID = _offer.tokenId;
         address offerer = _offer.offerer;
         bool isERC20 = _offer.erc20Token != address(0x0);
