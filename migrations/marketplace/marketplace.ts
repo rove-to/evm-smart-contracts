@@ -1,8 +1,9 @@
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
 
-const {ethers} = require("hardhat");
+const {ethers, upgrades} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
+const Web3 = require('web3');
 
 class Marketplace {
     network: string;
@@ -29,6 +30,20 @@ class Marketplace {
         return RoveMarketPlaceDeploy.address;
     }
 
+    async deployUpgradeable(operatorAddress: any, paramAddress: any) {
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+
+        const RoveMarketPlaceUpgradeable = await ethers.getContractFactory("RoveMarketPlaceUpgradeable");
+        console.log("RoveMarketPlaceUpgradeable.deploying ...")
+        const proxy = await upgrades.deployProxy(RoveMarketPlaceUpgradeable, [operatorAddress, paramAddress], {initializer: 'initialize(address, address)'});
+        await proxy.deployed();
+        console.log("RoveMarketPlaceUpgradeable deployed at proxy:", proxy.address);
+        return proxy.address;
+    }
+
     async deployErc721(operatorAddress: any, paramAddress: any) {
         if (this.network == "local") {
             console.log("not run local");
@@ -41,6 +56,20 @@ class Marketplace {
 
         console.log("RoveMarketPlaceRRC721 deployed:", RoveMarketPlaceERC721Deploy.address);
         return RoveMarketPlaceERC721Deploy.address;
+    }
+
+    async deployErc721Upgradeable(operatorAddress: any, paramAddress: any) {
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+
+        const RoveMarketPlaceERC721Upgradeable = await ethers.getContractFactory("RoveMarketPlaceERC721Upgradeable");
+        console.log("RoveMarketPlaceERC721Upgradeable.deploying ...")
+        const proxy = await upgrades.deployProxy(RoveMarketPlaceERC721Upgradeable, [operatorAddress, paramAddress], {initializer: 'initialize(address, address)'});
+        await proxy.deployed();
+        console.log("RoveMarketPlaceERC721Upgradeable deployed at proxy:", proxy.address);
+        return proxy.address;
     }
 }
 
