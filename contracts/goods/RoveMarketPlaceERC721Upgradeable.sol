@@ -1,26 +1,23 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.12;
-// Deprecated this contract
-/*
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 import "../governance/ParameterControl.sol";
-import "../utils/IERC1155Tradable.sol";
 
-contract RoveMarketPlace is ReentrancyGuard, AccessControl {
-    using Counters for Counters.Counter;
-    Counters.Counter private _offeringNonces;
+contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    CountersUpgradeable.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, uint256 amount);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
-    event OfferingRemain(bytes32 indexed offeringId, address indexed buyer, uint indexed amount);
-    event BalanceWithdrawn (address indexed beneficiary, address erc20, uint amount);
+    event BalanceWithdrawn (address indexed beneficiary, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
     event ParameterControlChanged (address previousOperator, address newOperator);
     event ApprovalForAll(address owner, address operator, bool approved);
@@ -43,7 +40,6 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         address hostContract;
         uint tokenId;
         uint price;
-        uint amount;
         bool closed;
         address erc20Token;
     }
@@ -51,8 +47,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     struct closeOfferingData {
         address buyer;
         uint price;
-        uint totalPrice;// final erc-20 amount which offer should be receive
-        uint256 originPrice; // origin erc-20 amount for this closing offering
+        uint originPrice;
         uint256 balanceBuyer;
         uint256 approvalToken;
         address erc20Token;
@@ -61,10 +56,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     mapping(bytes32 => offering) offeringRegistry;
     bytes32[] private _arrayOffering;
 
-    constructor (address operator_, address parameterControl_) {
-        require(operator_ != address(0x0), "ADDRESS_INVALID");
-        require(parameterControl_ != address(0x0), "ADDRES_INVALID");
-
+    function initialize(address operator_, address parameterControl_) initializer public {
         operator = operator_;
         _setupRole(DEFAULT_ADMIN_ROLE, operator);
         if (operator != _msgSender()) {
@@ -77,8 +69,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         return _arrayOffering;
     }
 
-    */
-/*function toHex16(bytes16 data) internal pure returns (bytes32 result) {
+    /*function toHex16(bytes16 data) internal pure returns (bytes32 result) {
         result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000 |
         (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
         result = result & 0xFFFFFFFF000000000000000000000000FFFFFFFF000000000000000000000000 |
@@ -93,27 +84,24 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         uint256(result) +
             (uint256(result) + 0x0606060606060606060606060606060606060606060606060606060606060606 >> 4 &
             0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F) * 7);
+    }*/
+
+    function toHex(bytes32 data) private pure returns (string memory) {
+        return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
     }
 
-    function toHtoHexex(bytes32 data) private pure returns (string memory) {
-        return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
-    }*//*
-
-
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant returns (bytes32) {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
-        // get hostContract of erc-1155
-        ERC1155 hostContract = ERC1155(_hostContract);
-        uint256 nftBalance = hostContract.balanceOf(nftOwner, _tokenId);
-        bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
+        // require(msg.sender == _operator, "Only operator dApp can create offerings");
 
-        /// check require
-        // check available amount of erc-1155
-        require(nftBalance >= _amount, "BALANCE_INVALID");
-        // check approval of erc-1155 on this contract
-        require(approval == true, "ERC-1155_NOT_APPROVED");
+        // get hostContract of erc-721
+        ERC721Upgradeable hostContract = ERC721Upgradeable(_hostContract);
+        require(hostContract.ownerOf(_tokenId) == nftOwner, "INVALID_ERC721_OWNER");
+        // check approval of erc-721 on this contract
+        bool approval = hostContract.isApprovedForAll(nftOwner, address(this));
+        require(approval == true, "ERC-721_NOT_APPROVED");
 
         // create offering nonce by counter
         _offeringNonces.increment();
@@ -126,7 +114,6 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         offeringRegistry[offeringId].hostContract = _hostContract;
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
-        offeringRegistry[offeringId].amount = _amount;
         if (_erc20Token != address(0x0)) {
             offeringRegistry[offeringId].erc20Token = _erc20Token;
         } else {
@@ -134,7 +121,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         }
 
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, _amount);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price);
         return offeringId;
     }
 
@@ -163,34 +150,33 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         }
     }
 
-    function closeOffering(bytes32 _offeringId, uint _amount) external nonReentrant payable {
+    function closeOffering(bytes32 _offeringId) external nonReentrant payable {
         // get offer
         offering memory _offer = offeringRegistry[_offeringId];
-        IERC1155Tradable hostContract = IERC1155Tradable(_offer.hostContract);
-        uint remainAmount = _offer.amount;
-        bool approvalErc1155 = hostContract.isApprovedForAll(_offer.offerer, address(this));
+        address hostContractOffering = _offer.hostContract;
+        ERC721 hostContract = ERC721(hostContractOffering);
+        uint tokenID = _offer.tokenId;
+        address offerer = _offer.offerer;
         bool isERC20 = _offer.erc20Token != address(0x0);
 
         // buyer is sender
         closeOfferingData memory _closeOfferingData;
-        ERC20 tokenERC20;
+        ERC20Upgradeable token;
         if (isERC20) {
-            tokenERC20 = ERC20(_offer.erc20Token);
+            token = ERC20Upgradeable(_offer.erc20Token);
             _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
-                _offer.price * _amount,
-                _offer.price * _amount,
-                tokenERC20.balanceOf(msg.sender),
-                tokenERC20.allowance(msg.sender, address(this)),
+                _offer.price,
+                token.balanceOf(msg.sender),
+                token.allowance(msg.sender, address(this)),
                 _offer.erc20Token
             );
         } else {
             _closeOfferingData = closeOfferingData(
                 msg.sender,
                 _offer.price,
-                _offer.price * _amount,
-                _offer.price * _amount,
+                _offer.price,
                 0,
                 0,
                 address(0x0) // is ETH
@@ -198,21 +184,18 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         }
 
         // check require
-        // check approval of erc-1155 on this contract
-        require(approvalErc1155 == true, "ERC-1155_NOT_APPROVED");
-        require(remainAmount >= _amount, "ERC-1155-AMOUNT_INVALID");
-        require(hostContract.balanceOf(_offer.offerer, _offer.tokenId) >= _amount, "ERC-1155_BALANCE_INVALID");
+        require(hostContract.ownerOf(tokenID) == offerer, "INVALID_ERC721_OWNER");
         if (isERC20) {
-            require(_closeOfferingData.approvalToken >= _closeOfferingData.totalPrice, "ERC-20_NOT_APPROVED");
-            require(_closeOfferingData.balanceBuyer >= _closeOfferingData.totalPrice, "ERC-20_BALANCE_INVALID");
+            // check approval of erc-20 on this contract
+            require(_closeOfferingData.approvalToken >= _closeOfferingData.price, "ERC-20_NOT_APPROVED");
+            require(_closeOfferingData.balanceBuyer >= _closeOfferingData.price, "ERC-20_BALANCE_INVALID");
         } else {
-            require(msg.value >= _closeOfferingData.totalPrice, "VALUE_INVALID");
+            require(msg.value >= _closeOfferingData.price, "VALUE_INVALID");
         }
-        require(!_offer.closed, "OFFERING_CLOSED");
+        require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
 
-        // transfer erc-1155
-        // only transfer one in this version
-        hostContract.safeTransferFrom(_offer.offerer, _closeOfferingData.buyer, _offer.tokenId, _amount, "0x");
+        // transfer erc-721
+        hostContract.safeTransferFrom(offerer, _closeOfferingData.buyer, tokenID);
 
         // logic for 
         // benefit of operator here
@@ -236,79 +219,54 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
                     }
                 }
             }
-            _closeOfferingData.totalPrice -= _benefit.benefitOperator;
+            _closeOfferingData.price -= _benefit.benefitOperator;
             // update balance(on market) of operator
-            _balances[_closeOfferingData.erc20Token][operator] += _benefit.benefitOperator;
-        }
-        // benefit of minter nfts here
-        _benefit.benefitPercentCreator = parameterController.getUInt256("CREATOR_BENEFIT");
-        if (_benefit.benefitPercentCreator > 0) {
-            if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(_offer.tokenId, _closeOfferingData.originPrice);
-                if (_receiver != address(0x0)) {
-                    _benefit.benefitCreator = _closeOfferingData.originPrice * _benefit.benefitPercentCreator / 10000;
-                    _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-                    // update balance(on market) of creator erc-1155
-                    _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
-                }
-            }
-        } else {
-            if (hostContract.supportsInterface(type(IERC1155Tradable).interfaceId)) {
-                (address _receiver, uint256 _royaltyAmount) = hostContract.royaltyInfo(_offer.tokenId, _closeOfferingData.originPrice);
-                if (_receiver != address(0x0)) {
-                    _benefit.benefitCreator = _royaltyAmount;
-                    _closeOfferingData.totalPrice -= _benefit.benefitCreator;
-                    // update balance(on market) of creator erc-1155
-                    _balances[_closeOfferingData.erc20Token][_receiver] += _benefit.benefitCreator;
-                }
-            }
+            _balances[operator][_closeOfferingData.erc20Token] += _benefit.benefitOperator;
         }
 
+        // tranfer erc-20 token to this market contract
         if (isERC20) {
-            // tranfer erc-20 token to this market contract
-            bool success = tokenERC20.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+            bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
             require(success == true, "TRANSFER_FAIL");
         }
-        offeringRegistry[_offeringId].amount -= _amount;
-        remainAmount = offeringRegistry[_offeringId].amount;
 
         // update balance(on market) of offerer
-        _balances[_closeOfferingData.erc20Token][_offer.offerer] += _closeOfferingData.totalPrice;
+        _balances[offerer][_closeOfferingData.erc20Token] += _closeOfferingData.price;
 
         // close offering
-        if (remainAmount == 0) {
-            offeringRegistry[_offeringId].closed = true;
-            emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
-        } else {
-            emit OfferingRemain(_offeringId, _closeOfferingData.buyer, remainAmount);
-        }
+        offeringRegistry[_offeringId].closed = true;
+
+        emit OfferingClosed(_offeringId, _closeOfferingData.buyer);
     }
 
     function withdrawBalance(address _erc20Token) external nonReentrant {
         address withdrawer = msg.sender;
         // check require: balance of sender in market place > 0
-        uint _withdrawAvailable = _balances[_erc20Token][withdrawer];
+        uint _withdrawAvailable = _balances[withdrawer][_erc20Token];
         require(_withdrawAvailable > 0, "WITHDRAW_UNAVAILABLE");
 
         if (_erc20Token != address(0x0)) {
-            ERC20 token = ERC20(_erc20Token);
-            uint256 balanceErc20 = token.balanceOf(address(this));
+            ERC20Upgradeable token = ERC20Upgradeable(_erc20Token);
+            uint256 balance = token.balanceOf(address(this));
             // check require balance of this market contract > sender's withdraw
-            require(balanceErc20 >= _balances[_erc20Token][withdrawer], "INVALID_FUND");
+            require(balance >= _balances[withdrawer][_erc20Token], "INVALID_FUND");
+
 
             // tranfer erc-20 token from this market contract to sender
-            bool success = token.transfer(withdrawer, _withdrawAvailable);
-            require(success == true, "TRANSFER_FAIL");
-        } else {
+            uint amount = _balances[withdrawer][_erc20Token];
+            //payable(withdrawer).transfer(amount);
+            bool success = token.transfer(withdrawer, amount);
+            require(success == true, "TRANSFER_FAIL");}
+        else {
             require(address(this).balance > 0, "INVALID_FUND");
             (bool success,) = withdrawer.call{value : _withdrawAvailable}("");
             require(success, "TRANSFER_FAIL");
         }
-
         // reset balance
-        _balances[_erc20Token][withdrawer] = 0;
+        _balances[withdrawer][_erc20Token] = 0;
+        //        roveToken.approve(withdrawer, _balances[withdrawer]);
 
-        emit BalanceWithdrawn(withdrawer, _erc20Token, _withdrawAvailable);
+        emit BalanceWithdrawn(withdrawer, _withdrawAvailable);
     }
 
     function changeOperator(address _newOperator) external {
@@ -333,17 +291,12 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         emit ParameterControlChanged(previousParameterControl, parameterControl);
     }
 
-    function viewOfferingNFT(bytes32 _offeringId) external view returns (address, uint, uint, bool, uint){
-        return (offeringRegistry[_offeringId].hostContract,
-        offeringRegistry[_offeringId].tokenId,
-        offeringRegistry[_offeringId].price,
-        offeringRegistry[_offeringId].closed,
-        offeringRegistry[_offeringId].amount
-        );
+    function viewOfferingNFT(bytes32 _offeringId) external view returns (address, uint, uint, bool){
+        return (offeringRegistry[_offeringId].hostContract, offeringRegistry[_offeringId].tokenId, offeringRegistry[_offeringId].price, offeringRegistry[_offeringId].closed);
     }
 
-    function viewBalances(address _address, address _erc20Token) external view returns (uint) {
-        return (_balances[_erc20Token][_address]);
+    function viewBalances(address _address, address _erc_20_token) external view returns (uint) {
+        return (_balances[_address][_erc_20_token]);
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
@@ -353,4 +306,4 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
-}*/
+}

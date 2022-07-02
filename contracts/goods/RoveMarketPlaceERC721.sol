@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.12;
-
+// Deprecated this contract
+/*
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -306,4 +307,4 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
-}
+}*/
