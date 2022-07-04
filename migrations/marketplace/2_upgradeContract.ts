@@ -8,10 +8,9 @@ import {Marketplace} from "./marketplace";
         }
 
         const marketplace = new Marketplace(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const address = await marketplace.deployUpgradeable(
-            "0xE55EAdE1B17BbA28A80a71633aF8C15Dc2D556A5",
-            "0xFD8500cf6B98F37Bc1a287195d2537b72945a1e8");
-        console.log("Marketplace deployed address: ", address);
+        const address = await marketplace.upgradeContract(
+            "0x3a498e9599A1977925015d7440162e4320900139",
+            "RoveMarketPlaceUpgradeable");
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
