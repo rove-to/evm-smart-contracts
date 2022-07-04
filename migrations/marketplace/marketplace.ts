@@ -64,12 +64,21 @@ class Marketplace {
             return;
         }
 
-        const RoveMarketPlaceERC721Upgradeable = await ethers.getContractFactory("RoveMarketPlaceERC721Upgradeable");
+        const RoveMarketPlaceERC721Upgradeable = await ethers.getContractFactory("RoveMarketPlaceERC721Upgradable");
         console.log("RoveMarketPlaceERC721Upgradeable.deploying ...")
         const proxy = await upgrades.deployProxy(RoveMarketPlaceERC721Upgradeable, [operatorAddress, paramAddress], {initializer: 'initialize(address, address)'});
         await proxy.deployed();
         console.log("RoveMarketPlaceERC721Upgradeable deployed at proxy:", proxy.address);
         return proxy.address;
+    }
+
+    async upgradeContract(proxyAddress: any, contractName: string) { 
+        const contractUpdated = await ethers.getContractFactory(contractName);
+        upgrades.up
+        console.log('Upgrading ' + contractName + '... by proxy ' + proxyAddress);
+        const tx = await upgrades.upgradeProxy(proxyAddress, contractUpdated);
+        console.log(contractName + ' upgraded on tx address ' + tx.address);
+        return tx;
     }
 }
 
