@@ -45,6 +45,7 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
         uint amount;
         bool closed;
         address erc20Token;
+        bool withdrawImm;
     }
 
     struct closeOfferingData {
@@ -55,6 +56,7 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
         uint256 balanceBuyer;
         uint256 approvalToken;
         address erc20Token;
+        bool withdrawImm;
     }
 
     mapping(bytes32 => offering) offeringRegistry;
@@ -98,7 +100,7 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
     }*/
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant returns (bytes32) {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount, bool _withdrawImm) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
         // get hostContract of erc-1155
@@ -124,6 +126,7 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
         offeringRegistry[offeringId].amount = _amount;
+        offeringRegistry[offeringId].withdrawImm = _withdrawImm;
         if (_erc20Token != address(0x0)) {
             offeringRegistry[offeringId].erc20Token = _erc20Token;
         } else {
@@ -180,7 +183,8 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
                 _offer.price * _amount,
                 tokenERC20.balanceOf(msg.sender),
                 tokenERC20.allowance(msg.sender, address(this)),
-                _offer.erc20Token
+                _offer.erc20Token,
+                _offer.withdrawImm
             );
         } else {
             _closeOfferingData = closeOfferingData(
@@ -190,7 +194,8 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
                 _offer.price * _amount,
                 0,
                 0,
-                address(0x0) // is ETH
+                address(0x0), // is ETH
+                _offer.withdrawImm
             );
         }
 
@@ -261,16 +266,30 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
             }
         }
 
-        if (isERC20) {
-            // tranfer erc-20 token to this market contract
-            bool success = tokenERC20.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-            require(success == true, "TRANSFER_FAIL");
-        }
         offeringRegistry[_offeringId].amount -= _amount;
         remainAmount = offeringRegistry[_offeringId].amount;
 
-        // update balance(on market) of offerer
-        _balances[_closeOfferingData.erc20Token][_offer.offerer] += _closeOfferingData.totalPrice;
+        if (!_closeOfferingData.withdrawImm) {
+            if (isERC20) {
+                // tranfer erc-20 token to this market contract
+                bool success = tokenERC20.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+                require(success == true, "TRANSFER_FAIL_E");
+            }
+            // update balance(on market) of offerer
+            _balances[_closeOfferingData.erc20Token][_offer.offerer] += _closeOfferingData.totalPrice;
+        } else {
+            if (isERC20) {
+                // tranfer erc-20 token to this market contract
+                bool success = tokenERC20.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+                require(success == true, "TRANSFER_FAIL_E1");
+                success = tokenERC20.transferFrom(address(this), _offer.offerer, _closeOfferingData.totalPrice);
+                require(success == true, "TRANSFER_FAIL_E2");
+            } else {
+                require(address(this).balance > 0, "INVALID_FUND");
+                (bool success,) = _offer.offerer.call{value : _closeOfferingData.totalPrice}("");
+                require(success, "TRANSFER_FAIL_N");
+            }
+        }
 
         // close offering
         if (remainAmount == 0) {

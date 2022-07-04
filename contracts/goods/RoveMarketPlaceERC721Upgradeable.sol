@@ -42,6 +42,7 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
         uint price;
         bool closed;
         address erc20Token;
+        bool withdrawImm;
     }
 
     struct closeOfferingData {
@@ -51,6 +52,7 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
         uint256 balanceBuyer;
         uint256 approvalToken;
         address erc20Token;
+        bool withdrawImm;
     }
 
     mapping(bytes32 => offering) offeringRegistry;
@@ -91,7 +93,7 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
     }*/
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant returns (bytes32) {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, bool _withdrawImm) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -114,6 +116,7 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
         offeringRegistry[offeringId].hostContract = _hostContract;
         offeringRegistry[offeringId].tokenId = _tokenId;
         offeringRegistry[offeringId].price = _price;
+        offeringRegistry[offeringId].withdrawImm = _withdrawImm;
         if (_erc20Token != address(0x0)) {
             offeringRegistry[offeringId].erc20Token = _erc20Token;
         } else {
@@ -170,7 +173,8 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
                 _offer.price,
                 token.balanceOf(msg.sender),
                 token.allowance(msg.sender, address(this)),
-                _offer.erc20Token
+                _offer.erc20Token,
+                _offer.withdrawImm
             );
         } else {
             _closeOfferingData = closeOfferingData(
@@ -179,7 +183,8 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
                 _offer.price,
                 0,
                 0,
-                address(0x0) // is ETH
+                address(0x0), // is ETH
+                _offer.withdrawImm
             );
         }
 
@@ -224,15 +229,26 @@ contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgrad
             _balances[operator][_closeOfferingData.erc20Token] += _benefit.benefitOperator;
         }
 
-        // tranfer erc-20 token to this market contract
-        if (isERC20) {
-            bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
-            require(success == true, "TRANSFER_FAIL");
+        if (!_closeOfferingData.withdrawImm) {
+            // tranfer erc-20 token to this market contract
+            if (isERC20) {
+                bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+                require(success == true, "TRANSFER_FAIL");
+            }
+            // update balance(on market) of offerer
+            _balances[offerer][_closeOfferingData.erc20Token] += _closeOfferingData.price;
+        } else {
+            if (isERC20) {
+                bool success = token.transferFrom(_closeOfferingData.buyer, address(this), _closeOfferingData.originPrice);
+                require(success == true, "TRANSFER_FAIL_E1");
+                success = token.transferFrom(address(this), _offer.offerer, _closeOfferingData.price);
+                require(success == true, "TRANSFER_FAIL_E2");
+            } else {
+                require(address(this).balance > 0, "INVALID_FUND");
+                (bool success,) = _offer.offerer.call{value : _closeOfferingData.price}("");
+                require(success, "TRANSFER_FAIL_N");
+            }
         }
-
-        // update balance(on market) of offerer
-        _balances[offerer][_closeOfferingData.erc20Token] += _closeOfferingData.price;
-
         // close offering
         offeringRegistry[_offeringId].closed = true;
 
