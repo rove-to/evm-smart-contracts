@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
 import "../governance/ParameterControl.sol";
 
-contract RoveMarketPlaceERC721Upgradable is Initializable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+contract RoveMarketPlaceERC721Upgradeable is Initializable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _offeringNonces;
 
