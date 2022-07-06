@@ -322,4 +322,10 @@ contract RoveMarketPlaceERC721Upgradeable is Initializable, ReentrancyGuardUpgra
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
+
+    function offererCloseOffering(bytes32 _offeringId) external {
+        require(msg.sender == offeringRegistry[_offeringId].offerer, "OFFERER_ONLY");
+        offeringRegistry[_offeringId].closed = true;
+        emit OfferingClosed(_offeringId, offeringRegistry[_offeringId].offerer);
+    }
 }
