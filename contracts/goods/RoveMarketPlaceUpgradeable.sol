@@ -367,12 +367,14 @@ contract RoveMarketPlaceUpgradeable is Initializable, ReentrancyGuardUpgradeable
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
         require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
         offeringRegistry[_offeringId].closed = true;
+        offeringRegistry[_offeringId].amount = 0;
         emit OfferingClosed(_offeringId, address(operator));
     }
 
     function offererCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == offeringRegistry[_offeringId].offerer, "OFFERER_ONLY");
         offeringRegistry[_offeringId].closed = true;
+        offeringRegistry[_offeringId].amount = 0;
         emit OfferingClosed(_offeringId, offeringRegistry[_offeringId].offerer);
     }
 }
