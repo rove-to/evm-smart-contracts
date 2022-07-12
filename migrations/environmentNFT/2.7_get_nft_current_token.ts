@@ -8,8 +8,12 @@ import {EnvironmentNFT} from "./environmentNFT";
         }
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        const tx = await nft.newItemId('');
-        console.log(tx);
+        const currentInitTokenTo = await nft.newItemId('');
+        console.log({tx: currentInitTokenTo});
+        const maxSupply = await nft.getMaxSupply('', 0);
+        console.log({maxSupply});
+        const totalSupply = await nft.getTotalSupply('', 0)
+        console.log({totalSupply});
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
