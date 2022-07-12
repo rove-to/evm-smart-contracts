@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.12;
 
-contract Initializable {
+contract InitializableSimple {
     bool inited = false;
 
     modifier initializer() {

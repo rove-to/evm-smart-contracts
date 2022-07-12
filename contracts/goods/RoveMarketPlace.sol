@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.12;
-
+// Deprecated this contract
+/*
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -16,7 +17,7 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, string uri);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, address erc20, uint price, uint256 amount);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event OfferingRemain(bytes32 indexed offeringId, address indexed buyer, uint indexed amount);
     event BalanceWithdrawn (address indexed beneficiary, address erc20, uint amount);
@@ -76,7 +77,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
         return _arrayOffering;
     }
 
-    /*function toHex16(bytes16 data) internal pure returns (bytes32 result) {
+    */
+/*function toHex16(bytes16 data) internal pure returns (bytes32 result) {
         result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000 |
         (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
         result = result & 0xFFFFFFFF000000000000000000000000FFFFFFFF000000000000000000000000 |
@@ -95,10 +97,11 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
 
     function toHtoHexex(bytes32 data) private pure returns (string memory) {
         return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
-    }*/
+    }*//*
+
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price, uint _amount) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
         // get hostContract of erc-1155
@@ -130,9 +133,9 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
             offeringRegistry[offeringId].erc20Token = address(0x0);
         }
 
-        string memory uri = hostContract.uri(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _erc20Token, _price, _amount);
+        return offeringId;
     }
 
     function _toLower(string memory str) internal pure returns (string memory) {
@@ -346,7 +349,8 @@ contract RoveMarketPlace is ReentrancyGuard, AccessControl {
     function operatorCloseOffering(bytes32 _offeringId) external {
         require(msg.sender == operator, "OPERATOR_ONLY");
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
-}
+}*/

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.12;
-
+// Deprecated this contract
+/*
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -15,7 +16,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _offeringNonces;
 
-    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price, string uri);
+    event OfferingPlaced(bytes32 indexed offeringId, address indexed hostContract, address indexed offerer, uint tokenId, uint price);
     event OfferingClosed(bytes32 indexed offeringId, address indexed buyer);
     event BalanceWithdrawn (address indexed beneficiary, uint amount);
     event OperatorChanged (address previousOperator, address newOperator);
@@ -91,7 +92,7 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     // NFTs's owner place offering
-    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant {
+    function placeOffering(address _hostContract, uint _tokenId, address _erc20Token, uint _price) external nonReentrant returns (bytes32) {
         // owner nft is sender
         address nftOwner = msg.sender;
         // require(msg.sender == _operator, "Only operator dApp can create offerings");
@@ -120,9 +121,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
             offeringRegistry[offeringId].erc20Token = address(0x0);
         }
 
-        string memory uri = hostContract.tokenURI(_tokenId);
         _arrayOffering.push(offeringId);
-        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price, uri);
+        emit OfferingPlaced(offeringId, _hostContract, nftOwner, _tokenId, _price);
+        return offeringId;
     }
 
     function _toLower(string memory str) internal pure returns (string memory) {
@@ -270,9 +271,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function changeOperator(address _newOperator) external {
-        require(msg.sender == operator, "only the operator can change the current operator");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
-        require(_newOperator != address(0x0), "new operator is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_newOperator != address(0x0), "ADDRESS_INVALID");
 
         address previousOperator = operator;
         operator = _newOperator;
@@ -282,9 +283,9 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function changeParameterControl(address _new) external {
-        require(msg.sender == operator, "only the operator can change the current _parameterControl");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "only the operator can change the current _parameterControl");
-        require(_new != address(0x0), "new parametercontrol is zero address");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(_new != address(0x0), "ADDRESS_INVALID");
 
         address previousParameterControl = parameterControl;
         parameterControl = _new;
@@ -300,9 +301,10 @@ contract RoveMarketPlaceERC721 is ReentrancyGuard, AccessControl {
     }
 
     function operatorCloseOffering(bytes32 _offeringId) external {
-        require(msg.sender == operator, "Only operator dApp can close offerings");
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Caller is not a operator");
+        require(msg.sender == operator, "OPERATOR_ONLY");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OPERATOR_ONLY");
+        require(!offeringRegistry[_offeringId].closed, "OFFERING_CLOSED");
         offeringRegistry[_offeringId].closed = true;
         emit OfferingClosed(_offeringId, address(0));
     }
-}
+}*/

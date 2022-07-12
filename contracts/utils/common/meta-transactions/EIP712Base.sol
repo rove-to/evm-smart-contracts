@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.12;
 
-import {Initializable} from "./Initializable.sol";
+import {InitializableSimple} from "./Initializable.sol";
 
-contract EIP712Base is Initializable {
+contract EIP712Base is InitializableSimple {
     struct EIP712Domain {
         string name;
         string version;
@@ -27,8 +27,8 @@ contract EIP712Base is Initializable {
     function _initializeEIP712(
         string memory name
     )
-        internal
-        initializer
+    internal
+    initializer
     {
         _setDomainSeperator(name);
     }
@@ -65,13 +65,13 @@ contract EIP712Base is Initializable {
      * "\\x01" is the version byte to make it compatible to EIP-191
      */
     function toTypedMessageHash(bytes32 messageHash)
-        internal
-        view
-        returns (bytes32)
+    internal
+    view
+    returns (bytes32)
     {
         return
-            keccak256(
-                abi.encodePacked("\x19\x01", getDomainSeperator(), messageHash)
-            );
+        keccak256(
+            abi.encodePacked("\x19\x01", getDomainSeperator(), messageHash)
+        );
     }
 }

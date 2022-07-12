@@ -1,9 +1,8 @@
 // ethereum/scripts/deploy.js
 import {createAlchemyWeb3} from "@alch/alchemy-web3";
 import * as path from "path";
-import {BigNumber} from "ethers";
 
-const {ethers} = require("hardhat");
+const {ethers, upgrades} = require("hardhat");
 const hardhatConfig = require("../../hardhat.config");
 const Web3 = require('web3');
 
@@ -15,7 +14,8 @@ class Zone {
     typeZone: number; //1: team ,2: nft hodler, 3: public
     rockIndexFrom: number;
     rockIndexTo: number;// required to >= from
-
+    chainId: number;
+    testValue: number;
     constructor(zoneIndex: number, type: number) {
         this.zoneIndex = zoneIndex;
         this.price = ethers.utils.parseEther("0.0").toNumber();
@@ -24,6 +24,8 @@ class Zone {
         this.rockIndexTo = 0;
         this.collAddr = "0x0000000000000000000000000000000000000000";
         this.coreTeamAddr = "0x0000000000000000000000000000000000000000";
+        this.chainId = 0;
+        this.testValue = 0;
     }
 }
 
@@ -48,8 +50,11 @@ class RockNFT {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        if (contractName == "") {
+        if (contractName == "" || contractName == "RockNFT") {
             contractName = "./artifacts/contracts/goods/RockNFT.sol/RockNFT.json";
+        } else if (contractName == 'RockNFTCollectionHolderCrossChain') {
+            contractName = "./artifacts/contracts/goods/RockNFTCollectionHolderCrossChain.sol/RockNFTCollectionHolderCrossChain.json";
+
         } else {
             contractName = "./artifacts/contracts/goods/RockNFTCollectionHolder.sol/RockNFTCollectionHolder.json";
         }
@@ -98,6 +103,25 @@ class RockNFT {
         return NFTDeploy.address;
     }
 
+    async deploy2(adminAddress: any, operatorAddress: any, verifier: any, paramAddress: any, name: string, symbol: string, contract: string) {
+        console.log("Network run", this.network, hardhatConfig.networks[this.network].url);
+        if (this.network == "local") {
+            console.log("not run local");
+            return;
+        }
+
+        const RockNFT = await ethers.getContractFactory(contract);
+        /*const NFTDeploy = await RockNFT.deploy(adminAddress, operatorAddress, verifier, paramAddress, name, symbol);
+        console.log("Rove Rock NFT deployed:", NFTDeploy.address);
+        return NFTDeploy.address;*/
+
+        // deploy upgradable
+        const proxy = await upgrades.deployProxy(RockNFT, [adminAddress, operatorAddress, verifier, paramAddress, name, symbol], {initializer: 'initialize(address, address, address, address, string memory, string memory)'});
+        await proxy.deployed();
+        console.log("Rove Rock NFT deployed:", proxy.address);
+        return proxy.address;
+    }
+
     async getAdminAddress(contractAddress: any, contractName: string) {
         let temp = this.getContract(contractAddress, contractName);
         const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
@@ -113,6 +137,21 @@ class RockNFT {
         const operatorAddress: any = await temp?.nftContract.methods.operator().call(tx);
         const paramControl: any = await temp?.nftContract.methods.parameterControlAdd().call(tx);
         return {adminAddress, operatorAddress, paramControl};
+    }
+
+    async metaverseOwners(contractAddress: any, metaverseIdHexa: string, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const adminAddress: any = await temp?.nftContract.methods.metaverseOwners(metaverseIdInt).call(tx);
+        return {adminAddress,};
     }
 
     async transfer(receiver: any, contractAddress: any, tokenID: number, amount: number, gas: number, contractName: string) {
@@ -149,6 +188,38 @@ class RockNFT {
             tx.gas = await fun.estimateGas(tx);
         }
 
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async addZone(contractAddress: any, metaverseIdHexa: string, zone: Zone, ethAmount: string, gas: number, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+        let nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        console.log("zone", zone);
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        // console.log({metaverseIdInt});
+        const fun = temp?.nftContract.methods.addZone(metaverseIdInt,
+            JSON.parse(JSON.stringify(zone)),
+        );
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+            value: 0,
+        }
+        if (ethAmount != "") {
+            tx.value = ethers.utils.parseEther(ethAmount);
+        }
+        try {
+            if (tx.gas == 0) {
+                tx.gas = await fun.estimateGas(tx);
+            }
+        } catch (e) {
+            console.log("ex", e);
+            return;
+        }
         return await this.signedAndSendTx(temp?.web3, tx);
     }
 
@@ -288,6 +359,48 @@ class RockNFT {
             nonce: nonce,
             gas: gas,
             value: 0,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async changeVerifier(contractAddress: any, verifier: any, contractName: string, gas: number) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        console.log("------verifier", verifier);
+        const fun = temp?.nftContract.methods.changeVerifier(verifier);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
+            data: fun.encodeABI(),
+        }
+
+        if (tx.gas == 0) {
+            tx.gas = await fun.estimateGas(tx);
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
+    }
+
+    async changeZonePrice(contractAddress: any, metaverseIdHexa: string, zoneIndex: number, price: string, contractName: string, gas: number) {
+        let temp = this.getContract(contractAddress, contractName);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const metaverseIdInt = BigInt("0x" + metaverseIdHexa);
+        const fun = temp?.nftContract.methods.changeZonePrice(metaverseIdInt, zoneIndex, ethers.utils.parseEther(price).toNumber())
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: gas,
             data: fun.encodeABI(),
         }
 
@@ -468,6 +581,28 @@ class RockNFT {
 
         const uri: any = await temp?.nftContract.methods.uri(tokenId).call(tx);
         return uri;
+    }
+
+    async verifySignData(contractAddress: any, data: string, signdData: string, contractName: string) {
+        let temp = this.getContract(contractAddress, contractName);
+
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+        const hashedMessage = Web3.utils.sha3(data);
+        // sign hashed message
+        const web3 = new Web3();
+        const signature = web3.eth.accounts.sign(hashedMessage, this.senderPrivateKey);
+        const fun = temp?.nftContract.methods.verifySignData(signature.message, signature.signature);
+        console.log("---------", contractName);
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+            gas: 50000,
+            data: fun.encodeABI(),
+        }
+
+        return await this.signedAndSendTx(temp?.web3, tx);
     }
 }
 

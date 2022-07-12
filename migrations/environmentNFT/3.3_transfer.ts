@@ -32,7 +32,7 @@ import {EnvironmentNFT} from "./environmentNFT";
         }
 
         const nft = new EnvironmentNFT(process.env.NETWORK, process.env.PRIVATE_KEY, process.env.PUBLIC_KEY);
-        await nft.transfer(receiver, contract, tokenID, amount, 500000);
+        await nft.transfer(receiver, contract, tokenID, amount, 0);
     } catch (e) {
         // Deal with the fact the chain failed
         console.log(e);
