@@ -100,6 +100,21 @@ class Erc721 {
 
         return await this.signedAndSendTx(temp?.web3, tx);
     }
+
+    async nextTokenId(contractAddress: any) {
+        let temp = this.getContract(contractAddress);
+        const nonce = await temp?.web3.eth.getTransactionCount(this.senderPublicKey, "latest") //get latest nonce
+
+        //the transaction
+        const tx = {
+            from: this.senderPublicKey,
+            to: contractAddress,
+            nonce: nonce,
+        }
+
+        const nextTokenId: any = await temp?.nftContract.methods.nextTokenId().call(tx);
+        return nextTokenId;
+    }
 }
 
 export {Erc721};
