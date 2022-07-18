@@ -3,6 +3,7 @@ pragma solidity 0.8.12;
 import "@openzeppelin/contracts/token/ERC721/presets/ERC721PresetMinterPauserAutoId.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
@@ -17,7 +18,7 @@ contract ProxyRegistry {
  * @title ERC721Tradable
  * ERC721Tradable - ERC721 contract that whitelists a trading address, and has minting functionality.
  */
-contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeMetaTransaction {
+contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeMetaTransaction, IERC2981 {
     event OperatorChanged (address previous, address new_);
     event AdminChanged (address previous, address new_);
     event ProxyRegistryAddressChanged (address previous, address new_);
@@ -28,6 +29,8 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
     address public admin;// multi sig address
     // operator
     address public operator;
+    // creator
+    mapping(uint256 => address) public creators;
 
     /*
      * We rely on the OZ Counter util to keep track of the next available ID.
@@ -43,6 +46,13 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
 
     mapping(uint256 => string) customUri;
 
+    /**
+     * @dev Require _msgSender() to be the creator of the token id
+   */
+    modifier creatorOnly(uint256 _id) {
+        require(creators[_id] == _msgSender(), "ONLY_CREATOR");
+        _;
+    }
 
     modifier operatorOnly() {
         require(_msgSender() == operator, "ERC721Tradable#ownersOnly: ONLY_OPERATOR_ALLOWED");
@@ -138,7 +148,45 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
         if (bytes(_uri).length > 0) {
             customUri[currentTokenId] = _uri;
         }
+        creators[currentTokenId] = _msgSender();
         _safeMint(_to, currentTokenId);
+    }
+
+    /**
+      * @dev Change the creator address for given token
+    * @param _to   Address of the new creator
+    * @param _id  Token IDs to change creator of
+    */
+    function _setCreator(address _to, uint256 _id) internal creatorOnly(_id)
+    {
+        creators[_id] = _to;
+    }
+
+    /**
+      * @dev Change the creator address for given tokens
+    * @param _to   Address of the new creator
+    * @param _ids  Array of Token IDs to change creator
+    */
+    function setCreator(
+        address _to,
+        uint256[] memory _ids
+    ) public operatorOnly {
+        require(_to != address(0), "INVALID_ADDRESS.");
+
+        _grantRole(CREATOR_ROLE, _to);
+        _grantRole(MINTER_ROLE, _to);
+        for (uint256 i = 0; i < _ids.length; i++) {
+            uint256 id = _ids[i];
+            _setCreator(_to, id);
+        }
+    }
+
+    function getCreator(uint256 id)
+    public
+    view
+    returns (address sender)
+    {
+        return creators[id];
     }
 
     /**
@@ -189,6 +237,12 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
         return super.isApprovedForAll(_owner, _operator);
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721PresetMinterPauserAutoId, IERC165) returns (bool) {
+        return
+        interfaceId == type(IERC721).interfaceId ||
+        super.supportsInterface(interfaceId);
+    }
+
     /**
      * This is used instead of msg.sender as transactions won't be sent by the original token owner, but by OpenSea.
      */
@@ -199,5 +253,38 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
     returns (address sender)
     {
         return ContextMixin.msgSender();
+    }
+
+    /** @dev EIP2981 royalties implementation. */
+    struct RoyaltyInfo {
+        address recipient;
+        uint24 amount;
+        bool isValue;
+    }
+
+    mapping(uint256 => RoyaltyInfo) public royalties;
+
+    function setTokenRoyalty(
+        uint256 _tokenId,
+        address _recipient,
+        uint256 _value
+    ) public operatorOnly {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "NOT_CREATOR");
+        require(_value <= 10000, 'TOO_HIGH');
+        royalties[_tokenId] = RoyaltyInfo(_recipient, uint24(_value), true);
+    }
+
+    // EIP2981 standard royalties return.
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override
+    returns (address receiver, uint256 royaltyAmount)
+    {
+        RoyaltyInfo memory royalty = royalties[_tokenId];
+        if (royalty.isValue) {
+            receiver = royalty.recipient;
+            royaltyAmount = (_salePrice * royalty.amount) / 10000;
+        } else {
+            receiver = creators[_tokenId];
+            royaltyAmount = (_salePrice * 500) / 10000;
+        }
     }
 }
