@@ -49,7 +49,7 @@ class Erc721 {
         API_URL = hardhatConfig.networks[hardhatConfig.defaultNetwork].url;
 
         // load contract
-        let contract = require(path.resolve("./artifacts/contracts/utils/common/ERC721TradableUpgradeable.sol/ERC721TradableUpgradeable.json"));
+        let contract = require(path.resolve("./artifacts/contracts/utils/ERC721TradableUpgradeable.sol/ERC721TradableUpgradeable.json"));
         const web3 = createAlchemyWeb3(API_URL)
         const nftContract = new web3.eth.Contract(contract.abi, contractAddress)
         return {web3, nftContract};
