@@ -201,6 +201,19 @@ contract ERC721Tradable is ContextMixin, ERC721PresetMinterPauserAutoId, NativeM
         return _baseURI();
     }
 
+    /**
+     * @dev Will update the base URI for the token
+   * @param _tokenId The token to update. _msgSender() must be its creator.
+   * @param _newURI New URI for the token.
+   */
+    function setCustomURI(
+        uint256 _tokenId,
+        string memory _newURI
+    ) public creatorOnly(_tokenId) {
+        require(hasRole(CREATOR_ROLE, _msgSender()), "ONLY_CREATOR");
+        customUri[_tokenId] = _newURI;
+    }
+
     function tokenURI(uint256 _tokenId) override public view returns (string memory) {
         bytes memory customUriBytes = bytes(customUri[_tokenId]);
         if (customUriBytes.length > 0) {
