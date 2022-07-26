@@ -2,7 +2,7 @@ import {Erc721} from "./erc721";
 
 (async () => {
     try {
-        if (process.env.NETWORK != "local") {
+        if (process.env.NETWORK != "mumbai") {
             console.log("wrong network");
             return;
         }
